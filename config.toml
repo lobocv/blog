@@ -44,11 +44,11 @@ navbarTitle         = "lobocv"
 dynamicTitles       = true
 searchMenu          = true
 shareMenu           = true
-languageMenu        = true
+languageMenu        = false
 
 [params.intro]
-header                = "blog"
-paragraph             = "Software design, architecture and philosophy"
+header                = "calvin lobo"
+paragraph             = "software design, architecture and philosophy"
 rssIntro              = true
 socialIntro           = true
 hideWhenSingleColumn  = false
