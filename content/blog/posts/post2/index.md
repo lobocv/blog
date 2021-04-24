@@ -1,7 +1,7 @@
 ---
-title: "Dev Velocity Post 1"
+title: "Building a Comfortable Dev Environment: Part 1"
 draft: false
-categories: ["developer velocity"]
+categories: ["Developer Efficiency"]
 ---
 
 This is dev velocity post 1
