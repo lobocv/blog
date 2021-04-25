@@ -47,7 +47,7 @@ shareMenu           = true
 languageMenu        = false
 
 [params.intro]
-header                = "calvin lobo"
+header                = "Calvin Lobo"
 paragraph             = "software design, architecture and philosophy"
 rssIntro              = true
 socialIntro           = true
