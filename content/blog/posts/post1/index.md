@@ -1,7 +1,7 @@
 ---
-title: "Architecture Post 1"
+title: "The Registration Pattern"
 draft: false
-categories: ["architecture"]
+categories: ["Architecture"]
 ---
 
-This is architecture post 1 2 2
+This is architecture post 112
