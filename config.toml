@@ -32,7 +32,7 @@ hideEmptyStats        = false
 
 [params.meta]
 description         = "A theme by HTML5 UP, ported by Julio Pescador. Slimmed and enhanced by Patrick Collins. Multilingual by StatnMap. Powered by Hugo."
-author              = "Calvin V Lobo "
+author              = "Calvin V Lobo"
 favicon             = false
 svg                 = true
 faviconVersion      = "1"
