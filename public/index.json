@@ -1,0 +1,31 @@
+[{
+    "title": "About",
+    "date": "",
+    "description": "",
+    "body": "About me!\n",
+    "ref": "/about/"
+  },{
+    "title": "Building a Comfortable Dev Environment: Part 1",
+    "date": "",
+    "description": "",
+    "body": "This is dev velocity post 1\n",
+    "ref": "/blog/posts/post2/"
+  },{
+    "title": "Event Compression / Deduplication",
+    "date": "",
+    "description": "",
+    "body": "This is dev velocity post 1\n",
+    "ref": "/blog/posts/post3/"
+  },{
+    "title": "The Registration Pattern",
+    "date": "",
+    "description": "",
+    "body": "This is architecture post 112\n",
+    "ref": "/blog/posts/post1/"
+  },{
+    "title": "why you shouldn't use database models in API signatures",
+    "date": "",
+    "description": "",
+    "body": "This is dev velocity post 1\n",
+    "ref": "/blog/posts/post4/"
+  }]
