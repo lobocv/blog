@@ -1,5 +1,5 @@
 ---
-title: "The Registration Pattern"
+title: "The Plugin Pattern"
 draft: true
 categories: ["Architecture"]
 ---
