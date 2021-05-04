@@ -3,7 +3,7 @@
 
 # baseurl must be set to "/blog" for some reason otherwise the built github pages does not resolve
 # the .css files
-baseurl                 = "http://www.lobocv.com"
+baseurl                 = "http://blog.lobocv.com"
 DefaultContentLanguage  = "en"
 title                   = "Lobocv Blog"
 theme                   = "hugo-future-imperfect-slim"
