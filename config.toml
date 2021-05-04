@@ -9,7 +9,7 @@ title                   = "Lobocv Blog"
 theme                   = "hugo-future-imperfect-slim"
 paginate                = 3
 disqusShortname         = ""
-googleAnalytics         = ""
+googleAnalytics         = "G-EWZHMS79VB"
 pluralizeListTitles     = false
 disableLanguages        = []
 
