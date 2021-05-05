@@ -59,8 +59,8 @@ alwaysOnHomepage      = false
 
 [params.intro.pic]
 src                 = "img/logo.jpg"
-shape               = "circle"
-width               = "100px"
+shape               = "triangle"
+width               = "200px"
 alt                 = ""
 
 [params.sidebar]
