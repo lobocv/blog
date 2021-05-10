@@ -71,7 +71,7 @@ situation we recursively call the <code>jsonb_recursive_merge</code> on <code>va
 merging any nested objects. I&rsquo;d like to thank and give credit to <code>klin</code> and his
 very helpful <a href=https://stackoverflow.com/a/42954907>StackOverflow</a> answer which brought
 me to a solution to this problem.</p><h3 id=using-the-function>Using the function</h3><p>One common use for this function is to upsert a row. In an upsert, when the row exists,
-you want to update it and when it doesn&rsquo;t a new row is inserted.
+you want to update it and when it doesn&rsquo;t, you want to insert a new one.
 To do this, you would use an <code>INSERT</code> statement with the <code>ON CONFLICT (col1,..., colN) DO UPDATE SET</code> clause.
 The columns in the clause specify the columns of a unique index. Following the clause is a list of
 <code>column_name = &lt;expression></code> statements that decide just how each column is to be updated.</p><p>Below is an example of updating a table of tweet metrics:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#66d9ef>INSERT</span> <span style=color:#66d9ef>INTO</span> tweets (id, metrics)
