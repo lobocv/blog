@@ -7,7 +7,7 @@ categories: ["Databases"]
 
 In addition to storing primitive data types such as `INT`, `FLOAT` and `VARCHAR`, 
 PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have a wide variety of
-[functions and operators](https://www.postgresql.org/docs/12/functions-json.html). 
+[functions and operators[1]](https://www.postgresql.org/docs/12/functions-json.html). 
 One of the more common and useful operators is the concatenation operator,
 `||`, which concatenates two jsonb values into a new JSONB value.
 
@@ -135,5 +135,45 @@ merging any nested objects. I'd like to thank and give credit to `klin` and his
 very helpful [StackOverflow](https://stackoverflow.com/a/42954907) answer which brought
 me to a solution to this problem. 
 
+
+### Using the function
+
+One common use for this function is to upsert a row. In an upsert, when the row exists,
+you want to update it and when it doesn't, you want to insert a new one.
+To do this, you would use an `INSERT` statement with the `ON CONFLICT (col1,..., colN) DO UPDATE SET` clause.
+The columns in the clause specify the columns of a unique index. Following the clause is a list of 
+`column_name = <expression>` statements that decide just how each column is to be updated. 
+
+Below is an example of updating a table of tweet metrics: 
+
+```postgresql
+INSERT INTO tweets (id, metrics)
+VALUES (1, '{"likes": 22, "comments": 12}')
+ON CONFLICT (id) DO UPDATE
+SET metrics = jsonb_recursive_merge(tweets.metrics, excluded.metrics);
+```
+
+In the statement above, if a row with the same ID exists, it will call the `jsonb_recursive_merge` function on
+the current value, `tweets.metrics`, and the inserted value, `excluded.metrics` (the `excluded` table is the
+name of the special table representing rows proposed for insertion[2]).
+
+### Limitations
+
+When we designed our `jsonb_recursive_merge` function we had to decide what "merge" meant to us. We decided
+that an overwrite of a value constitutes a "merge". But what about values that are arrays? One 
+could argue that merging two arrays `[1, 2, 3]` and `[4, 5, 6]` should result in `[1,2,3,4,5,6]`. It really
+all depends on the context of what you are trying to do. 
+
+If you want to also merge the values of arrays you can add an extra `case` statement that appends the values when
+both `va` and `vb` are arrays:
+
+```postgresql
+WHEN jsonb_typeof(va) = 'array' AND jsonb_typeof(vb) = 'array' THEN va || vb
+```
+
+However, be aware that this will apply to **all** arrays encountered in the JSON objects.
+
 ## Further Reading
-[JSON Functions and Operators](https://www.postgresql.org/docs/12/functions-json.html)
+[1] [JSON Functions and Operators](https://www.postgresql.org/docs/12/functions-json.html)
+
+[2] [PostgresSQL Insert Documentation](https://www.postgresql.org/docs/12/sql-insert.html)
