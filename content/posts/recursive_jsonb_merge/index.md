@@ -130,11 +130,6 @@ are defined and **not both** JSON objects themselves. In this case we choose `vb
 The final case (`else`) handles the situation where `va` and `vb` are both JSON objects. In that
 situation we recursively call the `jsonb_recursive_merge` on `va` and `vb`. 
 
-And there you have it, a custom PostgreSQL function that merges two JSON objects, preserving and 
-merging any nested objects. I'd like to thank and give credit to `klin` and his
-very helpful [StackOverflow](https://stackoverflow.com/a/42954907) answer which brought
-me to a solution to this problem. 
-
 
 ### Using the function
 
@@ -172,6 +167,13 @@ WHEN jsonb_typeof(va) = 'array' AND jsonb_typeof(vb) = 'array' THEN va || vb
 ```
 
 However, be aware that this will apply to **all** arrays encountered in the JSON objects.
+
+
+And there you have it, a custom PostgreSQL function that merges two JSON objects, preserving and
+merging any nested objects. I'd like to thank and give credit to `klin` and his
+very helpful [StackOverflow](https://stackoverflow.com/a/42954907) answer which brought
+me to a solution to this problem.
+
 
 ## Further Reading
 [1] [JSON Functions and Operators](https://www.postgresql.org/docs/12/functions-json.html)
