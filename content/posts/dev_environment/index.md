@@ -5,16 +5,103 @@ date: 2021-05-01
 categories: ["Developer Efficiency"]
 ---
 
-I am a simple man, I enjoy the comfort and feel of home. When given the opportunity, 
-I will find a way to make myself as comfortable as possible, and my software projects are no exception.
+Being a software developer can be overwhelming at times. There are an endlessly diverse set of technologies, languages 
+and frameworks to choose. That list grows larger and larger each day. On top of that, we have an abundance of tools that
+we use daily. Tools like git, docker, docker-compose, kubernetes, ssh, curl, sed, awk, grep, etc. are all tools we call
+multiple times a day. Most of these tools have a small subset of commands / flags that we use the most. As the years go 
+by, with repetition, you end up memorizing these commands. This is great for productivity, but it takes time! 
+In the meantime, while you have yet to internalize these commands, your brain needs to stop (even for a second) to think:
+"What was that flag again?"
+
+These small and frequent context switches cause us to lose a step on what is more important at the time: solving that bug 
+or finishing that feature. The solution is simple. Keep a cheatsheet of all your favorite commands written on cue cards.
+Tuck that cue card under your pillow and each night before bed, recite all the commands in their entirety out loud as you
+eventually fall asleep.
+
+
+
+....
+
+No. We're not in high school school anymore (well some of you may be). There is a (much) better way of removing this
+unnecessary cognitive load so you can always stay focused on your task at hand.
+
+In this article I am going to talk about a few things I do to speed up my development flow. I've found this incredibly 
+valuable and I hope you do to. Best of all is that you can take as much or as little from this flow as suites you. 
+Customize it, change it, **improve** it and share your results, I would love to hear it.
+
+Lets get start with the simpliest thing you can do:
+
+## The Shell
+
+### Aliases
+
+A shell alias is a shortcut you can define for any command. They are very simple to create and can save you a lot of time
+and memorizing. For example, instead of typing `ls -lah` each time, you can create an alias `la` that would do the exact 
+same thing:
+
+`alias la="ls -lAh"`
+
+Aliases act as a run-time replacement of your alias with the defined command. This means you can augment your alias on
+the fly:
+
+`la -R`
+
+would translate to `ls -lAh -R`.
+
+Aliases need to be loaded into your shell. The most common way of loading aliases is to define them in your `.bashrc` 
+so that they are defined whenever you open a new shell.
+
+### Shell Functions
+
+An even more flexible option to aliases are shell functions. These act similarly to an alias but instead of simply
+replacing text being send to your shell's REPL, it executes the shell code you've defined. Use shell functions whenever
+you want to do something more complex than just shortcuts. Below is an example function to extract a specific
+JSON key-value from input:
+
+```
+# Reads from JSON from stdin and print outs the value of the specified key
+# $1: Key to print
+# Example: echo '{"a": 1, "b": 2}' | jsonparsekey b
+# > 2
+function jsonparsekey() {
+	KEY=$1
+	python -c "import sys,json; s=json.loads(''.join([l for l in sys.stdin])); print s['$KEY']"
+}
+```
+
+I find this useful for filtering response data of HTTP APIs as I am debugging.
+
+
+### Upgrade from Bash
+
+Bash is ubiquitous and great, but over the years people have developed much more full-featured, customizable and extensible 
+shells such as [zsh](https://www.zsh.org/) and [fish](https://fishshell.com/). I would highly recommend looking into these
+shells or the many others that exist. I personally use `zsh` with the [oh-my-zsh](https://ohmyz.sh/) configuration manager 
+to extend and customize the shell to my liking.
+
+## Storing your Configuration
+
+Over the years you will likely be using many different computers. I personally have my home desktop, a personal laptop and
+my work laptop. To keep configurations on all my devices in sync I have a [git repository](https://github.com/lobocv/mysetup) 
+which stores all my aliases, shell functions, zsh plugins and common system packages. This repo also prevents me from losing
+and having to recreate configurations as I reinstall my OS or format my hard drives. 
+
+I even have a [script](https://github.com/lobocv/mysetup/blob/master/load_aliases.sh) 
+that loads the repository, keeping my `.zshrc` file edits minimal:
+
+**.zshrc**
+```
+source ~/lobocv/mysetup/load_aliases.sh
+```
+
+
+## Containerized Environments
 
 Docker and docker-compose make it simple to create a customized and reproducible development
 environment for your team's software projects. In addition to the docker container, I have several scripts which help 
-make common tasks dead simple. These tasks could be as trivial as building the docker image, starting and entering 
+make common tasks dead simple. These tasks could be as trivial as building the docker image(s), starting and entering 
 the development container and tearing it down when I'm finished.
 
-In this post I'll talk about my particular work environment and how it lightens my cognitive load while developing.
-You can try out the examples discussed in this post [here]()
 
 ### The Docker Container
 
@@ -35,7 +122,7 @@ RUN go get google.golang.org/protobuf/cmd/protoc-gen-go \
 Docker-compose makes it simple to orchestrate several containers which can then communicate with one another via a common network or
 share a volumes with the host or one another. In the following docker-compose example config, I define the development 
 container, `dev`, and mount my local filesystem (`./`) to a `/src` folder inside the container. This allows my development
-container have access to code in the repository and immediately see changes being made to them. The configuration also
+container have access to code in the repository and immediately see changes being made to them. The example configuration below also
 starts up a MongoDB container named `mongo`.
 
 **docker-compose.yaml**
@@ -89,7 +176,7 @@ slow `docker-compose up` command.
 ### Customizing the environment
 
 You may have noticed that in `devshell.sh` I provided an `--rcfile` parameter to `bash`. This allows us to setup any
-customized environment we want in the developer shell. This can contain functions or aliases that are specific to
+customized environment we want in the devshell. This can contain functions or aliases that are specific to
 your project. I like to have this script define a `help()` function and print it upon entry of the shell.
 This helps new team members joining the project get accustom to what features exist in the devshell.
 It also helps broadcast any improvements added to the shell and acts as reference documentation for the devshell.  
@@ -137,8 +224,8 @@ help
 ```
 
 ### Personalizing the Shell
-At the end of the `.devshell_bashrc` script above, we source a `.customrc` file if it exists. You can use this file
-to personalize your devshell. Be sure to add `.customrc` to your project's
+At the end of the `.devshell_bashrc` script above, we source a `.customrc` file (if it exists). Each member of your team 
+can use this file to personalize their devshell. Be sure to add `.customrc` to your project's
 `.gitignore` so that someone does not accidentally share their own personal scripts.
 
 Here is an example of some additional personalization I do to my `devshell`:
@@ -159,6 +246,7 @@ alias run='go run ./...'
 
 While these examples are pretty general purpose, there are many ways you can tailor your environment
 to speed up your development flows. Be creative! Here are some ideas:
+
 - Changing to a particular directory which I often use
 - Run a particular tool such as generating proto files 
 - Building and running a service via a regex
@@ -167,9 +255,9 @@ to speed up your development flows. Be creative! Here are some ideas:
 
 ### Teardown and Cleanup
 
-Tearing down the containers is as simple as calling `docker-compose down`. While a simple alias can suffice,
-I like to write a script so that I have the abiility to add arguments in the future. It also makes the project more
-portable as aliases need to be defined somewhere.
+Tearing down the containers is as simple as calling `docker-compose down`. Although this is a simple command, having it 
+defined as a script opens the door to add more functionality such as only shutting down certain containers. 
+It also provides nice symmetry to `devshell.sh` and makes things dead simple.
 
 **devdown.sh**
 ```bash
@@ -179,5 +267,3 @@ PROJECT_NAME=myproject
 
 docker-compose -p ${PROJECT_NAME} down --remove-orphans
 ```
-
-(I usually just have this in my `.bashrc` as an alias because it's so generic)
