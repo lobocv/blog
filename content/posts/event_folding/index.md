@@ -1,5 +1,5 @@
 ---
-title: "Reducing System Load With Event Compression"
+title: "Reducing System Load With Event Folding"
 draft: false
 date: 2021-08-01
 categories: ["Architecture"]
@@ -25,7 +25,7 @@ MathJax.Hub.Queue(function() {
 </script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML-full"></script>
 
-![Event Compressor](https://blog.lobocv.com/posts/event_compression/compressor.png)
+![Event Folder](https://blog.lobocv.com/posts/event_folding/event_folder.png)
 
 One of the prevailing forms of communication in modern microservice architectures is asynchronous messaging.
 This is the backbone of the event-driven architecture model. In this model, services send messages to a message 
@@ -65,8 +65,8 @@ a certain amount of time.
 Ideally, what we would like to have is to have a slightly different event than our `post-metric-updated` event. What we really 
 want is a `post-metric-last-updated-X-minutes-ago` event, where `X` is some acceptable delay. If each `post-metric-updated` 
 event contains a list of all the updated metrics, then the `post-metric-last-updated-X-minutes-ago` event should contain 
-the superset of all the metrics that were updated. Let's define the time duration, `X`, the `compression window` because it is
-the minimum duration of time at which similar events will be compressed into a single event.
+the superset of all the metrics that were updated. Let's define the time duration, `X`, the `folding window` because it is
+the minimum duration of time at which similar events will be folded into a single event.
 
 But how do we produce such an event?
 
@@ -142,13 +142,13 @@ And of course you can delete keys from the sorted-set with [ZREM](https://redis.
 (integer) 1
 ```
 
-### Compressing Events
+### Folding Events
 
-Since the sorted set can only have unique values, we can use it to "compress" a group of events into a single event.
+Since the sorted set can only have unique values, we can use it to "fold" a group of events into a single event.
 In order to do that, we need to remove unique information from the events such that they serialize to the 
 same string value. We can use the time of the event as the `score` in the sorted-set. Each time an event is added, we update
 the `score`, thus keeping track of the last event in the group. Our sorted-set then holds a time-ordered collection 
-of events, where each element represents a compressed view of events from each group. We can then regularly query the
+of events, where each element represents a folded view of events from each group. We can then regularly query the
 sorted-set with `ZRANGEBYSCORE` to get values with timestamps (scores) before `time.Now()-X`. 
 These values are then published as `post-metric-last-updated-X-minutes-ago` events and removed from the sorted set[2].
 
@@ -177,7 +177,7 @@ And we have the following events being published, shown below in their JSON seri
 These 6 events span two unique accounts (`account_1` and `account_2`) and should therefore ideally create two separate
 `post-metric-last-updated-X-minutes-ago` events. Remember, a sorted set stores *unique* strings, so we cannot just 
 insert these JSON strings into the sorted-set as is. If we did, they would be stored as 6 different entries in the set. 
-We need to identify the `group key` for all the events that we want to compress.
+We need to identify the `group key` for all the events that we want to fold.
 The group key should remove all uniquely identifying information in the event such that events within the same group have the same 
 serialized value. In our example, the group key would be just the `account_id` field, since we just want one event per account:
 
@@ -186,17 +186,17 @@ serialized value. In our example, the group key would be just the `account_id` f
 {"account_id": "account_2"}
 ```
 
-But wait... We just lost a bunch of information from our events! That's right. I never said this compression was lossless!
+But wait... We just lost a bunch of information from our events! That's right. I never said this folding was lossless!
 In some cases this may be acceptable, you may be able to gather that information elsewhere, say from an API call, or it 
 may not be relevant for what you are trying to do on the subscriber side. 
 
 In cases where you *do* need that information, we can store it separately in a database as we are inserting values into 
-the sorted-set. When querying the sorted-set for events to publish, we can "decompress" the event by enriching it with 
+the sorted-set. When querying the sorted-set for events to publish, we can "unfold" the event by enriching it with 
 the information we stored in the database. 
 
 In our example, we need a list of metrics that have changed so that we know which metrics to aggregate.
 We can easily keep track of these metrics in a regular Redis set. When we query the sorted-set to get
-the compressed event older than `X`, we also grab the metrics that have changed from the regular set. We can then assemble
+the folded event older than `X`, we also grab the metrics that have changed from the regular set. We can then assemble
 the `post-metric-last-updated-X-minutes-ago` event:
 
 
@@ -218,88 +218,89 @@ The service performing the aggregation can then subscribe to these events and be
 being updated. We can rest assured that we will compute the value at most once in the `X` minutes since the
 last time a post metric was updated.
 
-### Compression Ratio
+### Folding Ratio
 
-To get a feel for how long we should set our compression window to be, we can calculate the compression ratio, ${C}_{R}$:
+To get a feel for how long we should set our folding window to be, we can calculate the folding ratio, ${F}_{R}$:
 
-<p style="text-align: center;">${C}_{R}=\frac{N_C}{N_E}$</p>
+<p style="text-align: center;">${F}_{R}=\frac{N_F}{N_E}$</p>
 
-where $N_E$ = Number of compression-eligible events and $N_C$ = Number of actually compressed events.
+where $N_E$ = Number of fold-eligible events and $N_F$ = Number of actually folded events.
 
 When inserting into a Redis sorted-set with the `ZADD` operator, Redis will tell you how many new elements were added to
-the sorted-set (score updates excluded). Assuming we are inserting one event at a time, the number of compressed events is 
+the sorted-set (score updates excluded). Assuming we are inserting one event at a time, the number of folded events is 
 measured by how many times the `ZADD` operation returns `0` and the number of new events is measured by how many times 
 `ZADD` returns `1`. With this in mind, we can measure the following values:
 
 <p style="text-align: center;">$N_E= N_{Total} - Count(ZADD == 1)$</p>
 
-<p style="text-align: center;">$N_C$ = Count(ZADD == 0)</p>
+<p style="text-align: center;">$N_F$ = Count(ZADD == 0)</p>
 
-<p style="text-align: center;">$C_R = \frac{Count(ZADD == 0)}{N_{Total} - Count(ZADD == 1)}$</p>
+<p style="text-align: center;">$F_R = \frac{Count(ZADD == 0)}{N_{Total} - Count(ZADD == 1)}$</p>
 
 where $N_{Total}$ is the total number of events.
 
-But there is a caveat; we are also popping elements off of the sorted set in order to publish the compressed event.
-If the compression window is too short for the timing of our incoming events, we are going to be removing an element 
-from the sorted set just before adding a new event that would have otherwise been compressed.
-In this situation, we will be over measuring our number of new events and under measuring the number of compressed events.
-Another way to look at this is that the value of `ZADD` only acts as a proxy for the compression count from *Redis*' perspective.
+But there is a caveat; we are also popping elements off of the sorted set in order to publish the folded event.
+If the folding window is too short for the timing of our incoming events, we are going to be removing an element 
+from the sorted set just before adding a new event that would have otherwise been folded.
+In this situation, we will be over measuring our number of new events and under measuring the number of folded events.
+Another way to look at this is that the value of `ZADD` only acts as a proxy for the folded count from *Redis*' perspective.
 
 Below is an example of what that could look like:
 
 ```html
 {"id": "post_1", "account_id": "account_1", "metrics": {"likes": 10, "shares": 5}}  -> ZADD Returns 1 (new) 
-{"id": "post_2", "account_id": "account_1", "metrics": {"likes": 25, "shares": 16}} -> ZADD Returns 0 (compressed)
-{"id": "post_3", "account_id": "account_1", "metrics": {"likes": 5, "shares": 2}}   -> ZADD Returns 0 (compressed)
+{"id": "post_2", "account_id": "account_1", "metrics": {"likes": 25, "shares": 16}} -> ZADD Returns 0 (folded)
+{"id": "post_3", "account_id": "account_1", "metrics": {"likes": 5, "shares": 2}}   -> ZADD Returns 0 (folded)
 
-                    Publish compressed event  {"account_id": "account_1"}
+                    Publish folded event  {"account_id": "account_1"}
 
 {"id": "post_4", "account_id": "account_1", "metrics": {"likes": 33, "shares": 8}}  -> ZADD Returns 1 (fake new)
 {"id": "post_5", "account_id": "account_2", "metrics": {"likes": 12, "shares": 15}} -> ZADD Returns 0 (new)
 
-                    Publish compressed event  {"account_id": "account_2"}
+                    Publish folded event  {"account_id": "account_2"}
 
 {"id": "post_6", "account_id": "account_2", "metrics": {"likes": 3, "shares": 1}}   -> ZADD Returns 1 (fake new)
 ```
 
 
-If your system is processing a large number of compressed events ($N_{Total} \gg Count(ZADD == 1)$) and your compression
-window is reasonable[3], then the error becomes negligible and the compression ratio simplifies further:
+If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
+window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:
 
-<p style="text-align: center;">${C}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p>
+<p style="text-align: center;">${F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p>
 
-If it is really important that you have the most optimal compression ratio, you will need to do some offline analysis such as looking
-at historical events within a time range. In this case, you will actually know the number of events that should be compressed.
-In most cases, the timing of your events will be irregularly spaced and you will never consistently achieve 100% compression.
-Even then, *any* non-zero compression is still cutting the amount of work your system is doing.
+If it is really important that you have the most optimal folding ratio, you will need to do some offline analysis such as looking
+at historical events within a time range. In this case, you will actually know the number of events that should be folded.
+In most cases, the timing of your events will be irregularly spaced and you will never consistently achieve 100% folding.
+Even then, *any* non-zero folding is still cutting the amount of work your system is doing.
 
 The example we have been using throughout this article is a real world scenario. In production we see anywhere between
-85% and 98% compression over hundreds of thousands of events per day. Without event compression, we would have overloaded our 
+85% and 98% folding over hundreds of thousands of events per day. Without event folding, we would have overloaded our 
 database a long time ago and be forced to drop our event-driven approach in favour of something more traditional such
 as scheduled cron jobs.
 
-### Compressor Placement
+### Placement of the Event Folder
 
-The compressor can be placed on either the publisher side or on the consumer side. Where you
-decide to place the compressor ultimately comes down to how many consumers want compressed events. By compressing on the
-publisher side, you can reduce complexity for consumers downstream. However, if only one consumer cares about compressed
-events, it may be cleaner to place the compressor on the consumer side and not have to make any changes at the producer. 
-If you place the compressor on the publisher side, there is nothing wrong with publishing both compressed and 
-uncompressed events, just be sure to place them on separate topics to prevent confusion.
+The event folder can be placed on either the publisher side or on the consumer side. Where you
+decide to place the event folder ultimately comes down to how many consumers want folded events. By folding on the
+publisher side, you can reduce complexity for consumers downstream. However, if only one consumer cares about folding
+events, it may be cleaner to place the event folder on the consumer side and not have to make any changes at the producer. 
+If you place the event folder on the publisher side, there is nothing wrong with publishing both folded and 
+unfolded events, just be sure to place them on separate topics to prevent confusion.
 
 ### Another Use-case: Database Syncing
 
-Another use-case where the event compressor is highly effective is during database syncing. In a CQRS pattern,
+Another use-case where the event folder is highly effective is during database syncing. In a 
+[CQRS](https://martinfowler.com/bliki/CQRS.html) pattern,
 we can separate database technologies used for writing and reading by syncing all writes to the read database. Some databases
-such as ElasticSearch perform poorly for document updates[4]. Using an event compressor we can reduce the number of
+such as ElasticSearch perform poorly for document updates[4]. Using an event folder we can reduce the number of
 writes to ElasticSearch, significantly reducing the number of deleted documents that need to be garbage collected.
 
 ### A Powerful Tool
 
-The event compressor can be a powerful tool in your system's architecture. It can be the difference in an event driven
-system's viability. The compressor I have outlined in this article is designed around transient spikes in
-events. If your events are not transient, you may find that your compressed events may never be published due to a
-constantly resetting compression window. With a few adjustments, this design can be used for non-transient event streams
+The event folder can be a powerful tool in your system's architecture. It can be the difference in an event driven
+system's viability. The event folder I have outlined in this article is designed around transient spikes in
+events. If your events are not transient, you may find that your folded events may never be published due to a
+constantly resetting folding window. With a few adjustments, this design can be used for non-transient event streams
 as well.
 
 
@@ -311,12 +312,13 @@ However, there are certain metrics which are not supported and cause us to have 
 [2] While Redis sorted-sets do have the ability to atomically pop elements from the top or bottom of the sorted set, it
 unfortunately does not have an atomic way to query and remove elements from the middle. This means that we have to make
 two separate commands: `ZRANGE` to get the values and `ZREM` to remove the key after we publish the event.
-The consequence of this is that there is are race conditions if you have multiple threads looking for compressed events
-to publish. This means a compressed event can be published more than once. If this is a real issue you can consider using
-global locks or partitioning the key-space, with the risk of added complexity.
+The consequence of this is that there is are race conditions if you have multiple threads looking for folded events
+to publish. This means a folded event can be published more than once. If this is a real issue you can consider using
+global locks or partitioning the key-space, with the trade-off of added complexity.
 
-[3] You should have some reasonable initial guess for your compression window. If not, take a sampling of events and
-determine it retrospectively offline. If your latency requirements allow for it, always start with a larger compression window.
+[3] You should have some reasonable initial guess for your folding window. If not, take a sampling of events and
+determine it retrospectively offline. If your latency requirements allow for it, start with a larger folding window and 
+gradually reduce it while monitoring your folding ratio.
 
 [4] Even though ElasticSearch has APIs for updating documents, under the hood it is actually indexing a new document and
 marking the old document for deletion.
