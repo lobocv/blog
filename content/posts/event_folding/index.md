@@ -87,9 +87,9 @@ For example, a sorted set would be a perfect data structure for storing a user s
 
 | Rank  | Name       | Highscore |
 |-------|------------|-----------|
-|   1   | Calvin     |  1050     |
+|   1   | Sharon     |  1050     |
 |   2   | Abdul      |  800      |
-|   3   | Sharon     |  780      |
+|   3   | Calvin     |  780      |
 |   4   | Pirakalan  |  660      |
 |   5   | Nirav      |  600      |
 
