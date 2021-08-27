@@ -5,6 +5,13 @@ date: 2021-05-01
 categories: ["Databases"]
 ---
 
+<div style="text-align:center">
+
+<img alt="Recursively Merging JSON in PostgreSQL" src="https://blog.lobocv.com/posts/recursive_jsonb_merge/banner.png"/>
+
+</div>
+
+
 In addition to storing primitive data types such as `INT`, `FLOAT` and `VARCHAR`, 
 PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have a wide variety of
 [functions and operators[1]](https://www.postgresql.org/docs/12/functions-json.html). 

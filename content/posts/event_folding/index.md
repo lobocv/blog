@@ -25,7 +25,11 @@ MathJax.Hub.Queue(function() {
 </script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML-full"></script>
 
-![Event Folder](https://blog.lobocv.com/posts/event_folding/event_folder.png)
+<div style="text-align:center">
+
+<img alt="Event Folder" src="https://blog.lobocv.com/posts/event_folding/event_folder.png"/>
+
+</div>
 
 One of the prevailing forms of communication in modern microservice architectures is asynchronous messaging.
 This is the backbone of the event-driven architecture model. In this model, services send messages to a message 
