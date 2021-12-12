@@ -98,7 +98,6 @@ lobocv
 </div>
 <div class=content>
 <img alt="Diffusing A Mapping Explosion" src=https://blog.lobocv.com/posts/elasticsearch_slots/img.png>
-<img alt="Diffusing A Mapping Explosion" src=./img.png>
 <p>ElasticSearch is a popular OLAP database that allows you to quickly search and aggregate your data in a rich and powerful way.
 It is a mature storage technology that has been used to back many online storefronts and analytical processing products
 around the world.
@@ -132,7 +131,6 @@ this, we came up with a system we called <code>Slots</code>.</p>
 <p>With the slots approach, we gain control of unbounded mapping growth by predefining a fixed number of fields and mapping
 them in the application code to the user-defined values.</p>
 <img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg>
-<img alt="ElasticSearch Slots" src=./es_slots.svg>
 <p>Each user will have their own slot-mapping meaning that the metric referred to by each slot will be different for each
 user. The number of slots we need to allocate needs to be, at a minimum, equal to the amount the customer with the most
 amount of custom metrics has. Generally speaking, having hundreds or even thousands of fields in an ES mapping is
