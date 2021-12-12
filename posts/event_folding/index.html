@@ -3,7 +3,7 @@
 <meta charset=utf-8>
 <title>Reducing System Load With Event Folding - Lobocv Blog</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=generator content="Hugo 0.87.0"><meta property="og:site_name" content="Lobocv Blog">
+<meta name=generator content="Hugo 0.90.1"><meta property="og:site_name" content="Lobocv Blog">
 <meta property="og:title" content="Reducing System Load With Event Folding">
 <meta property="og:description" content="Software Development Blog">
 <meta property="description" content="Software Development Blog">
@@ -238,14 +238,14 @@ of events, where each element represents a folded view of events from each group
 sorted-set with <code>ZRANGEBYSCORE</code> to get values with timestamps (scores) before <code>time.Now()-X</code>.
 These values are then published as <code>post-metric-last-updated-X-minutes-ago</code> events and removed from the sorted set[2].</p>
 <p>Back to our example, the <code>post-metric-updated</code> event has the following schema:</p>
-<pre><code>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
+<pre tabindex=0><code>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
 type PostMetricUpdatedEvent struct {
 	PostID string                      `json:&quot;id&quot;`
 	AccountID string                   `json:&quot;account_id&quot;`
 	UpdatedMetrics map[string]float64  `json:&quot;metrics&quot;`
 }
 </code></pre><p>And we have the following events being published, shown below in their JSON serialized form:</p>
-<pre><code>{&quot;id&quot;: &quot;post_1&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 10, &quot;shares&quot;: 5}}
+<pre tabindex=0><code>{&quot;id&quot;: &quot;post_1&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 10, &quot;shares&quot;: 5}}
 {&quot;id&quot;: &quot;post_2&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;comments&quot;: 25, &quot;impressions&quot;: 16}}
 {&quot;id&quot;: &quot;post_3&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 5, &quot;shares&quot;: 2}}
 {&quot;id&quot;: &quot;post_4&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;comments&quot;: 33, &quot;impressions&quot;: 8}}
@@ -257,7 +257,7 @@ insert these JSON strings into the sorted-set as is. If we did, they would be st
 We need to identify the <code>group key</code> for all the events that we want to fold.
 The group key should remove all uniquely identifying information in the event such that events within the same group have the same
 serialized value. In our example, the group key would be just the <code>account_id</code> field, since we just want one event per account:</p>
-<pre><code>{&quot;account_id&quot;: &quot;account_1&quot;}
+<pre tabindex=0><code>{&quot;account_id&quot;: &quot;account_1&quot;}
 {&quot;account_id&quot;: &quot;account_2&quot;}
 </code></pre><p>But wait&mldr; We just lost a bunch of information from our events! That&rsquo;s right. I never said this folding was lossless!
 In some cases this may be acceptable, you may be able to gather that information elsewhere, say from an API call, or it
@@ -269,12 +269,12 @@ the information we stored in the database.</p>
 We can easily keep track of these metrics in a regular Redis set. When we query the sorted-set to get
 the folded event older than <code>X</code>, we also grab the metrics that have changed from the regular set. We can then assemble
 the <code>post-metric-last-updated-X-minutes-ago</code> event:</p>
-<pre><code>type PostMetricUpdatedEvent  struct {
+<pre tabindex=0><code>type PostMetricUpdatedEvent  struct {
 	AccountID string        `json:&quot;account_id&quot;`
 	UpdatedMetrics []string `json:&quot;metrics&quot;`
 }
 </code></pre><p>which in our example looks like:</p>
-<pre><code>{&quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: [&quot;likes&quot;, &quot;shares&quot;, &quot;comments&quot;, &quot;impressions&quot;]}
+<pre tabindex=0><code>{&quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: [&quot;likes&quot;, &quot;shares&quot;, &quot;comments&quot;, &quot;impressions&quot;]}
 {&quot;account_id&quot;: &quot;account_2&quot;, &quot;metrics&quot;: [&quot;likes&quot;, &quot;shares&quot;]}
 </code></pre><p>The service performing the aggregation can then subscribe to these events and be notified only once metrics have stopped
 being updated. We can rest assured that we will compute the value at most once in the <code>X</code> minutes since the
@@ -366,6 +366,7 @@ marking the old document for deletion.</p>
 </footer>
 </article>
 <div class=pagination>
+<a href=/posts/elasticsearch_slots/ class="button left"><span>Defusing an ElasticSearch Mapping Explosion with Slots</span></a>
 <a href=/posts/dev_environment/ class="button right"><span>Building a Comfortable Dev Environment</span></a>
 </div>
 </main>
@@ -374,6 +375,12 @@ marking the old document for deletion.</p>
 <header>
 <h1>Recent Posts</h1>
 </header>
+<article class=mini-post>
+<header>
+<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
+<time class=published datetime="2021-10-30 00:00:00 +0000 UTC">October 30, 2021</time>
+</header>
+</article>
 <article class=mini-post>
 <header>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
@@ -399,9 +406,9 @@ marking the old document for deletion.</p>
 </header>
 <ul>
 <li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
+<a href=/categories/databases/>databases<span class=count>2</span></a>
 <li>
-<a href=/categories/databases/>databases<span class=count>1</span></a>
+<a href=/categories/architecture/>architecture<span class=count>1</span></a>
 <li>
 <a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
 </li>
@@ -426,7 +433,7 @@ marking the old document for deletion.</p>
 <p class=copyright>
 © 2021 Lobocv Blog
 <br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.87.0 target=_blank rel=noopener>Hugo</a>
+Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.90.1 target=_blank rel=noopener>Hugo</a>
 </p>
 </footer>
 <a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>

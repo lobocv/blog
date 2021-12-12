@@ -3,7 +3,7 @@
 <meta charset=utf-8>
 <title>Building a Comfortable Dev Environment - Lobocv Blog</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=generator content="Hugo 0.87.0"><meta property="og:site_name" content="Lobocv Blog">
+<meta name=generator content="Hugo 0.90.1"><meta property="og:site_name" content="Lobocv Blog">
 <meta property="og:title" content="Building a Comfortable Dev Environment">
 <meta property="og:description" content="Software Development Blog">
 <meta property="description" content="Software Development Blog">
@@ -122,15 +122,15 @@ valuable and I hope you do too. Best of all, you can take as much or as little f
 <p>A shell alias is a shortcut that you can define for any command. They are simple to create and can save you a lot of time
 and memorizing. For example, instead of typing <code>ls -lah</code> each time, you can create an alias <code>la</code> that would do the exact
 same thing:</p>
-<pre><code>alias la=&quot;ls -lAh&quot;
+<pre tabindex=0><code>alias la=&quot;ls -lAh&quot;
 </code></pre><p>Aliases act as a run-time replacement of your alias with the defined command. This means you can augment your alias on
 the fly:</p>
-<pre><code>la -R
+<pre tabindex=0><code>la -R
 </code></pre><p>would translate to:</p>
-<pre><code>ls -lAh -R
+<pre tabindex=0><code>ls -lAh -R
 </code></pre><p>Aliases are a great way to turn that awkward to remember or type command into something dead simple that you can
 remember immediately. There is no alias too silly or simple. The following are probably my most commonly used aliases:</p>
-<pre><code>alias cd.=&quot;cd ..&quot;
+<pre tabindex=0><code>alias cd.=&quot;cd ..&quot;
 alias cd..=&quot;cd ../..&quot;
 alias cd...=&quot;cd ../../..&quot;
 </code></pre><p>Lastly, aliases need to be loaded into your shell. The most common way of loading aliases is to define them in your <code>.bashrc</code>
@@ -140,7 +140,7 @@ so that they are defined whenever you open a new shell.</p>
 replacing text being sent to your shell&rsquo;s <a href=https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop>REPL</a>, it executes the shell code you&rsquo;ve defined. Use shell functions whenever
 you want to do something more complex than just shortcuts such as provide input arguments, flags and pipe input.
 Below is an example function to extract a specific JSON key-value from input:</p>
-<pre><code># Reads from JSON from stdin and print outs the value of the specified key
+<pre tabindex=0><code># Reads from JSON from stdin and print outs the value of the specified key
 # $1: Key to print
 # Example: echo '{&quot;a&quot;: 1, &quot;b&quot;: 2}' | jsonparsekey b
 # &gt; 2
@@ -163,7 +163,7 @@ and having to recreate configurations as I reinstall my OS or format my hard dri
 <p>I even have a <a href=https://github.com/lobocv/mysetup/blob/master/load_aliases.sh>script</a>
 that loads the repository, keeping my <code>.zshrc</code> file edits minimal:</p>
 <p><strong>.zshrc</strong></p>
-<pre><code>source ~/lobocv/mysetup/load_aliases.sh
+<pre tabindex=0><code>source ~/lobocv/mysetup/load_aliases.sh
 </code></pre><h2 id=containerized-environments>Containerized Environments</h2>
 <p>Docker and docker-compose make it simple to create a customized and reproducible development
 environment for your team&rsquo;s software projects. In addition to the docker container, I have several scripts which help
@@ -186,7 +186,7 @@ container, <code>dev</code>, and mount my local filesystem (<code>./</code>) to 
 container have access to code in the repository and immediately see changes being made to them from my IDE.</p>
 <p>The example configuration below also starts up a MongoDB container named <code>mongo</code>.</p>
 <p><strong>docker-compose.yaml</strong></p>
-<pre><code>version: &quot;3&quot;
+<pre tabindex=0><code>version: &quot;3&quot;
 
 services:
 
@@ -333,6 +333,12 @@ an impact it can have on your output. Keep in mind, that unlike code, these gain
 </header>
 <article class=mini-post>
 <header>
+<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
+<time class=published datetime="2021-10-30 00:00:00 +0000 UTC">October 30, 2021</time>
+</header>
+</article>
+<article class=mini-post>
+<header>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
 <time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time>
 </header>
@@ -356,9 +362,9 @@ an impact it can have on your output. Keep in mind, that unlike code, these gain
 </header>
 <ul>
 <li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
+<a href=/categories/databases/>databases<span class=count>2</span></a>
 <li>
-<a href=/categories/databases/>databases<span class=count>1</span></a>
+<a href=/categories/architecture/>architecture<span class=count>1</span></a>
 <li>
 <a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
 </li>
@@ -383,7 +389,7 @@ an impact it can have on your output. Keep in mind, that unlike code, these gain
 <p class=copyright>
 © 2021 Lobocv Blog
 <br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.87.0 target=_blank rel=noopener>Hugo</a>
+Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.90.1 target=_blank rel=noopener>Hugo</a>
 </p>
 </footer>
 <a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>

@@ -1,14 +1,14 @@
 <!doctype html><html lang=en>
 <head>
 <meta charset=utf-8>
-<title>Categories - Lobocv Blog</title>
+<title>Lobocv Blog</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <meta name=generator content="Hugo 0.90.1"><meta property="og:site_name" content="Lobocv Blog">
-<meta property="og:title" content="Categories">
+<meta property="og:title" content="Lobocv Blog">
 <meta property="og:description" content="Software Development Blog">
 <meta property="description" content="Software Development Blog">
-<meta property="og:url" content="http://blog.lobocv.com/categories/">
-<meta property="og:type" content="article">
+<meta property="og:url" content="http://blog.lobocv.com/">
+<meta property="og:type" content="website">
 <meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
 <link rel=stylesheet href=/css/bundle.min.6ad9eb85bff384c75937a02036b01425a2ca63f19a96535b8ba5b181db62a4b3.css integrity="sha256-atnrhb/zhMdZN6AgNrAUJaLKY/GallNbi6WxgdtipLM="><link rel=stylesheet href=/css/add-on.css>
 </head>
@@ -34,19 +34,19 @@ lobocv
 <menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu>
 <menu id=share-menu class="flyout-menu menu">
 <h1>Share Post</h1>
-<a href="//twitter.com/share?text=Categories&url=http%3a%2f%2fblog.lobocv.com%2fcategories%2f" target=_blank rel=noopener class="nav share-btn twitter">
+<a href="//twitter.com/share?text=Lobocv%20Blog&url=http%3a%2f%2fblog.lobocv.com%2f" target=_blank rel=noopener class="nav share-btn twitter">
 <p>Twitter</p>
 </a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fcategories%2f" target=_blank rel=noopener class="nav share-btn facebook">
+<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2f" target=_blank rel=noopener class="nav share-btn facebook">
 <p>Facebook</p>
 </a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fcategories%2f&title=Categories" target=_blank rel=noopener class="nav share-btn reddit">
+<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2f&title=Lobocv%20Blog" target=_blank rel=noopener class="nav share-btn reddit">
 <p>Reddit</p>
 </a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fcategories%2f&title=Categories" target=_blank rel=noopener class="nav share-btn linkedin">
+<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2f&title=Lobocv%20Blog" target=_blank rel=noopener class="nav share-btn linkedin">
 <p>LinkedIn</p>
 </a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fcategories%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
+<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
 <p>Email</p>
 </a>
 </menu>
@@ -62,7 +62,7 @@ lobocv
 </main>
 <footer>
 <ul class=socnet-icons>
-<li><a href=/categories/index.xml type=application/rss+xml target=_blank title=RSS class="fas fa-rss"></a></li>
+<li><a href=/index.xml type=application/rss+xml target=_blank title=RSS class="fas fa-rss"></a></li>
 <li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
 <li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
 <li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
@@ -70,32 +70,38 @@ lobocv
 </footer>
 </section>
 <main id=site-main>
-<ul class=posts>
+<article class=post>
 <header>
-<h1>Categories</h1>
+<div class=title>
+<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
+</div>
+<div class=meta>
+<time datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
+<p>5-Minute Read</p>
+</div>
 </header>
-<li>
-<article>
-<header>
-<a href=http://blog.lobocv.com/categories/databases/>Databases<span style=float:right>2</span></a>
-</header>
-</article>
-</li>
-<li>
-<article>
-<header>
-<a href=http://blog.lobocv.com/categories/architecture/>Architecture<span style=float:right>1</span></a>
-</header>
-</article>
-</li>
-<li>
-<article>
-<header>
-<a href=http://blog.lobocv.com/categories/developer-efficiency/>Developer Efficiency<span style=float:right>1</span></a>
-</header>
-</article>
-</li>
+<div class=content>
+<p>In addition to storing primitive data types such as <code>INT</code>, <code>FLOAT</code> and <code>VARCHAR</code>,
+PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have a wide variety of
+<a href=https://www.postgresql.org/docs/12/functions-json.html>functions and operators[1]</a>.
+One of the more common and useful operators is the concatenation operator,
+<code>||</code>, which concatenates two jsonb values into a new JSONB value.</p>
+</div>
+<footer>
+<a href=/posts/recursive_jsonb_merge/ class="button big">Read More</a>
+<div class=stats>
+<ul class=categories>
+<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
 </ul>
+<ul class=tags>
+<li>None</li>
+</ul>
+</div>
+</footer>
+</article>
+<div class=pagination>
+<a href=/ class="button left"><span>Previous Page</span></a>
+</div>
 </main>
 <section id=site-sidebar>
 <section id=recent-posts>
@@ -127,6 +133,20 @@ lobocv
 </header>
 </article>
 </section>
+<section id=categories>
+<header>
+<h1><a href=/categories>Categories</a></h1>
+</header>
+<ul>
+<li>
+<a href=/categories/databases/>databases<span class=count>2</span></a>
+<li>
+<a href=/categories/architecture/>architecture<span class=count>1</span></a>
+<li>
+<a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
+</li>
+</ul>
+</section>
 <section id=mini-bio>
 <header>
 <h1>About</h1>
@@ -139,7 +159,7 @@ lobocv
 </section>
 <footer id=site-footer>
 <ul class=socnet-icons>
-<li><a href=/categories/index.xml type=application/rss+xml target=_blank title=RSS class="fas fa-rss"></a></li>
+<li><a href=/index.xml type=application/rss+xml target=_blank title=RSS class="fas fa-rss"></a></li>
 <li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
 <li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
 <li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>

@@ -3,7 +3,7 @@
 <meta charset=utf-8>
 <title>Posts - Lobocv Blog</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=generator content="Hugo 0.87.0"><meta property="og:site_name" content="Lobocv Blog">
+<meta name=generator content="Hugo 0.90.1"><meta property="og:site_name" content="Lobocv Blog">
 <meta property="og:title" content="Posts">
 <meta property="og:description" content="Software Development Blog">
 <meta property="description" content="Software Development Blog">
@@ -73,6 +73,34 @@ lobocv
 <article class=post>
 <header>
 <div class=title>
+<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
+</div>
+<div class=meta>
+<time datetime="2021-10-30 00:00:00 +0000 UTC">October 30, 2021</time>
+<p>7-Minute Read</p>
+</div>
+</header>
+<div class=content>
+<p>ElasticSearch is a popular OLAP database that allows you to quickly search and aggregate your data in a rich and powerful way.
+It is a mature storage technology that has been used to back many online storefronts and analytical processing products
+around the world.
+Under the hood, ElasticSearch uses Lucene to index each field in the document so that queries can be executed promptly.</p>
+</div>
+<footer>
+<a href=/posts/elasticsearch_slots/ class="button big">Read More</a>
+<div class=stats>
+<ul class=categories>
+<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
+</ul>
+<ul class=tags>
+<li>None</li>
+</ul>
+</div>
+</footer>
+</article>
+<article class=post>
+<header>
+<div class=title>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
 </div>
 <div class=meta>
@@ -126,36 +154,8 @@ docker-compose, kubernetes, ssh, curl, sed, awk, grep, jq etc. are all tools we 
 </div>
 </footer>
 </article>
-<article class=post>
-<header>
-<div class=title>
-<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
-</div>
-<div class=meta>
-<time datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
-<p>5-Minute Read</p>
-</div>
-</header>
-<div class=content>
-<p>In addition to storing primitive data types such as <code>INT</code>, <code>FLOAT</code> and <code>VARCHAR</code>,
-PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have a wide variety of
-<a href=https://www.postgresql.org/docs/12/functions-json.html>functions and operators[1]</a>.
-One of the more common and useful operators is the concatenation operator,
-<code>||</code>, which concatenates two jsonb values into a new JSONB value.</p>
-</div>
-<footer>
-<a href=/posts/recursive_jsonb_merge/ class="button big">Read More</a>
-<div class=stats>
-<ul class=categories>
-<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
-</ul>
-<ul class=tags>
-<li>None</li>
-</ul>
-</div>
-</footer>
-</article>
 <div class=pagination>
+<a href=/posts/page/2/ class="button right"><span>Next Page</span></a>
 </div>
 </main>
 <section id=site-sidebar>
@@ -163,6 +163,12 @@ One of the more common and useful operators is the concatenation operator,
 <header>
 <h1>Recent Posts</h1>
 </header>
+<article class=mini-post>
+<header>
+<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
+<time class=published datetime="2021-10-30 00:00:00 +0000 UTC">October 30, 2021</time>
+</header>
+</article>
 <article class=mini-post>
 <header>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
@@ -188,9 +194,9 @@ One of the more common and useful operators is the concatenation operator,
 </header>
 <ul>
 <li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
+<a href=/categories/databases/>databases<span class=count>2</span></a>
 <li>
-<a href=/categories/databases/>databases<span class=count>1</span></a>
+<a href=/categories/architecture/>architecture<span class=count>1</span></a>
 <li>
 <a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
 </li>
@@ -216,7 +222,7 @@ One of the more common and useful operators is the concatenation operator,
 <p class=copyright>
 © 2021 Lobocv Blog
 <br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.87.0 target=_blank rel=noopener>Hugo</a>
+Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.90.1 target=_blank rel=noopener>Hugo</a>
 </p>
 </footer>
 <a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
