@@ -73,6 +73,34 @@ lobocv
 <article class=post>
 <header>
 <div class=title>
+<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
+</div>
+<div class=meta>
+<time datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time>
+<p>8-Minute Read</p>
+</div>
+</header>
+<div class=content>
+<p>ElasticSearch (and similarly OpenSearch[1]) is a popular OLAP database that allows you to quickly search and aggregate your
+data in a rich and powerful way. It is a mature storage technology build on top of <a href=https://lucene.apache.org/>Apache Lucene</a> that has been used to back
+many online storefronts and analytical processing products around the world.
+Under the hood, ElasticSearch uses Lucene to index each field in the document so that queries can be executed efficiently.</p>
+</div>
+<footer>
+<a href=/posts/elasticsearch_slots/ class="button big">Read More</a>
+<div class=stats>
+<ul class=categories>
+<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
+</ul>
+<ul class=tags>
+<li>None</li>
+</ul>
+</div>
+</footer>
+</article>
+<article class=post>
+<header>
+<div class=title>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
 </div>
 <div class=meta>
@@ -126,36 +154,8 @@ docker-compose, kubernetes, ssh, curl, sed, awk, grep, jq etc. are all tools we 
 </div>
 </footer>
 </article>
-<article class=post>
-<header>
-<div class=title>
-<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
-</div>
-<div class=meta>
-<time datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
-<p>5-Minute Read</p>
-</div>
-</header>
-<div class=content>
-<p>In addition to storing primitive data types such as <code>INT</code>, <code>FLOAT</code> and <code>VARCHAR</code>,
-PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have a wide variety of
-<a href=https://www.postgresql.org/docs/12/functions-json.html>functions and operators[1]</a>.
-One of the more common and useful operators is the concatenation operator,
-<code>||</code>, which concatenates two jsonb values into a new JSONB value.</p>
-</div>
-<footer>
-<a href=/posts/recursive_jsonb_merge/ class="button big">Read More</a>
-<div class=stats>
-<ul class=categories>
-<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
-</ul>
-<ul class=tags>
-<li>None</li>
-</ul>
-</div>
-</footer>
-</article>
 <div class=pagination>
+<a href=/posts/page/2/ class="button right"><span>Next Page</span></a>
 </div>
 </main>
 <section id=site-sidebar>
@@ -163,6 +163,12 @@ One of the more common and useful operators is the concatenation operator,
 <header>
 <h1>Recent Posts</h1>
 </header>
+<article class=mini-post>
+<header>
+<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
+<time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time>
+</header>
+</article>
 <article class=mini-post>
 <header>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
@@ -188,9 +194,9 @@ One of the more common and useful operators is the concatenation operator,
 </header>
 <ul>
 <li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
+<a href=/categories/databases/>databases<span class=count>2</span></a>
 <li>
-<a href=/categories/databases/>databases<span class=count>1</span></a>
+<a href=/categories/architecture/>architecture<span class=count>1</span></a>
 <li>
 <a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
 </li>
