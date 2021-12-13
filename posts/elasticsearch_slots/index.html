@@ -105,7 +105,7 @@ Under the hood, ElasticSearch uses Lucene to index each field in the document so
 <p>In order to provide rich searching capabilities, ElasticSearch creates indices for each field it receives. The type of index
 created is determined by the data type of the field. Possible data types include numeric types such as <code>integer</code>, <code>float</code>
 and <code>double</code> as well as two string data types, <code>keyword</code> and <code>text</code>. The list of all indexed fields (and how they are indexed)
-are stored in what is called an [index mapping](<a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html>https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html</a>.
+are stored in what is called an <a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html>index mapping</a>.
 By default, ElasticSearch will create a mapping entry when a new field is encountered by deducing it&rsquo;s data type[2].
 This is called dynamic mapping.</p>
 <p>The problem with dynamic mapping is that once ElasticSearch introduces a field to the mapping, it can
@@ -257,17 +257,17 @@ represent a larger number of fields and prevent a mapping explosion. The trade o
 and reduction to the ease of debugging. The performance impact of adding an additional translation layer is negligible
 with the help of an LRU cache.</p>
 <h3 id=footnotes>Footnotes</h3>
-<p>[1] In 2021, Elastic.co, the company that owns the license to ElasticSearch, changed their license to be more restrictive
+<p><strong>[1]</strong> In 2021, Elastic.co, the company that owns the license to ElasticSearch, changed their license to be more restrictive
 and in conflict of open source values. In response, Amazon created a fork of ElasticSearch 7.10.2 named OpenSearch which
 continues the Apache 2.0 license.</p>
-<p>[2] ElasticSearch prevents you from shooting yourself in the foot too much by setting an
+<p><strong>[2]</strong> ElasticSearch prevents you from shooting yourself in the foot too much by setting an
 <a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html>upper limit</a> on the number of
 fields in a mapping. As of writing this, the default is 1000. This limit can be increased at any time.</p>
-<p>[3] Dynamic mapping has another problem, it will set the field settings to general purpose presets. If you want
+<p><strong>[3]</strong> Dynamic mapping has another problem, it will set the field settings to general purpose presets. If you want
 more control of your fields, such as defining a
 <a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-custom-analyzer.html>custom analyzer</a>,
 you should define the field mappings explicitly.</p>
-<p>[4] Generally speaking, having hundreds or even thousands of fields in an ElasticSearch mapping is
+<p><strong>[4]</strong> Generally speaking, having hundreds or even thousands of fields in an ElasticSearch mapping is
 not as much of an issue as the unbounded growth of the mapping.</p>
 </div>
 <footer>
