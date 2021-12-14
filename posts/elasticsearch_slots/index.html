@@ -130,12 +130,12 @@ However, we also collect metrics from offsite attributions such as <a href=https
 and <a href=https://business.adobe.com/ca/products/analytics/adobe-analytics.html>Adobe Analytics</a>.
 On these platforms, users can name and define their own metrics. These are the metrics we need to be careful about.
 Each customer now has the ability to permanently increase our mapping size by creating a unique metric name. The problem
-is even more serious when you consider that these mapping entries will be around long after a customer stopped using that metric.</p>
+is even more serious when you consider that these mapping entries will be around long after a customer has stopped using that metric.</p>
 <p>Disabling these fields in the mapping is not an option. We needed to devise a way to still provide the search and aggregation
 functionality that is so critical to our product functionality, yet also have a stable long tem solution. To overcome
 this, we came up with a system we called <code>Slots</code>.</p>
 <h2 id=defusing-a-mapping-explosion>Defusing a mapping explosion</h2>
-<p>With the slots approach, we gain control of unbounded mapping growth by predefining a fixed number of fields and translating
+<p>With the slots approach, we gain control of unbounded mapping growth by predefining a fixed number of fields (the slots) and translating
 them in the application code to the user-defined values. We call the application-level translation from metric to slot the
 <code>slot-mapping</code>.</p>
 <img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg>
@@ -145,8 +145,9 @@ highest number of custom-named metrics has[4]. From looking at our own data, the
 amount of custom metrics had about 200 metrics. To be safe, we allocated 1000 slots.</p>
 <h2 id=trade-offs>Trade offs</h2>
 <p>The slots approach is not without it own caveats. For one, it makes debugging and reading data more difficult. Now if we
-go into Kibana, rather than seeing a field named <code>custom_metric_c</code>, we see <code>slot_3</code>. We need to refer back to the slot-mapping
-to determine which slot refers to the metric we are looking for.</p>
+inspect our data with third party tools such as <a href=https://www.elastic.co/kibana/>Kibana</a>, rather than seeing a field
+named <code>custom_metric_c</code>, we see <code>slot_3</code>. We need to refer back to the slot-mapping to determine which slot refers to
+the metric we are looking for.</p>
 <p>Second, we must be careful that there are no requests for data that combine documents that use different slot-mappings.
 You cannot aggregate <code>slot_2</code> across data from two different customers because the metric <code>slot_2</code> refers to will be different.
 Luckily, aggregating across customers is not a valid business use-case and in fact goes again our multi-tenant principles.</p>
@@ -156,19 +157,10 @@ in use by going through data and removing the values from documents. Alternative
 slots.</p>
 <h2 id=defining-the-slot-mapping>Defining the slot mapping</h2>
 <p>Each metric, whether it be from the social network or user defined, has a unique ID and some metadata associated with it
-called the <code>metric definition</code>. At first it may be tempting to store the slot number on the metric definition, however
-there are two problems with this approach:</p>
-<ol>
-<li>
-<p>The metric definitions are in a separate service than the service which stores the metric values. Without going into
-too much detail, the reason for this is because there are many services and entities that store metric values and
-replicating the definitions to each of them was deemed too much overhead.</p>
-</li>
-<li>
-<p>The slot is an implementation detail of the fact that we use ElasticSearch as a storage backend. By exposing the slots outside of
-the service performing the translation to/from metric name to slot, we are weakening our abstraction.</p>
-</li>
-</ol>
+called the <code>Metric Definition</code>. At first it was tempting to store the slot number on the metric definition itself, however
+we decided against it because slots are an implementation detail of the fact that we use ElasticSearch as a storage backend.
+By exposing the slots outside of the service performing the translation to/from metric name to slot, we are weakening our
+abstraction.</p>
 <p>Instead, we had the services that write to ElasticSearch each define their own slot-mappings. The slot mapping is defined the first
 time the service writes the metric to ElasticSearch. The flow requires us to keep a counter for the current number of slots for a user
 and also the relationship between slot and metric name.</p>
