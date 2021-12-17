@@ -200,32 +200,32 @@ and also the relationship between slot and metric name.</p>
 <tbody>
 <tr>
 <td>1</td>
-<td>0</td>
+<td>1</td>
 <td>visits</td>
 </tr>
 <tr>
 <td>1</td>
-<td>1</td>
+<td>2</td>
 <td>bounces</td>
 </tr>
 <tr>
 <td>2</td>
-<td>0</td>
+<td>1</td>
 <td>website_visits</td>
 </tr>
 <tr>
 <td>2</td>
-<td>1</td>
+<td>2</td>
 <td>website_pageviews</td>
 </tr>
 <tr>
 <td>2</td>
-<td>2</td>
+<td>3</td>
 <td>ecommerce_revenue</td>
 </tr>
 <tr>
 <td>2</td>
-<td>3</td>
+<td>4</td>
 <td>goal_values</td>
 </tr>
 </tbody>
@@ -237,6 +237,7 @@ must also have a unique compound index on the <code>user_id</code> and <code>slo
 potential race conditions from multiple API requests trying to grab the next slot number at the same time. In the case of a race condition,
 one of the attempts to write to the slot_mapping table will fail on the unique-constraint and we can roll back the transaction and
 simply retry again.</p>
+<img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg>
 <p>Before writing to ElasticSearch, all metric names are converted to their slot numbers. When reading or aggregating metrics,
 the slot names retrieved from ElasticSearch are translated back to the original metric names with the same slot_mapping table.
 This whole process is completely transparent to the user of the API.</p>
