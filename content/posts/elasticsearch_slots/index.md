@@ -57,6 +57,8 @@ them in the application code to the user-defined values. We call the application
 
 <img alt="ElasticSearch Slots" src="https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg"/>
 
+**Figure 1: Translation of metric names into slots before writing to ElasticSearch. Each customer gets it's own set of slots.**
+
 Each user will have their own slot-mapping, meaning that the metric referred to by each slot will be different for each 
 user. The number of slots we need to allocate needs to be, at a minimum, equal to the amount that the customer with the 
 highest number of custom-named metrics has[4]. From looking at our own data, the customer with the largest
@@ -102,12 +104,12 @@ and also the relationship between slot and metric name.
 **Table: slot_mappings**
 | user_id 	| slot 	| metric            	|
 |---------	|------	|-------------------	|
-| 1       	| 0    	| visits            	|
-| 1       	| 1    	| bounces           	|
-| 2       	| 0    	| website_visits    	|
-| 2       	| 1    	| website_pageviews 	|
-| 2       	| 2    	| ecommerce_revenue 	|
-| 2       	| 3    	| goal_values       	|
+| 1       	| 1    	| visits            	|
+| 1       	| 2    	| bounces           	|
+| 2       	| 1    	| website_visits    	|
+| 2       	| 2    	| website_pageviews 	|
+| 2       	| 3    	| ecommerce_revenue 	|
+| 2       	| 4    	| goal_values       	|
 
 **Table 2: The slot_mappings table contains the relationships between slot and metric for each user. It has a unique
 constraint on combinations of (user_id, slot).**
@@ -118,6 +120,10 @@ potential race conditions from multiple API requests trying to grab the next slo
 one of the attempts to write to the slot_mapping table will fail on the unique-constraint and we can roll back the transaction and
 simply retry again.  
 
+<img alt="ElasticSearch Slots" src="https://blog.lobocv.com/posts/elasticsearch_slots/slot_tx.svg"/>
+
+**Figure 2: A flow diagram of how using a transaction, a unique constraint on the slot_mappings table and a retry mechanism 
+keeps concurrent requests from creating the same slot mapping.**
 
 Before writing to ElasticSearch, all metric names are converted to their slot numbers. When reading or aggregating metrics,
 the slot names retrieved from ElasticSearch are translated back to the original metric names with the same slot_mapping table.
