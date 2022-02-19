@@ -13,7 +13,8 @@
 <meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
 <link rel="shortcut icon" href="/favicon.ico?v=1">
 <meta name=generator content="Hugo 0.92.2">
-<link rel=stylesheet href=/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL+1/RYU="><link rel=stylesheet href=/css/add-on.css>
+<link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/dracula.min.css>
+<link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css>
 </head>
 <body>
 <header id=site-header>
@@ -126,17 +127,17 @@ valuable and I hope you do too. Best of all, you can take as much or as little f
 <p>A shell alias is a shortcut that you can define for any command. They are simple to create and can save you a lot of time
 and memorizing. For example, instead of typing <code>ls -lah</code> each time, you can create an alias <code>la</code> that would do the exact
 same thing:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>la</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;ls -lAh&#34;</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>alias la<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;ls -lAh&#34;</span>
 </code></pre></div><p>Aliases act as a run-time replacement of your alias with the defined command. This means you can augment your alias on
 the fly:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>la -R
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>la -R
 </code></pre></div><p>would translate to:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>ls -lAh -R
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>ls -lAh -R
 </code></pre></div><p>Aliases are a great way to turn that awkward to remember or type command into something dead simple that you can
 remember immediately. There is no alias too silly or simple. The following are probably my most commonly used aliases:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#8be9fd;font-style:italic>alias</span> cd.<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;cd ..&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> cd..<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;cd ../..&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> cd...<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;cd ../../..&#34;</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>alias cd.<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;cd ..&#34;</span>
+alias cd..<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;cd ../..&#34;</span>
+alias cd...<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;cd ../../..&#34;</span>
 </code></pre></div><p>Lastly, aliases need to be loaded into your shell. The most common way of loading aliases is to define them in your <code>.bashrc</code>
 so that they are defined whenever you open a new shell.</p>
 <h3 id=shell-functions>Shell Functions</h3>
@@ -144,14 +145,14 @@ so that they are defined whenever you open a new shell.</p>
 replacing text being sent to your shell&rsquo;s <a href=https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop>REPL</a>, it executes the shell code you&rsquo;ve defined. Use shell functions whenever
 you want to do something more complex than just shortcuts such as provide input arguments, flags and pipe input.
 Below is an example function to extract a specific JSON key-value from input:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#6272a4># Reads from JSON from stdin and print outs the value of the specified key</span>
-<span style=color:#6272a4># $1: Key to print</span>
-<span style=color:#6272a4># Example: echo &#39;{&#34;a&#34;: 1, &#34;b&#34;: 2}&#39; | jsonparsekey b</span>
-<span style=color:#6272a4># &gt; 2</span>
-<span style=color:#ff79c6>function</span> jsonparsekey<span style=color:#ff79c6>()</span> <span style=color:#ff79c6>{</span>
-	<span style=color:#8be9fd;font-style:italic>local</span> <span style=color:#8be9fd;font-style:italic>KEY</span><span style=color:#ff79c6>=</span><span style=color:#8be9fd;font-style:italic>$1</span>
-	python -c <span style=color:#f1fa8c>&#34;import sys,json; s=json.loads(&#39;&#39;.join([l for l in sys.stdin])); print s[&#39;</span><span style=color:#8be9fd;font-style:italic>$KEY</span><span style=color:#f1fa8c>&#39;]&#34;</span>
-<span style=color:#ff79c6>}</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Reads from JSON from stdin and print outs the value of the specified key</span>
+<span style=color:#75715e># $1: Key to print</span>
+<span style=color:#75715e># Example: echo &#39;{&#34;a&#34;: 1, &#34;b&#34;: 2}&#39; | jsonparsekey b</span>
+<span style=color:#75715e># &gt; 2</span>
+<span style=color:#66d9ef>function</span> jsonparsekey<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+	local KEY<span style=color:#f92672>=</span>$1
+	python -c <span style=color:#e6db74>&#34;import sys,json; s=json.loads(&#39;&#39;.join([l for l in sys.stdin])); print s[&#39;</span>$KEY<span style=color:#e6db74>&#39;]&#34;</span>
+<span style=color:#f92672>}</span>
 </code></pre></div><p>I find this useful for filtering response data of HTTP APIs as I am debugging.</p>
 <p>Check out some of my other <a href=https://github.com/lobocv/mysetup/tree/master/aliases>aliases and shell functions</a>.</p>
 <h3 id=upgrade-from-bash>Upgrade from Bash</h3>
@@ -167,7 +168,7 @@ and having to recreate configurations as I reinstall my OS or format my hard dri
 <p>I even have a <a href=https://github.com/lobocv/mysetup/blob/master/load_aliases.sh>script</a>
 that loads the repository, keeping my <code>.zshrc</code> file edits minimal:</p>
 <p><strong>.zshrc</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#8be9fd;font-style:italic>source</span> ~/lobocv/mysetup/load_aliases.sh
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>source ~/lobocv/mysetup/load_aliases.sh
 </code></pre></div><h2 id=containerized-environments>Containerized Environments</h2>
 <p>Docker and docker-compose make it simple to create a customized and reproducible development
 environment for your team&rsquo;s software projects. In addition to the docker container, I have several scripts which help
@@ -180,51 +181,51 @@ dependencies installed already exists, I use that as the base image for the dev 
 I use the <a href=https://hub.docker.com/_/golang>golang</a> docker image which already includes the go toolchain.
 Afterwards, I install any additional dependencies I need for the project such as protocol buffers and linters.</p>
 <p><strong>Dockerfile</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#ff79c6>FROM</span><span style=color:#f1fa8c> golang:1.16</span>
-
-<span style=color:#ff79c6>RUN</span> go get google.golang.org/protobuf/cmd/protoc-gen-go <span style=color:#f1fa8c>\
-</span><span style=color:#f1fa8c></span>         google.golang.org/grpc/cmd/protoc-gen-go-grpc
-</code></pre></div><p>Docker-compose makes it simple to orchestrate several containers which can then communicate with one another via a common network or
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> golang:1.16</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> go get google.golang.org/protobuf/cmd/protoc-gen-go <span style=color:#ae81ff>\
+</span><span style=color:#ae81ff></span>         google.golang.org/grpc/cmd/protoc-gen-go-grpc<span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><p>Docker-compose makes it simple to orchestrate several containers which can then communicate with one another via a common network or
 share volumes with the host or one another. In the following docker-compose example config, I define the development
 container, <code>dev</code>, and mount my local filesystem (<code>./</code>) to a <code>/src</code> folder inside the container. This allows my development
 container have access to code in the repository and immediately see changes being made to them from my IDE.</p>
 <p>The example configuration below also starts up a MongoDB container named <code>mongo</code>.</p>
 <p><strong>docker-compose.yaml</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile>version: <span style=color:#f1fa8c>&#34;3&#34;</span>
-
-services:
-
-  dev:
-    build:
-      context: .
-      dockerfile:  ./Dockerfile
-    command: sleep <span style=color:#bd93f9>1000000</span>
-    volumes:
-      - ./:/src
-
-  mongo:
-    image: mongo:4.4-bionic
-
-</code></pre></div><h3 id=accessing-the-development-environment>Accessing the Development Environment</h3>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile>version: <span style=color:#e6db74>&#34;3&#34;</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>services:<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>  dev:<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>    build:<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>      context: .<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>      dockerfile:  ./Dockerfile<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>    command: sleep <span style=color:#ae81ff>1000000</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>    volumes:<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>      - ./:/src<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>  mongo:<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span>    image: mongo:4.4-bionic<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><h3 id=accessing-the-development-environment>Accessing the Development Environment</h3>
 <p>To make it fast and simple to get going, I write a bash script that starts the container(s)
 and enters the development container&rsquo;s shell, which I call the <code>devshell</code>:</p>
 <p><strong>devshell.sh</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#ff79c6>#!/usr/bin/env bash
-</span><span style=color:#ff79c6></span>
-<span style=color:#8be9fd;font-style:italic>PROJECT_NAME</span><span style=color:#ff79c6>=</span>myproject
-<span style=color:#8be9fd;font-style:italic>DEV_CONTAINER</span><span style=color:#ff79c6>=</span>dev
-<span style=color:#8be9fd;font-style:italic>RC_FILE</span><span style=color:#ff79c6>=</span>/src/.devshell_bashrc
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e>#!/usr/bin/env bash
+</span><span style=color:#75715e></span>
+PROJECT_NAME<span style=color:#f92672>=</span>myproject
+DEV_CONTAINER<span style=color:#f92672>=</span>dev
+RC_FILE<span style=color:#f92672>=</span>/src/.devshell_bashrc
 
-<span style=color:#6272a4># If the -b flag is provided then build the containers before entering the shell</span>
-<span style=color:#ff79c6>if</span> <span style=color:#ff79c6>[</span> <span style=color:#f1fa8c>&#34;</span><span style=color:#8be9fd;font-style:italic>$1</span><span style=color:#f1fa8c>&#34;</span> <span style=color:#ff79c6>==</span> <span style=color:#f1fa8c>&#34;-b&#34;</span> <span style=color:#ff79c6>]</span>; <span style=color:#ff79c6>then</span>
-  docker-compose -p <span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>PROJECT_NAME</span><span style=color:#f1fa8c>}</span> build
-<span style=color:#ff79c6>fi</span>
+<span style=color:#75715e># If the -b flag is provided then build the containers before entering the shell</span>
+<span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> <span style=color:#e6db74>&#34;</span>$1<span style=color:#e6db74>&#34;</span> <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;-b&#34;</span> <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
+  docker-compose -p <span style=color:#e6db74>${</span>PROJECT_NAME<span style=color:#e6db74>}</span> build
+<span style=color:#66d9ef>fi</span>
 
-<span style=color:#6272a4># Check if the dev container is already up. If it&#39;s not, then start it</span>
-<span style=color:#ff79c6>[</span> ! <span style=color:#f1fa8c>&#34;</span><span style=color:#ff79c6>$(</span>docker ps | grep <span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>DEV_CONTAINER</span><span style=color:#f1fa8c>}</span><span style=color:#ff79c6>)</span><span style=color:#f1fa8c>&#34;</span> <span style=color:#ff79c6>]</span> <span style=color:#ff79c6>&amp;&amp;</span> docker-compose -p <span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>PROJECT_NAME</span><span style=color:#f1fa8c>}</span> up -d <span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>DEV_CONTAINER</span><span style=color:#f1fa8c>}</span>
+<span style=color:#75715e># Check if the dev container is already up. If it&#39;s not, then start it</span>
+<span style=color:#f92672>[</span> ! <span style=color:#e6db74>&#34;</span><span style=color:#66d9ef>$(</span>docker ps | grep <span style=color:#e6db74>${</span>DEV_CONTAINER<span style=color:#e6db74>}</span><span style=color:#66d9ef>)</span><span style=color:#e6db74>&#34;</span> <span style=color:#f92672>]</span> <span style=color:#f92672>&amp;&amp;</span> docker-compose -p <span style=color:#e6db74>${</span>PROJECT_NAME<span style=color:#e6db74>}</span> up -d <span style=color:#e6db74>${</span>DEV_CONTAINER<span style=color:#e6db74>}</span>
 
-<span style=color:#6272a4># Enter the dev shell and load the rc file</span>
-docker <span style=color:#8be9fd;font-style:italic>exec</span> -it -e <span style=color:#f1fa8c>&#34;TERM=xterm-256color&#34;</span> <span style=color:#f1fa8c>&#34;</span><span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>PROJECT_NAME</span><span style=color:#f1fa8c>}</span><span style=color:#f1fa8c>_</span><span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>DEV_CONTAINER</span><span style=color:#f1fa8c>}</span><span style=color:#f1fa8c>_1&#34;</span> bash --rcfile <span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>RC_FILE</span><span style=color:#f1fa8c>}</span>
+<span style=color:#75715e># Enter the dev shell and load the rc file</span>
+docker exec -it -e <span style=color:#e6db74>&#34;TERM=xterm-256color&#34;</span> <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>PROJECT_NAME<span style=color:#e6db74>}</span><span style=color:#e6db74>_</span><span style=color:#e6db74>${</span>DEV_CONTAINER<span style=color:#e6db74>}</span><span style=color:#e6db74>_1&#34;</span> bash --rcfile <span style=color:#e6db74>${</span>RC_FILE<span style=color:#e6db74>}</span>
 </code></pre></div><p>This script checks if the docker container is already running so that it does not always need to call the (somewhat)
 slow <code>docker-compose up</code> command.</p>
 <h3 id=customizing-the-environment>Customizing the environment</h3>
@@ -234,42 +235,42 @@ your project. I like to have this script define a <code>help()</code> function a
 This helps new team members joining the project get accustom to what features exist in the devshell.
 It also helps broadcast any improvements added to the shell and acts as reference documentation for the devshell.</p>
 <p><strong>.devshell_bashrc</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#6272a4># Define any common useful aliases or functions for the team </span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>gotest</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;go test ./...&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>testify</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;go test -testify.m&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>lint</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;golangci-lint run -v ./...&#34;</span>
-<span style=color:#6272a4># Set default cd to go to project root</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>cd</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#39;HOME=/src cd&#39;</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e># Define any common useful aliases or functions for the team </span>
+alias gotest<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;go test ./...&#34;</span>
+alias testify<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;go test -testify.m&#34;</span>
+alias lint<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;golangci-lint run -v ./...&#34;</span>
+<span style=color:#75715e># Set default cd to go to project root</span>
+alias cd<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;HOME=/src cd&#39;</span>
 
-<span style=color:#ff79c6>function</span> help<span style=color:#ff79c6>()</span> <span style=color:#ff79c6>{</span>
-  <span style=color:#8be9fd;font-style:italic>echo</span> <span style=color:#f1fa8c>&#34;
-</span><span style=color:#f1fa8c>=======================================
-</span><span style=color:#f1fa8c>Welcome to the dev shell
-</span><span style=color:#f1fa8c>=======================================
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>Type &#34;</span>help<span style=color:#f1fa8c>&#34; in the shell to repeat this message.
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>Additional shell customizations can be loaded by creating a .customrc file in the root of the project.
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>Here is a list of common commands you can do:
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>* gotest: Run all go tests in the current directory
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>* lint: Run golangci-lint in the current directory
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>* testify: Run a testify test by name
-</span><span style=color:#f1fa8c>  Arguments:
-</span><span style=color:#f1fa8c>      1 : Regex to match test names
-</span><span style=color:#f1fa8c>&#34;</span>
-<span style=color:#ff79c6>}</span>
+<span style=color:#66d9ef>function</span> help<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+  echo <span style=color:#e6db74>&#34;
+</span><span style=color:#e6db74>=======================================
+</span><span style=color:#e6db74>Welcome to the dev shell
+</span><span style=color:#e6db74>=======================================
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Type &#34;</span>help<span style=color:#e6db74>&#34; in the shell to repeat this message.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Additional shell customizations can be loaded by creating a .customrc file in the root of the project.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Here is a list of common commands you can do:
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>* gotest: Run all go tests in the current directory
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>* lint: Run golangci-lint in the current directory
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>* testify: Run a testify test by name
+</span><span style=color:#e6db74>  Arguments:
+</span><span style=color:#e6db74>      1 : Regex to match test names
+</span><span style=color:#e6db74>&#34;</span>
+<span style=color:#f92672>}</span>
 
-<span style=color:#6272a4># Source any user-specific / personal aliases or functions</span>
-<span style=color:#ff79c6>if</span> <span style=color:#ff79c6>[[</span> -f .customrc <span style=color:#ff79c6>]]</span>; <span style=color:#ff79c6>then</span>
-    <span style=color:#8be9fd;font-style:italic>echo</span> <span style=color:#f1fa8c>&#34;Custom shell configuration found. Loading...&#34;</span>
-    <span style=color:#8be9fd;font-style:italic>source</span> .customrc
-<span style=color:#ff79c6>fi</span>
+<span style=color:#75715e># Source any user-specific / personal aliases or functions</span>
+<span style=color:#66d9ef>if</span> <span style=color:#f92672>[[</span> -f .customrc <span style=color:#f92672>]]</span>; <span style=color:#66d9ef>then</span>
+    echo <span style=color:#e6db74>&#34;Custom shell configuration found. Loading...&#34;</span>
+    source .customrc
+<span style=color:#66d9ef>fi</span>
 
-<span style=color:#8be9fd;font-style:italic>help</span>
+help
 
 </code></pre></div><h3 id=personalizing-the-shell>Personalizing the Shell</h3>
 <p>At the end of the <code>.devshell_bashrc</code> script above, we source a <code>.customrc</code> file (if it exists). Each member of your team
@@ -277,15 +278,15 @@ can use this file to personalize their devshell. Be sure to add <code>.customrc<
 <code>.gitignore</code> so that someone does not accidentally share their own personal scripts.</p>
 <p>Here is an example of some additional personalization I do to my <code>devshell</code>:</p>
 <p><strong>.customrc</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#ff79c6>#!/bin/bash
-</span><span style=color:#ff79c6></span><span style=color:#8be9fd;font-style:italic>echo</span> <span style=color:#f1fa8c>&#34;Hi Calvin!&#34;</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e>#!/bin/bash
+</span><span style=color:#75715e></span>echo <span style=color:#e6db74>&#34;Hi Calvin!&#34;</span>
 
-<span style=color:#8be9fd;font-style:italic>alias</span> cd.<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;cd ..&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> cd..<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;cd ../..&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> cd...<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;cd ../../..&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>la</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;ls -lah&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>gofmt</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;gofmt -w -s .&#34;</span>
-<span style=color:#8be9fd;font-style:italic>alias</span> <span style=color:#8be9fd;font-style:italic>run</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#39;go run ./...&#39;</span>
+alias cd.<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;cd ..&#34;</span>
+alias cd..<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;cd ../..&#34;</span>
+alias cd...<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;cd ../../..&#34;</span>
+alias la<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;ls -lah&#34;</span>
+alias gofmt<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;gofmt -w -s .&#34;</span>
+alias run<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;go run ./...&#39;</span>
 </code></pre></div><p>While these examples are pretty general purpose, there are many ways you can tailor your environment
 to speed up your development flows. Be creative! Here are some ideas:</p>
 <ul>
@@ -300,11 +301,11 @@ to speed up your development flows. Be creative! Here are some ideas:</p>
 defined as a script opens the door to add more functionality such as only shutting down certain containers.
 It also provides nice symmetry to <code>devshell.sh</code> and makes things dead simple.</p>
 <p><strong>devdown.sh</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#ff79c6>#!/usr/bin/env bash
-</span><span style=color:#ff79c6></span>
-<span style=color:#8be9fd;font-style:italic>PROJECT_NAME</span><span style=color:#ff79c6>=</span>myproject
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#75715e>#!/usr/bin/env bash
+</span><span style=color:#75715e></span>
+PROJECT_NAME<span style=color:#f92672>=</span>myproject
 
-docker-compose -p <span style=color:#f1fa8c>${</span><span style=color:#8be9fd;font-style:italic>PROJECT_NAME</span><span style=color:#f1fa8c>}</span> down --remove-orphans
+docker-compose -p <span style=color:#e6db74>${</span>PROJECT_NAME<span style=color:#e6db74>}</span> down --remove-orphans
 </code></pre></div><h3 id=try-it-yourself>Try it yourself</h3>
 <p>A working example of this development environment can be found at my <a href=https://github.com/lobocv/project-bootstrap>project-bootstrap repository</a>.
 Feel free to try it out!</p>
