@@ -44,27 +44,27 @@ A shell alias is a shortcut that you can define for any command. They are simple
 and memorizing. For example, instead of typing `ls -lah` each time, you can create an alias `la` that would do the exact 
 same thing:
 
-```
+```bash
 alias la="ls -lAh"
 ```
 
 Aliases act as a run-time replacement of your alias with the defined command. This means you can augment your alias on
 the fly:
 
-```
+```bash
 la -R
 ```
 
 would translate to:
 
-```
+```bash
 ls -lAh -R
 ```
 
 Aliases are a great way to turn that awkward to remember or type command into something dead simple that you can
 remember immediately. There is no alias too silly or simple. The following are probably my most commonly used aliases:
 
-```
+```bash
 alias cd.="cd .."
 alias cd..="cd ../.."
 alias cd...="cd ../../.."
@@ -80,7 +80,7 @@ replacing text being sent to your shell's [REPL](https://en.wikipedia.org/wiki/R
 you want to do something more complex than just shortcuts such as provide input arguments, flags and pipe input. 
 Below is an example function to extract a specific JSON key-value from input:
 
-```
+```bash
 # Reads from JSON from stdin and print outs the value of the specified key
 # $1: Key to print
 # Example: echo '{"a": 1, "b": 2}' | jsonparsekey b
@@ -113,7 +113,7 @@ I even have a [script](https://github.com/lobocv/mysetup/blob/master/load_aliase
 that loads the repository, keeping my `.zshrc` file edits minimal:
 
 **.zshrc**
-```
+```bash
 source ~/lobocv/mysetup/load_aliases.sh
 ```
 
@@ -135,7 +135,7 @@ I use the [golang](https://hub.docker.com/_/golang) docker image which already i
 Afterwards, I install any additional dependencies I need for the project such as protocol buffers and linters.
 
 **Dockerfile**
-```bash
+```dockerfile
 FROM golang:1.16
 
 RUN go get google.golang.org/protobuf/cmd/protoc-gen-go \
@@ -150,7 +150,7 @@ container have access to code in the repository and immediately see changes bein
 The example configuration below also starts up a MongoDB container named `mongo`.
 
 **docker-compose.yaml**
-```
+```dockerfile
 version: "3"
 
 services:

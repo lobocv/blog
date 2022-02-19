@@ -99,7 +99,7 @@ For example, a sorted set would be a perfect data structure for storing a user s
 
 We can insert the data above into the sorted set in any order and it will maintain the entries in the order of high-score.
 
-```html
+```bash
 >> ZADD highscores 780 Calvin
 >> (integer) 1
 >> ZADD highscores 1050 Sharon
@@ -115,7 +115,7 @@ We can insert the data above into the sorted set in any order and it will mainta
 It is then very simple to ask the sorted set for the top `N` results with [ZREVRANGE](https://redis.io/commands/zrevrange).
 (You could also get the results sorted by ascending order by using [ZRANGE](https://redis.io/commands/zrange))
 
-```html
+```bash
 >> ZREVRANGE highscores 0 5 WITHSCORES
 1) "Sharon"
 2) 1050
@@ -131,7 +131,7 @@ It is then very simple to ask the sorted set for the top `N` results with [ZREVR
 
 Or get values within a range of scores with [ZRANGEBYSCORE](https://redis.io/commands/zrangebyscore).
 
-```html
+```bash
 >> ZRANGEBYSCORE highscores 700 800 WITHSCORES
 1) "Abdul"
 2) 800
@@ -141,7 +141,7 @@ Or get values within a range of scores with [ZRANGEBYSCORE](https://redis.io/com
 
 And of course you can delete keys from the sorted-set with [ZREM](https://redis.io/commands/zrem).
 
-```html
+```bash
 >> ZREM highscores Abdul
 (integer) 1
 ```
@@ -158,7 +158,7 @@ These values are then published as `post-metric-last-updated-X-minutes-ago` even
 
 Back to our example, the `post-metric-updated` event has the following schema:
 
-```
+```go
 // PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
 type PostMetricUpdatedEvent struct {
 	PostID string                      `json:"id"`
@@ -169,7 +169,7 @@ type PostMetricUpdatedEvent struct {
 
 And we have the following events being published, shown below in their JSON serialized form:
 
-```
+```json
 {"id": "post_1", "account_id": "account_1", "metrics": {"likes": 10, "shares": 5}}
 {"id": "post_2", "account_id": "account_1", "metrics": {"comments": 25, "impressions": 16}}
 {"id": "post_3", "account_id": "account_1", "metrics": {"likes": 5, "shares": 2}}
@@ -185,7 +185,7 @@ We need to identify the `group key` for all the events that we want to fold.
 The group key should remove all uniquely identifying information in the event such that events within the same group have the same 
 serialized value. In our example, the group key would be just the `account_id` field, since we just want one event per account:
 
-```
+```json
 {"account_id": "account_1"}
 {"account_id": "account_2"}
 ```
@@ -204,7 +204,7 @@ the folded event older than `X`, we also grab the metrics that have changed from
 the `post-metric-last-updated-X-minutes-ago` event:
 
 
-```
+```go
 type PostMetricUpdatedEvent  struct {
 	AccountID string        `json:"account_id"`
 	UpdatedMetrics []string `json:"metrics"`
@@ -213,7 +213,7 @@ type PostMetricUpdatedEvent  struct {
 
 which in our example looks like:
 
-```
+```json
 {"account_id": "account_1", "metrics": ["likes", "shares", "comments", "impressions"]}
 {"account_id": "account_2", "metrics": ["likes", "shares"]}
 ```
@@ -251,7 +251,7 @@ Another way to look at this is that the value of `ZADD` only acts as a proxy for
 
 Below is an example of what that could look like:
 
-```html
+```json
 {"id": "post_1", "account_id": "account_1", "metrics": {"likes": 10, "shares": 5}}  -> ZADD Returns 1 (new) 
 {"id": "post_2", "account_id": "account_1", "metrics": {"likes": 25, "shares": 16}} -> ZADD Returns 0 (folded)
 {"id": "post_3", "account_id": "account_1", "metrics": {"likes": 5, "shares": 2}}   -> ZADD Returns 0 (folded)
