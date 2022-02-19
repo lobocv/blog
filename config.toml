@@ -24,7 +24,7 @@ enableCDN             = false
 cssFiles              = ["default"]
 jsFiles               = ["default"]
 highlightjs           = true
-highlightjsTheme      = ""
+highlightjsTheme      = "colorful"
 highlightjsLang       = []
 viewMorePostsLink     = "/blog/"
 readingTime           = true
@@ -128,7 +128,7 @@ email                 = "calvinvlobo@gmail.com"
 
 [markup]
   [markup.highlight]
-  anchorLineNos = false
+  anchorLineNos = true
   codeFences = true
   guessSyntax = false
   hl_Lines = ''
@@ -137,5 +137,5 @@ email                 = "calvinvlobo@gmail.com"
   lineNos = false
   lineNumbersInTable = true
   noClasses = true
-  style = 'dracula'
+  style = 'colorful'
   tabWidth = 4
