@@ -2,15 +2,18 @@
 <head>
 <meta charset=utf-8>
 <title>Reducing System Load With Event Folding - Lobocv Blog</title>
+<meta name=description content="Software Development Blog">
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=generator content="Hugo 0.90.1"><meta property="og:site_name" content="Lobocv Blog">
+<meta name=twitter:card content="summary_large_image">
+<meta property="og:site_name" content="Lobocv Blog">
 <meta property="og:title" content="Reducing System Load With Event Folding">
 <meta property="og:description" content="Software Development Blog">
-<meta property="description" content="Software Development Blog">
-<meta property="og:url" content="http://blog.lobocv.com/posts/event_folding/">
 <meta property="og:type" content="article">
+<meta property="og:url" content="http://blog.lobocv.com/posts/event_folding/">
 <meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
-<link rel=stylesheet href=/css/bundle.min.6ad9eb85bff384c75937a02036b01425a2ca63f19a96535b8ba5b181db62a4b3.css integrity="sha256-atnrhb/zhMdZN6AgNrAUJaLKY/GallNbi6WxgdtipLM="><link rel=stylesheet href=/css/add-on.css>
+<link rel="shortcut icon" href="/favicon.ico?v=1">
+<meta name=generator content="Hugo 0.92.2">
+<link rel=stylesheet href=/css/bundle.min.5233f2a4cd515395301b4154f6c1c621695e8cf53faa0935b76ac52fed7f4585.css integrity="sha256-UjPypM1RU5UwG0FU9sHGIWlejPU/qgk1t2rFL+1/RYU="><link rel=stylesheet href=/css/add-on.css>
 </head>
 <body>
 <header id=site-header>
@@ -53,7 +56,7 @@ lobocv
 </header>
 <div id=wrapper>
 <section id=site-intro>
-<a href=/><img src=http://blog.lobocv.com/img/logo.jpg class=triangle width=200px alt></a>
+<a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a>
 <header>
 <h1>Calvin Lobo</h1>
 </header>
@@ -69,7 +72,8 @@ lobocv
 </footer>
 </section>
 <main id=site-main>
-<article class=post>
+<article>
+<div class=post>
 <header>
 <div class=title>
 <h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
@@ -197,38 +201,38 @@ For example, a sorted set would be a perfect data structure for storing a user s
 </tbody>
 </table>
 <p>We can insert the data above into the sorted set in any order and it will maintain the entries in the order of high-score.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&gt;&gt; ZADD highscores 780 Calvin
-&gt;&gt; (integer) 1
-&gt;&gt; ZADD highscores 1050 Sharon
-&gt;&gt; (integer) 1
-&gt;&gt; ZADD highscores 660 Pirakalan
-&gt;&gt; (integer) 1
-&gt;&gt; ZADD highscores 600 Nirav
-&gt;&gt; (integer) 1
-&gt;&gt; ZADD highscores 800 Abdul
-&gt;&gt; (integer) 1
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZADD highscores <span style=color:#bd93f9>780</span> Calvin
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>1050</span> Sharon
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>660</span> Pirakalan
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>600</span> Nirav
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>800</span> Abdul
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
 </code></pre></div><p>It is then very simple to ask the sorted set for the top <code>N</code> results with <a href=https://redis.io/commands/zrevrange>ZREVRANGE</a>.
 (You could also get the results sorted by ascending order by using <a href=https://redis.io/commands/zrange>ZRANGE</a>)</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&gt;&gt; ZREVRANGE highscores 0 5 WITHSCORES
-1) &#34;Sharon&#34;
-2) 1050
-3) &#34;Abdul&#34;
-4) 800
-5) &#34;Calvin&#34;
-6) 780
-7) &#34;Pirakalan&#34;
-8) 660
-9) &#34;Nirav&#34;
-10) 600
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREVRANGE highscores <span style=color:#bd93f9>0</span> <span style=color:#bd93f9>5</span> WITHSCORES
+1<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Sharon&#34;</span>
+2<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1050</span>
+3<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Abdul&#34;</span>
+4<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>800</span>
+5<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Calvin&#34;</span>
+6<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>780</span>
+7<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Pirakalan&#34;</span>
+8<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>660</span>
+9<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Nirav&#34;</span>
+10<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>600</span>
 </code></pre></div><p>Or get values within a range of scores with <a href=https://redis.io/commands/zrangebyscore>ZRANGEBYSCORE</a>.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&gt;&gt; ZRANGEBYSCORE highscores 700 800 WITHSCORES
-1) &#34;Abdul&#34;
-2) 800
-3) &#34;Calvin&#34;
-4) 780
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZRANGEBYSCORE highscores <span style=color:#bd93f9>700</span> <span style=color:#bd93f9>800</span> WITHSCORES
+1<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Abdul&#34;</span>
+2<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>800</span>
+3<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Calvin&#34;</span>
+4<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>780</span>
 </code></pre></div><p>And of course you can delete keys from the sorted-set with <a href=https://redis.io/commands/zrem>ZREM</a>.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&gt;&gt; ZREM highscores Abdul
-(integer) 1
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREM highscores Abdul
+<span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
 </code></pre></div><h3 id=folding-events>Folding Events</h3>
 <p>Since the sorted set can only have unique values, we can use it to &ldquo;fold&rdquo; a group of events into a single event.
 In order to do that, we need to remove unique information from the events such that they serialize to the
@@ -238,28 +242,28 @@ of events, where each element represents a folded view of events from each group
 sorted-set with <code>ZRANGEBYSCORE</code> to get values with timestamps (scores) before <code>time.Now()-X</code>.
 These values are then published as <code>post-metric-last-updated-X-minutes-ago</code> events and removed from the sorted set[2].</p>
 <p>Back to our example, the <code>post-metric-updated</code> event has the following schema:</p>
-<pre tabindex=0><code>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
-type PostMetricUpdatedEvent struct {
-	PostID string                      `json:&quot;id&quot;`
-	AccountID string                   `json:&quot;account_id&quot;`
-	UpdatedMetrics map[string]float64  `json:&quot;metrics&quot;`
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#6272a4>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
+</span><span style=color:#6272a4></span><span style=color:#8be9fd;font-style:italic>type</span> PostMetricUpdatedEvent <span style=color:#8be9fd;font-style:italic>struct</span> {
+	PostID <span style=color:#8be9fd>string</span>                      <span style=color:#f1fa8c>`json:&#34;id&#34;`</span>
+	AccountID <span style=color:#8be9fd>string</span>                   <span style=color:#f1fa8c>`json:&#34;account_id&#34;`</span>
+	UpdatedMetrics <span style=color:#8be9fd;font-style:italic>map</span>[<span style=color:#8be9fd>string</span>]<span style=color:#8be9fd>float64</span>  <span style=color:#f1fa8c>`json:&#34;metrics&#34;`</span>
 }
-</code></pre><p>And we have the following events being published, shown below in their JSON serialized form:</p>
-<pre tabindex=0><code>{&quot;id&quot;: &quot;post_1&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 10, &quot;shares&quot;: 5}}
-{&quot;id&quot;: &quot;post_2&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;comments&quot;: 25, &quot;impressions&quot;: 16}}
-{&quot;id&quot;: &quot;post_3&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 5, &quot;shares&quot;: 2}}
-{&quot;id&quot;: &quot;post_4&quot;, &quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: {&quot;comments&quot;: 33, &quot;impressions&quot;: 8}}
-{&quot;id&quot;: &quot;post_5&quot;, &quot;account_id&quot;: &quot;account_2&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 12, &quot;shares&quot;: 15}}
-{&quot;id&quot;: &quot;post_6&quot;, &quot;account_id&quot;: &quot;account_2&quot;, &quot;metrics&quot;: {&quot;likes&quot;: 3, &quot;shares&quot;: 1}}
-</code></pre><p>These 6 events span two unique accounts (<code>account_1</code> and <code>account_2</code>) and should therefore ideally create two separate
+</code></pre></div><p>And we have the following events being published, shown below in their JSON serialized form:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_1&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>10</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>5</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_2&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;comments&#34;</span>: <span style=color:#bd93f9>25</span>, <span style=color:#ff79c6>&#34;impressions&#34;</span>: <span style=color:#bd93f9>16</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_3&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>5</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>2</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_4&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;comments&#34;</span>: <span style=color:#bd93f9>33</span>, <span style=color:#ff79c6>&#34;impressions&#34;</span>: <span style=color:#bd93f9>8</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_5&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>12</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>15</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_6&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>3</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>1</span>}}
+</code></pre></div><p>These 6 events span two unique accounts (<code>account_1</code> and <code>account_2</code>) and should therefore ideally create two separate
 <code>post-metric-last-updated-X-minutes-ago</code> events. Remember, a sorted set stores <em>unique</em> strings, so we cannot just
 insert these JSON strings into the sorted-set as is. If we did, they would be stored as 6 different entries in the set.
 We need to identify the <code>group key</code> for all the events that we want to fold.
 The group key should remove all uniquely identifying information in the event such that events within the same group have the same
 serialized value. In our example, the group key would be just the <code>account_id</code> field, since we just want one event per account:</p>
-<pre tabindex=0><code>{&quot;account_id&quot;: &quot;account_1&quot;}
-{&quot;account_id&quot;: &quot;account_2&quot;}
-</code></pre><p>But wait&mldr; We just lost a bunch of information from our events! That&rsquo;s right. I never said this folding was lossless!
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>}
+{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>}
+</code></pre></div><p>But wait&mldr; We just lost a bunch of information from our events! That&rsquo;s right. I never said this folding was lossless!
 In some cases this may be acceptable, you may be able to gather that information elsewhere, say from an API call, or it
 may not be relevant for what you are trying to do on the subscriber side.</p>
 <p>In cases where you <em>do</em> need that information, we can store it separately in a database as we are inserting values into
@@ -269,14 +273,14 @@ the information we stored in the database.</p>
 We can easily keep track of these metrics in a regular Redis set. When we query the sorted-set to get
 the folded event older than <code>X</code>, we also grab the metrics that have changed from the regular set. We can then assemble
 the <code>post-metric-last-updated-X-minutes-ago</code> event:</p>
-<pre tabindex=0><code>type PostMetricUpdatedEvent  struct {
-	AccountID string        `json:&quot;account_id&quot;`
-	UpdatedMetrics []string `json:&quot;metrics&quot;`
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#8be9fd;font-style:italic>type</span> PostMetricUpdatedEvent  <span style=color:#8be9fd;font-style:italic>struct</span> {
+	AccountID <span style=color:#8be9fd>string</span>        <span style=color:#f1fa8c>`json:&#34;account_id&#34;`</span>
+	UpdatedMetrics []<span style=color:#8be9fd>string</span> <span style=color:#f1fa8c>`json:&#34;metrics&#34;`</span>
 }
-</code></pre><p>which in our example looks like:</p>
-<pre tabindex=0><code>{&quot;account_id&quot;: &quot;account_1&quot;, &quot;metrics&quot;: [&quot;likes&quot;, &quot;shares&quot;, &quot;comments&quot;, &quot;impressions&quot;]}
-{&quot;account_id&quot;: &quot;account_2&quot;, &quot;metrics&quot;: [&quot;likes&quot;, &quot;shares&quot;]}
-</code></pre><p>The service performing the aggregation can then subscribe to these events and be notified only once metrics have stopped
+</code></pre></div><p>which in our example looks like:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: [<span style=color:#f1fa8c>&#34;likes&#34;</span>, <span style=color:#f1fa8c>&#34;shares&#34;</span>, <span style=color:#f1fa8c>&#34;comments&#34;</span>, <span style=color:#f1fa8c>&#34;impressions&#34;</span>]}
+{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: [<span style=color:#f1fa8c>&#34;likes&#34;</span>, <span style=color:#f1fa8c>&#34;shares&#34;</span>]}
+</code></pre></div><p>The service performing the aggregation can then subscribe to these events and be notified only once metrics have stopped
 being updated. We can rest assured that we will compute the value at most once in the <code>X</code> minutes since the
 last time a post metric was updated.</p>
 <h3 id=folding-ratio>Folding Ratio</h3>
@@ -297,18 +301,18 @@ from the sorted set just before adding a new event that would have otherwise bee
 In this situation, we will be over measuring our number of new events and under measuring the number of folded events.
 Another way to look at this is that the value of <code>ZADD</code> only acts as a proxy for the folded count from <em>Redis</em>' perspective.</p>
 <p>Below is an example of what that could look like:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>{&#34;id&#34;: &#34;post_1&#34;, &#34;account_id&#34;: &#34;account_1&#34;, &#34;metrics&#34;: {&#34;likes&#34;: 10, &#34;shares&#34;: 5}}  -&gt; ZADD Returns 1 (new) 
-{&#34;id&#34;: &#34;post_2&#34;, &#34;account_id&#34;: &#34;account_1&#34;, &#34;metrics&#34;: {&#34;likes&#34;: 25, &#34;shares&#34;: 16}} -&gt; ZADD Returns 0 (folded)
-{&#34;id&#34;: &#34;post_3&#34;, &#34;account_id&#34;: &#34;account_1&#34;, &#34;metrics&#34;: {&#34;likes&#34;: 5, &#34;shares&#34;: 2}}   -&gt; ZADD Returns 0 (folded)
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_1&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>10</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>5</span>}}  -&gt; ZADD Returns <span style=color:#bd93f9>1</span> (new) 
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_2&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>25</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>16</span>}} -&gt; ZADD Returns <span style=color:#bd93f9>0</span> (folded)
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_3&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>5</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>2</span>}}   -&gt; ZADD Returns <span style=color:#bd93f9>0</span> (folded)
 
-                    Publish folded event  {&#34;account_id&#34;: &#34;account_1&#34;}
+                    Publish folded event  {<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>}
 
-{&#34;id&#34;: &#34;post_4&#34;, &#34;account_id&#34;: &#34;account_1&#34;, &#34;metrics&#34;: {&#34;likes&#34;: 33, &#34;shares&#34;: 8}}  -&gt; ZADD Returns 1 (fake new)
-{&#34;id&#34;: &#34;post_5&#34;, &#34;account_id&#34;: &#34;account_2&#34;, &#34;metrics&#34;: {&#34;likes&#34;: 12, &#34;shares&#34;: 15}} -&gt; ZADD Returns 0 (new)
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_4&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>33</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>8</span>}}  -&gt; ZADD Returns <span style=color:#bd93f9>1</span> (fake new)
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_5&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>12</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>15</span>}} -&gt; ZADD Returns <span style=color:#bd93f9>0</span> (new)
 
-                    Publish folded event  {&#34;account_id&#34;: &#34;account_2&#34;}
+                    Publish folded event  {<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>}
 
-{&#34;id&#34;: &#34;post_6&#34;, &#34;account_id&#34;: &#34;account_2&#34;, &#34;metrics&#34;: {&#34;likes&#34;: 3, &#34;shares&#34;: 1}}   -&gt; ZADD Returns 1 (fake new)
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_6&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>3</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>1</span>}}   -&gt; ZADD Returns <span style=color:#bd93f9>1</span> (fake new)
 </code></pre></div><p>If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
 window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:</p>
 <p style=text-align:center>${F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p>
@@ -364,6 +368,7 @@ marking the old document for deletion.</p>
 </ul>
 </div>
 </footer>
+</div>
 </article>
 <div class=pagination>
 <a href=/posts/elasticsearch_slots/ class="button left"><span>Defusing an ElasticSearch Mapping Explosion with Slots</span></a>
@@ -433,12 +438,12 @@ marking the old document for deletion.</p>
 <p class=copyright>
 © 2021 Lobocv Blog
 <br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.90.1 target=_blank rel=noopener>Hugo</a>
+Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.92.2 target=_blank rel=noopener>Hugo</a>
 </p>
 </footer>
 <a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
 <script src=/js/highlight.js></script>
-<script>hljs.initHighlightingOnLoad()</script><script src=/js/bundle.min.0d5e8ac1d85d8099bdf7808daad895a475c163efad3542448e3f7b31852b6ad5.js integrity="sha256-DV6KwdhdgJm994CNqtiVpHXBY++tNUJEjj97MYUratU="></script>
+<script>hljs.highlightAll()</script><script src=/js/bundle.min.c71e1ad682a1b9030ea4c63475579f1d8d13af96a92f718403ba99cf722ec3e2.js integrity="sha256-xx4a1oKhuQMOpMY0dVefHY0Tr5apL3GEA7qZz3Iuw+I="></script>
 <script src=/js/add-on.js></script>
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-196196121-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
