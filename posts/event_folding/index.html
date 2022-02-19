@@ -202,38 +202,38 @@ For example, a sorted set would be a perfect data structure for storing a user s
 </tbody>
 </table>
 <p>We can insert the data above into the sorted set in any order and it will maintain the entries in the order of high-score.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZADD highscores <span style=color:#ae81ff>780</span> Calvin
-&gt;&gt; <span style=color:#f92672>(</span>integer<span style=color:#f92672>)</span> <span style=color:#ae81ff>1</span>
-&gt;&gt; ZADD highscores <span style=color:#ae81ff>1050</span> Sharon
-&gt;&gt; <span style=color:#f92672>(</span>integer<span style=color:#f92672>)</span> <span style=color:#ae81ff>1</span>
-&gt;&gt; ZADD highscores <span style=color:#ae81ff>660</span> Pirakalan
-&gt;&gt; <span style=color:#f92672>(</span>integer<span style=color:#f92672>)</span> <span style=color:#ae81ff>1</span>
-&gt;&gt; ZADD highscores <span style=color:#ae81ff>600</span> Nirav
-&gt;&gt; <span style=color:#f92672>(</span>integer<span style=color:#f92672>)</span> <span style=color:#ae81ff>1</span>
-&gt;&gt; ZADD highscores <span style=color:#ae81ff>800</span> Abdul
-&gt;&gt; <span style=color:#f92672>(</span>integer<span style=color:#f92672>)</span> <span style=color:#ae81ff>1</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZADD highscores <span style=color:#bd93f9>780</span> Calvin
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>1050</span> Sharon
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>660</span> Pirakalan
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>600</span> Nirav
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
+&gt;&gt; ZADD highscores <span style=color:#bd93f9>800</span> Abdul
+&gt;&gt; <span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
 </code></pre></div><p>It is then very simple to ask the sorted set for the top <code>N</code> results with <a href=https://redis.io/commands/zrevrange>ZREVRANGE</a>.
 (You could also get the results sorted by ascending order by using <a href=https://redis.io/commands/zrange>ZRANGE</a>)</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREVRANGE highscores <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>5</span> WITHSCORES
-1<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Sharon&#34;</span>
-2<span style=color:#f92672>)</span> <span style=color:#ae81ff>1050</span>
-3<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Abdul&#34;</span>
-4<span style=color:#f92672>)</span> <span style=color:#ae81ff>800</span>
-5<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Calvin&#34;</span>
-6<span style=color:#f92672>)</span> <span style=color:#ae81ff>780</span>
-7<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Pirakalan&#34;</span>
-8<span style=color:#f92672>)</span> <span style=color:#ae81ff>660</span>
-9<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Nirav&#34;</span>
-10<span style=color:#f92672>)</span> <span style=color:#ae81ff>600</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREVRANGE highscores <span style=color:#bd93f9>0</span> <span style=color:#bd93f9>5</span> WITHSCORES
+1<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Sharon&#34;</span>
+2<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1050</span>
+3<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Abdul&#34;</span>
+4<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>800</span>
+5<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Calvin&#34;</span>
+6<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>780</span>
+7<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Pirakalan&#34;</span>
+8<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>660</span>
+9<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Nirav&#34;</span>
+10<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>600</span>
 </code></pre></div><p>Or get values within a range of scores with <a href=https://redis.io/commands/zrangebyscore>ZRANGEBYSCORE</a>.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZRANGEBYSCORE highscores <span style=color:#ae81ff>700</span> <span style=color:#ae81ff>800</span> WITHSCORES
-1<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Abdul&#34;</span>
-2<span style=color:#f92672>)</span> <span style=color:#ae81ff>800</span>
-3<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;Calvin&#34;</span>
-4<span style=color:#f92672>)</span> <span style=color:#ae81ff>780</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZRANGEBYSCORE highscores <span style=color:#bd93f9>700</span> <span style=color:#bd93f9>800</span> WITHSCORES
+1<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Abdul&#34;</span>
+2<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>800</span>
+3<span style=color:#ff79c6>)</span> <span style=color:#f1fa8c>&#34;Calvin&#34;</span>
+4<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>780</span>
 </code></pre></div><p>And of course you can delete keys from the sorted-set with <a href=https://redis.io/commands/zrem>ZREM</a>.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREM highscores Abdul
-<span style=color:#f92672>(</span>integer<span style=color:#f92672>)</span> <span style=color:#ae81ff>1</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREM highscores Abdul
+<span style=color:#ff79c6>(</span>integer<span style=color:#ff79c6>)</span> <span style=color:#bd93f9>1</span>
 </code></pre></div><h3 id=folding-events>Folding Events</h3>
 <p>Since the sorted set can only have unique values, we can use it to &ldquo;fold&rdquo; a group of events into a single event.
 In order to do that, we need to remove unique information from the events such that they serialize to the
@@ -243,27 +243,27 @@ of events, where each element represents a folded view of events from each group
 sorted-set with <code>ZRANGEBYSCORE</code> to get values with timestamps (scores) before <code>time.Now()-X</code>.
 These values are then published as <code>post-metric-last-updated-X-minutes-ago</code> events and removed from the sorted set[2].</p>
 <p>Back to our example, the <code>post-metric-updated</code> event has the following schema:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#75715e>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
-</span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>PostMetricUpdatedEvent</span> <span style=color:#66d9ef>struct</span> {
-	<span style=color:#a6e22e>PostID</span> <span style=color:#66d9ef>string</span>                      <span style=color:#e6db74>`json:&#34;id&#34;`</span>
-	<span style=color:#a6e22e>AccountID</span> <span style=color:#66d9ef>string</span>                   <span style=color:#e6db74>`json:&#34;account_id&#34;`</span>
-	<span style=color:#a6e22e>UpdatedMetrics</span> <span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#66d9ef>float64</span>  <span style=color:#e6db74>`json:&#34;metrics&#34;`</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#6272a4>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
+</span><span style=color:#6272a4></span><span style=color:#8be9fd;font-style:italic>type</span> PostMetricUpdatedEvent <span style=color:#8be9fd;font-style:italic>struct</span> {
+	PostID <span style=color:#8be9fd>string</span>                      <span style=color:#f1fa8c>`json:&#34;id&#34;`</span>
+	AccountID <span style=color:#8be9fd>string</span>                   <span style=color:#f1fa8c>`json:&#34;account_id&#34;`</span>
+	UpdatedMetrics <span style=color:#8be9fd;font-style:italic>map</span>[<span style=color:#8be9fd>string</span>]<span style=color:#8be9fd>float64</span>  <span style=color:#f1fa8c>`json:&#34;metrics&#34;`</span>
 }
 </code></pre></div><p>And we have the following events being published, shown below in their JSON serialized form:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_1&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>10</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>5</span>}}
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_2&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;comments&#34;</span>: <span style=color:#ae81ff>25</span>, <span style=color:#f92672>&#34;impressions&#34;</span>: <span style=color:#ae81ff>16</span>}}
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_3&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>5</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>2</span>}}
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_4&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;comments&#34;</span>: <span style=color:#ae81ff>33</span>, <span style=color:#f92672>&#34;impressions&#34;</span>: <span style=color:#ae81ff>8</span>}}
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_5&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>12</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>15</span>}}
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_6&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>3</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>1</span>}}
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_1&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>10</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>5</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_2&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;comments&#34;</span>: <span style=color:#bd93f9>25</span>, <span style=color:#ff79c6>&#34;impressions&#34;</span>: <span style=color:#bd93f9>16</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_3&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>5</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>2</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_4&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;comments&#34;</span>: <span style=color:#bd93f9>33</span>, <span style=color:#ff79c6>&#34;impressions&#34;</span>: <span style=color:#bd93f9>8</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_5&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>12</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>15</span>}}
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_6&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>3</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>1</span>}}
 </code></pre></div><p>These 6 events span two unique accounts (<code>account_1</code> and <code>account_2</code>) and should therefore ideally create two separate
 <code>post-metric-last-updated-X-minutes-ago</code> events. Remember, a sorted set stores <em>unique</em> strings, so we cannot just
 insert these JSON strings into the sorted-set as is. If we did, they would be stored as 6 different entries in the set.
 We need to identify the <code>group key</code> for all the events that we want to fold.
 The group key should remove all uniquely identifying information in the event such that events within the same group have the same
 serialized value. In our example, the group key would be just the <code>account_id</code> field, since we just want one event per account:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>}
-{<span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>}
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>}
+{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>}
 </code></pre></div><p>But wait&mldr; We just lost a bunch of information from our events! That&rsquo;s right. I never said this folding was lossless!
 In some cases this may be acceptable, you may be able to gather that information elsewhere, say from an API call, or it
 may not be relevant for what you are trying to do on the subscriber side.</p>
@@ -274,13 +274,13 @@ the information we stored in the database.</p>
 We can easily keep track of these metrics in a regular Redis set. When we query the sorted-set to get
 the folded event older than <code>X</code>, we also grab the metrics that have changed from the regular set. We can then assemble
 the <code>post-metric-last-updated-X-minutes-ago</code> event:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>PostMetricUpdatedEvent</span>  <span style=color:#66d9ef>struct</span> {
-	<span style=color:#a6e22e>AccountID</span> <span style=color:#66d9ef>string</span>        <span style=color:#e6db74>`json:&#34;account_id&#34;`</span>
-	<span style=color:#a6e22e>UpdatedMetrics</span> []<span style=color:#66d9ef>string</span> <span style=color:#e6db74>`json:&#34;metrics&#34;`</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#8be9fd;font-style:italic>type</span> PostMetricUpdatedEvent  <span style=color:#8be9fd;font-style:italic>struct</span> {
+	AccountID <span style=color:#8be9fd>string</span>        <span style=color:#f1fa8c>`json:&#34;account_id&#34;`</span>
+	UpdatedMetrics []<span style=color:#8be9fd>string</span> <span style=color:#f1fa8c>`json:&#34;metrics&#34;`</span>
 }
 </code></pre></div><p>which in our example looks like:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: [<span style=color:#e6db74>&#34;likes&#34;</span>, <span style=color:#e6db74>&#34;shares&#34;</span>, <span style=color:#e6db74>&#34;comments&#34;</span>, <span style=color:#e6db74>&#34;impressions&#34;</span>]}
-{<span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: [<span style=color:#e6db74>&#34;likes&#34;</span>, <span style=color:#e6db74>&#34;shares&#34;</span>]}
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: [<span style=color:#f1fa8c>&#34;likes&#34;</span>, <span style=color:#f1fa8c>&#34;shares&#34;</span>, <span style=color:#f1fa8c>&#34;comments&#34;</span>, <span style=color:#f1fa8c>&#34;impressions&#34;</span>]}
+{<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: [<span style=color:#f1fa8c>&#34;likes&#34;</span>, <span style=color:#f1fa8c>&#34;shares&#34;</span>]}
 </code></pre></div><p>The service performing the aggregation can then subscribe to these events and be notified only once metrics have stopped
 being updated. We can rest assured that we will compute the value at most once in the <code>X</code> minutes since the
 last time a post metric was updated.</p>
@@ -302,18 +302,18 @@ from the sorted set just before adding a new event that would have otherwise bee
 In this situation, we will be over measuring our number of new events and under measuring the number of folded events.
 Another way to look at this is that the value of <code>ZADD</code> only acts as a proxy for the folded count from <em>Redis</em>' perspective.</p>
 <p>Below is an example of what that could look like:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_1&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>10</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>5</span>}}  <span style=color:#960050;background-color:#1e0010>-&gt;</span> <span style=color:#960050;background-color:#1e0010>ZADD</span> <span style=color:#960050;background-color:#1e0010>Returns</span> <span style=color:#ae81ff>1</span> <span style=color:#960050;background-color:#1e0010>(new)</span> 
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_2&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>25</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>16</span>}} <span style=color:#960050;background-color:#1e0010>-&gt;</span> <span style=color:#960050;background-color:#1e0010>ZADD</span> <span style=color:#960050;background-color:#1e0010>Returns</span> <span style=color:#ae81ff>0</span> <span style=color:#960050;background-color:#1e0010>(folded)</span>
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_3&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>5</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>2</span>}}   <span style=color:#960050;background-color:#1e0010>-&gt;</span> <span style=color:#960050;background-color:#1e0010>ZADD</span> <span style=color:#960050;background-color:#1e0010>Returns</span> <span style=color:#ae81ff>0</span> <span style=color:#960050;background-color:#1e0010>(folded)</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_1&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>10</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>5</span>}}  -&gt; ZADD Returns <span style=color:#bd93f9>1</span> (new) 
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_2&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>25</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>16</span>}} -&gt; ZADD Returns <span style=color:#bd93f9>0</span> (folded)
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_3&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>5</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>2</span>}}   -&gt; ZADD Returns <span style=color:#bd93f9>0</span> (folded)
 
-                    <span style=color:#960050;background-color:#1e0010>Publish</span> <span style=color:#960050;background-color:#1e0010>folded</span> <span style=color:#960050;background-color:#1e0010>event</span>  {<span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>}
+                    Publish folded event  {<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>}
 
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_4&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_1&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>33</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>8</span>}}  <span style=color:#960050;background-color:#1e0010>-&gt;</span> <span style=color:#960050;background-color:#1e0010>ZADD</span> <span style=color:#960050;background-color:#1e0010>Returns</span> <span style=color:#ae81ff>1</span> <span style=color:#960050;background-color:#1e0010>(fake</span> <span style=color:#960050;background-color:#1e0010>new)</span>
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_5&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>12</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>15</span>}} <span style=color:#960050;background-color:#1e0010>-&gt;</span> <span style=color:#960050;background-color:#1e0010>ZADD</span> <span style=color:#960050;background-color:#1e0010>Returns</span> <span style=color:#ae81ff>0</span> <span style=color:#960050;background-color:#1e0010>(new)</span>
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_4&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_1&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>33</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>8</span>}}  -&gt; ZADD Returns <span style=color:#bd93f9>1</span> (fake new)
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_5&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>12</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>15</span>}} -&gt; ZADD Returns <span style=color:#bd93f9>0</span> (new)
 
-                    <span style=color:#960050;background-color:#1e0010>Publish</span> <span style=color:#960050;background-color:#1e0010>folded</span> <span style=color:#960050;background-color:#1e0010>event</span>  {<span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>}
+                    Publish folded event  {<span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>}
 
-{<span style=color:#f92672>&#34;id&#34;</span>: <span style=color:#e6db74>&#34;post_6&#34;</span>, <span style=color:#f92672>&#34;account_id&#34;</span>: <span style=color:#e6db74>&#34;account_2&#34;</span>, <span style=color:#f92672>&#34;metrics&#34;</span>: {<span style=color:#f92672>&#34;likes&#34;</span>: <span style=color:#ae81ff>3</span>, <span style=color:#f92672>&#34;shares&#34;</span>: <span style=color:#ae81ff>1</span>}}   <span style=color:#960050;background-color:#1e0010>-&gt;</span> <span style=color:#960050;background-color:#1e0010>ZADD</span> <span style=color:#960050;background-color:#1e0010>Returns</span> <span style=color:#ae81ff>1</span> <span style=color:#960050;background-color:#1e0010>(fake</span> <span style=color:#960050;background-color:#1e0010>new)</span>
+{<span style=color:#ff79c6>&#34;id&#34;</span>: <span style=color:#f1fa8c>&#34;post_6&#34;</span>, <span style=color:#ff79c6>&#34;account_id&#34;</span>: <span style=color:#f1fa8c>&#34;account_2&#34;</span>, <span style=color:#ff79c6>&#34;metrics&#34;</span>: {<span style=color:#ff79c6>&#34;likes&#34;</span>: <span style=color:#bd93f9>3</span>, <span style=color:#ff79c6>&#34;shares&#34;</span>: <span style=color:#bd93f9>1</span>}}   -&gt; ZADD Returns <span style=color:#bd93f9>1</span> (fake new)
 </code></pre></div><p>If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
 window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:</p>
 <p style=text-align:center>${F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p>
