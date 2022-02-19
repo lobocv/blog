@@ -13,7 +13,7 @@
 <meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
 <link rel="shortcut icon" href="/favicon.ico?v=1">
 <meta name=generator content="Hugo 0.92.2">
-<link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/dracula.min.css>
+<link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css>
 <link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css>
 </head>
 <body>
@@ -111,44 +111,44 @@ PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have 
 One of the more common and useful operators is the concatenation operator,
 <code>||</code>, which concatenates two jsonb values into a new JSONB value.</p>
 <p>Example:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql>postgres<span style=color:#ff79c6>=&gt;</span> <span style=color:#ff79c6>SELECT</span> <span style=color:#f1fa8c>&#39;{&#34;a&#34;: 1, &#34;b&#34;: 2}&#39;</span><span style=color:#ff79c6>::</span><span style=color:#8be9fd;font-style:italic>jsonb</span> <span style=color:#ff79c6>||</span> <span style=color:#f1fa8c>&#39;{&#34;b&#34;: 5, &#34;c&#34;: 6}&#39;</span><span style=color:#ff79c6>::</span><span style=color:#8be9fd;font-style:italic>jsonb</span> <span style=color:#ff79c6>as</span> result;
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql>postgres<span style=color:#333>=&gt;</span> <span style=color:#080;font-weight:700>SELECT</span> <span style=background-color:#fff0f0>&#39;{&#34;a&#34;: 1, &#34;b&#34;: 2}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#333>||</span> <span style=background-color:#fff0f0>&#39;{&#34;b&#34;: 5, &#34;c&#34;: 6}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>as</span> result;
 
 result
-<span style=color:#6272a4>--------------------------
-</span><span style=color:#6272a4></span>{<span style=color:#f1fa8c>&#34;a&#34;</span>: <span style=color:#bd93f9>1</span>, <span style=color:#f1fa8c>&#34;b&#34;</span>: <span style=color:#bd93f9>5</span>, <span style=color:#f1fa8c>&#34;c&#34;</span>: <span style=color:#bd93f9>6</span>}
+<span style=color:#888>--------------------------
+</span><span style=color:#888></span>{<span style=background-color:#fff0f0>&#34;a&#34;</span>: <span style=color:#60e;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#34;b&#34;</span>: <span style=color:#60e;font-weight:700>5</span>, <span style=background-color:#fff0f0>&#34;c&#34;</span>: <span style=color:#60e;font-weight:700>6</span>}
 
 </code></pre></div><p>However, this concatenation is limiting. For one, if a key is present in both arguments, the
 second value will completely overwrite the first. This is a problem for nested objects. The following
 example attempts to update the <code>"author.age"</code> value from <code>30</code> to <code>31</code>, but also ends up removing
 the <code>author.name</code> field.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#ff79c6>SELECT</span> <span style=color:#f1fa8c>&#39;{&#34;author&#34;: {&#34;age&#34;: 30, &#34;name&#34;: &#34;Calvin&#34;}}&#39;</span><span style=color:#ff79c6>::</span><span style=color:#8be9fd;font-style:italic>jsonb</span> <span style=color:#ff79c6>||</span> <span style=color:#f1fa8c>&#39;{&#34;author&#34;: {&#34;age&#34;: 31}}&#39;</span><span style=color:#ff79c6>::</span><span style=color:#8be9fd;font-style:italic>jsonb</span> <span style=color:#ff79c6>as</span> result;
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>SELECT</span> <span style=background-color:#fff0f0>&#39;{&#34;author&#34;: {&#34;age&#34;: 30, &#34;name&#34;: &#34;Calvin&#34;}}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#333>||</span> <span style=background-color:#fff0f0>&#39;{&#34;author&#34;: {&#34;age&#34;: 31}}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>as</span> result;
 
 result
-<span style=color:#6272a4>--------------------
-</span><span style=color:#6272a4></span>{<span style=color:#f1fa8c>&#34;author&#34;</span>: {<span style=color:#f1fa8c>&#34;age&#34;</span>: <span style=color:#bd93f9>31</span>}}
+<span style=color:#888>--------------------
+</span><span style=color:#888></span>{<span style=background-color:#fff0f0>&#34;author&#34;</span>: {<span style=background-color:#fff0f0>&#34;age&#34;</span>: <span style=color:#60e;font-weight:700>31</span>}}
 </code></pre></div><p>In order to preserve objects and have their fields merged instead of overwritten,
 we need to write a custom function.</p>
 <p>Here is the full function which recursively merges two JSON objects <code>A </code> and <code>B</code>:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#ff79c6>CREATE</span> <span style=color:#ff79c6>OR</span> <span style=color:#ff79c6>REPLACE</span> <span style=color:#ff79c6>FUNCTION</span> jsonb_recursive_merge(A <span style=color:#8be9fd;font-style:italic>jsonb</span>, B <span style=color:#8be9fd;font-style:italic>jsonb</span>) 
-<span style=color:#ff79c6>RETURNS</span> <span style=color:#8be9fd;font-style:italic>jsonb</span> <span style=color:#ff79c6>LANGUAGE</span> SQL <span style=color:#ff79c6>AS</span> <span style=color:#f1fa8c>$$ 
-</span><span style=color:#f1fa8c>SELECT 
-</span><span style=color:#f1fa8c>    jsonb_object_agg( 
-</span><span style=color:#f1fa8c>        coalesce(ka, kb), 
-</span><span style=color:#f1fa8c>        CASE 
-</span><span style=color:#f1fa8c>            WHEN va isnull THEN vb 
-</span><span style=color:#f1fa8c>            WHEN vb isnull THEN va 
-</span><span style=color:#f1fa8c>            WHEN jsonb_typeof(va) &lt;&gt; &#39;object&#39; OR jsonb_typeof(vb) &lt;&gt; &#39;object&#39; THEN vb 
-</span><span style=color:#f1fa8c>            ELSE jsonb_recursive_merge(va, vb) END 
-</span><span style=color:#f1fa8c>        ) 
-</span><span style=color:#f1fa8c>    FROM jsonb_each(A) temptable1(ka, va)
-</span><span style=color:#f1fa8c>    FULL JOIN jsonb_each(B) temptable2(kb, vb) ON ka = kb  
-</span><span style=color:#f1fa8c>$$</span>;
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>CREATE</span> <span style=color:#080;font-weight:700>OR</span> <span style=color:#080;font-weight:700>REPLACE</span> <span style=color:#080;font-weight:700>FUNCTION</span> jsonb_recursive_merge(A <span style=color:#007020>jsonb</span>, B <span style=color:#007020>jsonb</span>) 
+<span style=color:#080;font-weight:700>RETURNS</span> <span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>LANGUAGE</span> SQL <span style=color:#080;font-weight:700>AS</span> <span style=background-color:#fff0f0>$$ 
+</span><span style=background-color:#fff0f0>SELECT 
+</span><span style=background-color:#fff0f0>    jsonb_object_agg( 
+</span><span style=background-color:#fff0f0>        coalesce(ka, kb), 
+</span><span style=background-color:#fff0f0>        CASE 
+</span><span style=background-color:#fff0f0>            WHEN va isnull THEN vb 
+</span><span style=background-color:#fff0f0>            WHEN vb isnull THEN va 
+</span><span style=background-color:#fff0f0>            WHEN jsonb_typeof(va) &lt;&gt; &#39;object&#39; OR jsonb_typeof(vb) &lt;&gt; &#39;object&#39; THEN vb 
+</span><span style=background-color:#fff0f0>            ELSE jsonb_recursive_merge(va, vb) END 
+</span><span style=background-color:#fff0f0>        ) 
+</span><span style=background-color:#fff0f0>    FROM jsonb_each(A) temptable1(ka, va)
+</span><span style=background-color:#fff0f0>    FULL JOIN jsonb_each(B) temptable2(kb, vb) ON ka = kb  
+</span><span style=background-color:#fff0f0>$$</span>;
 </code></pre></div><p>This function may be a bit hard to digest, so let&rsquo;s break it down:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#ff79c6>SELECT</span> jsonb_object_agg(
-    <span style=color:#bd93f9>...</span>
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>SELECT</span> jsonb_object_agg(
+    <span style=color:#60e;font-weight:700>...</span>
 )
-<span style=color:#ff79c6>FROM</span> jsonb_each(A) temptableA(ka, va)
-<span style=color:#ff79c6>FULL</span> <span style=color:#ff79c6>JOIN</span> jsonb_each(B) temptableB(kb, vb) <span style=color:#ff79c6>ON</span> ka <span style=color:#ff79c6>=</span> kb
+<span style=color:#080;font-weight:700>FROM</span> jsonb_each(A) temptableA(ka, va)
+<span style=color:#080;font-weight:700>FULL</span> <span style=color:#080;font-weight:700>JOIN</span> jsonb_each(B) temptableB(kb, vb) <span style=color:#080;font-weight:700>ON</span> ka <span style=color:#333>=</span> kb
 </code></pre></div><p><code>jsonb_object_agg</code> is a built-in postgresql function which aggregates a list of (key, value) pairs into a JSON object.
 This is what creates the final merged JSON result. Here we are applying <code>jsonb_object_agg</code> on the results of an
 in-memory temporary table that we are creating on the fly.</p>
@@ -204,17 +204,17 @@ As we iterate through the rows of this joined temporary table, we need to determ
 which key (<code>ka</code> or <code>kb</code>) and value (<code>va</code> or <code>vb</code>) we want to place in the resultant
 JSON object.</p>
 <h3 id=selecting-the-key>Selecting the Key</h3>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#ff79c6>coalesce</span>(ka, kb)
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>coalesce</span>(ka, kb)
 </code></pre></div><p><code>coalesce</code> is a built in postgresql function that returns the first non null value it is given.
 In this case it will choose <code>ka</code> if <code>kb</code> is null or <code>kb</code> if <code>ka</code> is null. Since we performed
 our <code>FULL JOIN</code> on columns <code>ka = kb</code>, we are guaranteed to have a non-null value for either <code>ka</code>
 or <code>kb</code>. When both <code>ka</code> and <code>kb</code> are non-null, they will be the same value.</p>
 <h3 id=selecting-the-value>Selecting the Value</h3>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql> <span style=color:#ff79c6>CASE</span> 
-    <span style=color:#ff79c6>WHEN</span> va <span style=color:#ff79c6>isnull</span> <span style=color:#ff79c6>THEN</span> vb 
-    <span style=color:#ff79c6>WHEN</span> vb <span style=color:#ff79c6>isnull</span> <span style=color:#ff79c6>THEN</span> va 
-    <span style=color:#ff79c6>WHEN</span> jsonb_typeof(va) <span style=color:#ff79c6>&lt;&gt;</span> <span style=color:#f1fa8c>&#39;object&#39;</span> <span style=color:#ff79c6>OR</span> jsonb_typeof(vb) <span style=color:#ff79c6>&lt;&gt;</span> <span style=color:#f1fa8c>&#39;object&#39;</span> <span style=color:#ff79c6>THEN</span> vb 
-    <span style=color:#ff79c6>ELSE</span> jsonb_recursive_merge(va, vb) <span style=color:#ff79c6>END</span> 
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql> <span style=color:#080;font-weight:700>CASE</span> 
+    <span style=color:#080;font-weight:700>WHEN</span> va <span style=color:#080;font-weight:700>isnull</span> <span style=color:#080;font-weight:700>THEN</span> vb 
+    <span style=color:#080;font-weight:700>WHEN</span> vb <span style=color:#080;font-weight:700>isnull</span> <span style=color:#080;font-weight:700>THEN</span> va 
+    <span style=color:#080;font-weight:700>WHEN</span> jsonb_typeof(va) <span style=color:#333>&lt;&gt;</span> <span style=background-color:#fff0f0>&#39;object&#39;</span> <span style=color:#080;font-weight:700>OR</span> jsonb_typeof(vb) <span style=color:#333>&lt;&gt;</span> <span style=background-color:#fff0f0>&#39;object&#39;</span> <span style=color:#080;font-weight:700>THEN</span> vb 
+    <span style=color:#080;font-weight:700>ELSE</span> jsonb_recursive_merge(va, vb) <span style=color:#080;font-weight:700>END</span> 
 </code></pre></div><p>To select the value, we have a switch statement. The first two cases chooses the
 non-null value when one of the values is null. The third case is when both <code>va</code> and <code>vb</code>
 are defined and <strong>not both</strong> JSON objects themselves. In this case we choose <code>vb</code> over <code>va</code> (remember we are merging <code>B</code> into <code>A</code>).
@@ -227,10 +227,10 @@ To do this, you would use an <code>INSERT</code> statement with the <code>ON CON
 The columns in the clause specify the columns of a unique index. Following the clause is a list of
 <code>column_name = &lt;expression></code> statements that decide just how each column is to be updated.</p>
 <p>Below is an example of updating a table of tweet metrics:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#ff79c6>INSERT</span> <span style=color:#ff79c6>INTO</span> tweets (id, metrics)
-<span style=color:#ff79c6>VALUES</span> (<span style=color:#bd93f9>1</span>, <span style=color:#f1fa8c>&#39;{&#34;likes&#34;: 22, &#34;comments&#34;: 12}&#39;</span>)
-<span style=color:#ff79c6>ON</span> CONFLICT (id) <span style=color:#ff79c6>DO</span> <span style=color:#ff79c6>UPDATE</span>
-<span style=color:#ff79c6>SET</span> metrics <span style=color:#ff79c6>=</span> jsonb_recursive_merge(tweets<span style=color:#bd93f9>.</span>metrics, excluded<span style=color:#bd93f9>.</span>metrics);
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>INSERT</span> <span style=color:#080;font-weight:700>INTO</span> tweets (id, metrics)
+<span style=color:#080;font-weight:700>VALUES</span> (<span style=color:#60e;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#39;{&#34;likes&#34;: 22, &#34;comments&#34;: 12}&#39;</span>)
+<span style=color:#080;font-weight:700>ON</span> CONFLICT (id) <span style=color:#080;font-weight:700>DO</span> <span style=color:#080;font-weight:700>UPDATE</span>
+<span style=color:#080;font-weight:700>SET</span> metrics <span style=color:#333>=</span> jsonb_recursive_merge(tweets<span style=color:#60e;font-weight:700>.</span>metrics, excluded<span style=color:#60e;font-weight:700>.</span>metrics);
 </code></pre></div><p>In the statement above, if a row with the same ID exists, it will call the <code>jsonb_recursive_merge</code> function on
 the current value, <code>tweets.metrics</code>, and the inserted value, <code>excluded.metrics</code> (the <code>excluded</code> table is the
 name of the special table representing rows proposed for insertion[2]).</p>
@@ -241,7 +241,7 @@ could argue that merging two arrays <code>[1, 2, 3]</code> and <code>[4, 5, 6]</
 all depends on the context of what you are trying to do.</p>
 <p>If you want to also merge the values of arrays you can add an extra <code>case</code> statement that appends the values when
 both <code>va</code> and <code>vb</code> are arrays:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#ff79c6>WHEN</span> jsonb_typeof(va) <span style=color:#ff79c6>=</span> <span style=color:#f1fa8c>&#39;array&#39;</span> <span style=color:#ff79c6>AND</span> jsonb_typeof(vb) <span style=color:#ff79c6>=</span> <span style=color:#f1fa8c>&#39;array&#39;</span> <span style=color:#ff79c6>THEN</span> va <span style=color:#ff79c6>||</span> vb
+<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>WHEN</span> jsonb_typeof(va) <span style=color:#333>=</span> <span style=background-color:#fff0f0>&#39;array&#39;</span> <span style=color:#080;font-weight:700>AND</span> jsonb_typeof(vb) <span style=color:#333>=</span> <span style=background-color:#fff0f0>&#39;array&#39;</span> <span style=color:#080;font-weight:700>THEN</span> va <span style=color:#333>||</span> vb
 </code></pre></div><p>However, be aware that this will apply to <strong>all</strong> arrays encountered in the JSON objects.</p>
 <p>And there you have it, a custom PostgreSQL function that merges two JSON objects, preserving and
 merging any nested objects. I&rsquo;d like to thank and give credit to <code>klin</code> and his
