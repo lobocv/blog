@@ -24,7 +24,7 @@ enableCDN             = false
 cssFiles              = ["default"]
 jsFiles               = ["default"]
 highlightjs           = true
-highlightjsTheme      = ""
+highlightjsTheme      = "dracula"
 highlightjsLang       = []
 viewMorePostsLink     = "/blog/"
 readingTime           = true
@@ -128,7 +128,7 @@ email                 = "calvinvlobo@gmail.com"
 
 [markup]
   [markup.highlight]
-  anchorLineNos = false
+  anchorLineNos = true
   codeFences = true
   guessSyntax = false
   hl_Lines = ''
