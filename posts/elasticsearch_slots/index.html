@@ -1,130 +1,27 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<title>Defusing an ElasticSearch Mapping Explosion with Slots - Lobocv Blog</title>
-<meta name=description content="Software Development Blog">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=twitter:card content="summary_large_image">
-<meta property="og:site_name" content="Lobocv Blog">
-<meta property="og:title" content="Defusing an ElasticSearch Mapping Explosion with Slots">
-<meta property="og:description" content="Software Development Blog">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://blog.lobocv.com/posts/elasticsearch_slots/">
-<meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
-<link rel="shortcut icon" href="/favicon.ico?v=1">
-<meta name=generator content="Hugo 0.92.2">
-<link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css>
-<link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css>
-</head>
-<body>
-<header id=site-header>
-<nav id=site-nav>
-<h1 class=nav-title>
-<a href=/ class=nav>
-lobocv
-</a>
-</h1>
-<menu id=site-nav-menu class="flyout-menu menu">
-<a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
+<!doctype html><html lang=en><head><meta charset=utf-8><title>Defusing an ElasticSearch Mapping Explosion with Slots - Lobocv Blog</title><meta name=description content="Software Development Blog"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=twitter:card content="summary_large_image"><meta property="og:site_name" content="Lobocv Blog"><meta property="og:title" content="Defusing an ElasticSearch Mapping Explosion with Slots"><meta property="og:description" content="Software Development Blog"><meta property="og:type" content="article"><meta property="og:url" content="http://blog.lobocv.com/posts/elasticsearch_slots/"><meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg"><link rel="shortcut icon" href="/favicon.ico?v=1"><meta name=generator content="Hugo 0.95.0"><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css><link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>lobocv</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
 <a href=/categories/ class="nav link"><i class="fas fa-sitemap"></i> Categories</a>
 <a href=/about/ class="nav link"><i class="far fa-id-card"></i> About</a>
 <a href=#share-menu class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
-<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
-</menu>
+<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu>
 <a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
 <a href=#share-menu class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
-</nav>
-<menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu>
-<menu id=share-menu class="flyout-menu menu">
-<h1>Share Post</h1>
-<a href="//twitter.com/share?text=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots&url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn twitter">
-<p>Twitter</p>
-</a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn facebook">
-<p>Facebook</p>
-</a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn reddit">
-<p>Reddit</p>
-</a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn linkedin">
-<p>LinkedIn</p>
-</a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
-<p>Email</p>
-</a>
-</menu>
-</header>
-<div id=wrapper>
-<section id=site-intro>
-<a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a>
-<header>
-<h1>Calvin Lobo</h1>
-</header>
-<main>
-<p>software design, architecture and philosophy</p>
-</main>
-<footer>
-<ul class=socnet-icons>
-<li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
-<li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
-<li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
-</ul>
-</footer>
-</section>
-<main id=site-main>
-<article>
-<div class=post>
-<header>
-<div class=title>
-<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
-</div>
-<div class=meta>
-<time datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time>
-<p>8-Minute Read</p>
-</div>
-</header>
-<div id=socnet-share>
-<a href="//twitter.com/share?text=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots&url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn twitter">
-<p>Twitter</p>
-</a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn facebook">
-<p>Facebook</p>
-</a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn reddit">
-<p>Reddit</p>
-</a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn linkedin">
-<p>LinkedIn</p>
-</a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
-<p>Email</p>
-</a>
-</div>
-<div class=content>
-<img alt="Diffusing A Mapping Explosion" src=https://blog.lobocv.com/posts/elasticsearch_slots/img.png>
-<p>ElasticSearch (and similarly <a href=https://opensearch.org/>OpenSearch</a>[1]) is a popular OLAP database that allows you to quickly search and aggregate your
+<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a></nav><menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu><menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots&url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a><header><h1>Calvin Lobo</h1></header><main><p>software design, architecture and philosophy</p></main><footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2></div><div class=meta><time datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time><p>8-Minute Read</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots&url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f&title=Defusing%20an%20ElasticSearch%20Mapping%20Explosion%20with%20Slots" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2felasticsearch_slots%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><img alt="Diffusing A Mapping Explosion" src=https://blog.lobocv.com/posts/elasticsearch_slots/img.png><p>ElasticSearch (and similarly <a href=https://opensearch.org/>OpenSearch</a>[1]) is a popular OLAP database that allows you to quickly search and aggregate your
 data in a rich and powerful way. It is a mature storage technology build on top of <a href=https://lucene.apache.org/>Apache Lucene</a> that has been used to back
 many online storefronts and analytical processing products around the world.
-Under the hood, ElasticSearch uses Lucene to index each field in the document so that queries can be executed efficiently.</p>
-<p>In order to provide rich searching capabilities, ElasticSearch creates indices for each field it receives. The type of index
+Under the hood, ElasticSearch uses Lucene to index each field in the document so that queries can be executed efficiently.</p><p>In order to provide rich searching capabilities, ElasticSearch creates indices for each field it receives. The type of index
 created is determined by the data type of the field. Possible data types include numeric types such as <code>integer</code>, <code>float</code>
 and <code>double</code> as well as two string data types, <code>keyword</code> and <code>text</code>. The list of all indexed fields (and how they are indexed)
 are stored in what is called an <a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html>index mapping</a>.
 By default, ElasticSearch will create a mapping entry when a new field is encountered by deducing it&rsquo;s data type[2].
-This is called dynamic mapping.</p>
-<p>The problem with dynamic mapping is that once ElasticSearch introduces a field to the mapping, it can
+This is called dynamic mapping.</p><p>The problem with dynamic mapping is that once ElasticSearch introduces a field to the mapping, it can
 <a href=https://www.elastic.co/guide/en/elasticsearch/reference/6.8/indices-delete-mapping.html>never be removed</a>. The index mapping
 also consumes cluster memory and must be replicated to all nodes. If you are not careful, leaving dynamic mapping enabled
 can lead to very large index mappings and slow down your cluster. This is called a <code>mapping explosion</code>. For this reason,
 it is recommended to disable dynamic mapping and enable it sparingly only for objects that you can trust have a finite number
-of fields[3].</p>
-<p>In many cases this is not an issue and it is not restrictive to disable dynamic mapping. However, in some cases a user
+of fields[3].</p><p>In many cases this is not an issue and it is not restrictive to disable dynamic mapping. However, in some cases a user
 may determine the name of a field. In such situations, one must come up with a strategy to mitigate the
 risk of an eventual mapping explosion. The rest of this article talks about how we mitigated a mapping explosion in
-HootSuite&rsquo;s analytics products.</p>
-<h2 id=the-problem-context>The problem context</h2>
-<p>At Hootsuite, we use ElasticSearch to store social media content and their associated metrics such as <code>likes</code>, <code>impressions</code>
+HootSuite&rsquo;s analytics products.</p><h2 id=the-problem-context>The problem context</h2><p>At Hootsuite, we use ElasticSearch to store social media content and their associated metrics such as <code>likes</code>, <code>impressions</code>
 <code>shares</code> and <code>comments</code>.
 With ElasticSearch, customers can search for content across all their social networks in a multitude of ways. They can
 also aggregate metric values from their content over a time range to give them a view of their social marketing performance.
@@ -135,230 +32,51 @@ However, we also collect metrics from offsite attributions such as <a href=https
 and <a href=https://business.adobe.com/ca/products/analytics/adobe-analytics.html>Adobe Analytics</a>.
 On these platforms, users can name and define their own metrics. These are the metrics we need to be careful about.
 Each customer now has the ability to permanently increase our mapping size by creating a unique metric name. The problem
-is even more serious when you consider that these mapping entries will be around long after a customer has stopped using that metric.</p>
-<p>Disabling these fields in the mapping is not an option. We needed to devise a way to still provide the search and aggregation
+is even more serious when you consider that these mapping entries will be around long after a customer has stopped using that metric.</p><p>Disabling these fields in the mapping is not an option. We needed to devise a way to still provide the search and aggregation
 functionality that is so critical to our product functionality, yet also have a stable long tem solution. To overcome
-this, we came up with a system we called <code>Slots</code>.</p>
-<h2 id=defusing-a-mapping-explosion>Defusing a mapping explosion</h2>
-<p>With the slots approach, we gain control of unbounded mapping growth by predefining a fixed number of fields (the slots) and translating
+this, we came up with a system we called <code>Slots</code>.</p><h2 id=defusing-a-mapping-explosion>Defusing a mapping explosion</h2><p>With the slots approach, we gain control of unbounded mapping growth by predefining a fixed number of fields (the slots) and translating
 them in the application code to the user-defined values. We call the application-level translation from metric to slot the
-<code>slot-mapping</code>.</p>
-<img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg>
-<p><strong>Figure 1: Translation of metric names into slots before writing to ElasticSearch. Each customer gets it&rsquo;s own set of slots.</strong></p>
-<p>Each user will have their own slot-mapping, meaning that the metric referred to by each slot will be different for each
+<code>slot-mapping</code>.</p><img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg><p><strong>Figure 1: Translation of metric names into slots before writing to ElasticSearch. Each customer gets it&rsquo;s own set of slots.</strong></p><p>Each user will have their own slot-mapping, meaning that the metric referred to by each slot will be different for each
 user. The number of slots we need to allocate needs to be, at a minimum, equal to the amount that the customer with the
 highest number of custom-named metrics has[4]. From looking at our own data, the customer with the largest
-amount of custom metrics had about 200 metrics. To be safe, we allocated 1000 slots.</p>
-<h2 id=trade-offs>Trade offs</h2>
-<p>The slots approach is not without it own caveats. For one, it makes debugging and reading data more difficult. Now if we
+amount of custom metrics had about 200 metrics. To be safe, we allocated 1000 slots.</p><h2 id=trade-offs>Trade offs</h2><p>The slots approach is not without it own caveats. For one, it makes debugging and reading data more difficult. Now if we
 inspect our data with third party tools such as <a href=https://www.elastic.co/kibana/>Kibana</a>, rather than seeing a field
 named <code>custom_metric_c</code>, we see <code>slot_3</code>. We need to refer back to the slot-mapping to determine which slot refers to
-the metric we are looking for.</p>
-<p>Second, we must be careful that there are no requests for data that combine documents that use different slot-mappings.
+the metric we are looking for.</p><p>Second, we must be careful that there are no requests for data that combine documents that use different slot-mappings.
 You cannot aggregate <code>slot_2</code> across data from two different customers because the metric <code>slot_2</code> refers to will be different.
-Luckily, aggregating across customers is not a valid business use-case and in fact goes again our multi-tenant principles.</p>
-<p>Third, a customer may eventually hit their 1000 slot limit by renaming or adding new metrics that they use temporarily.
+Luckily, aggregating across customers is not a valid business use-case and in fact goes again our multi-tenant principles.</p><p>Third, a customer may eventually hit their 1000 slot limit by renaming or adding new metrics that they use temporarily.
 This has yet to happen but there are a few avenues for when it possibly does. We can reclaim some of the slots that are no longer
 in use by going through data and removing the values from documents. Alternatively, we can simply increase the maximum
-slots.</p>
-<h2 id=defining-the-slot-mapping>Defining the slot mapping</h2>
-<p>Each metric, whether it be from the social network or user defined, has a unique ID and some metadata associated with it
+slots.</p><h2 id=defining-the-slot-mapping>Defining the slot mapping</h2><p>Each metric, whether it be from the social network or user defined, has a unique ID and some metadata associated with it
 called the <code>Metric Definition</code>. At first it was tempting to store the slot number on the metric definition itself, however
 we decided against it because slots are an implementation detail of the fact that we use ElasticSearch as a storage backend.
 By exposing the slots outside of the service performing the translation to/from metric name to slot, we are weakening our
-abstraction.</p>
-<p>Instead, we had the services that write to ElasticSearch each define their own slot-mappings. The slot mapping is defined the first
+abstraction.</p><p>Instead, we had the services that write to ElasticSearch each define their own slot-mappings. The slot mapping is defined the first
 time the service writes the metric to ElasticSearch. The flow requires us to keep a counter for the current number of slots for a user
-and also the relationship between slot and metric name.</p>
-<p><strong>Table: slot_counters</strong></p>
-<table>
-<thead>
-<tr>
-<th>user_id</th>
-<th>n_slots</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>2</td>
-</tr>
-<tr>
-<td>2</td>
-<td>4</td>
-</tr>
-<tr>
-<td>3</td>
-<td>0</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Table 1: The slot_counters table keeps track of the number of slots each user has used.</strong></p>
-<p><strong>Table: slot_mappings</strong></p>
-<table>
-<thead>
-<tr>
-<th>user_id</th>
-<th>slot</th>
-<th>metric</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>1</td>
-<td>visits</td>
-</tr>
-<tr>
-<td>1</td>
-<td>2</td>
-<td>bounces</td>
-</tr>
-<tr>
-<td>2</td>
-<td>1</td>
-<td>website_visits</td>
-</tr>
-<tr>
-<td>2</td>
-<td>2</td>
-<td>website_pageviews</td>
-</tr>
-<tr>
-<td>2</td>
-<td>3</td>
-<td>ecommerce_revenue</td>
-</tr>
-<tr>
-<td>2</td>
-<td>4</td>
-<td>goal_values</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Table 2: The slot_mappings table contains the relationships between slot and metric for each user. It has a unique
-constraint on combinations of (user_id, slot).</strong></p>
-<p>When a new metric is written, the counter is incremented and a new slot_mapping row is written. The slot_mapping table
+and also the relationship between slot and metric name.</p><p><strong>Table: slot_counters</strong></p><table><thead><tr><th>user_id</th><th>n_slots</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr><tr><td>2</td><td>4</td></tr><tr><td>3</td><td>0</td></tr></tbody></table><p><strong>Table 1: The slot_counters table keeps track of the number of slots each user has used.</strong></p><p><strong>Table: slot_mappings</strong></p><table><thead><tr><th>user_id</th><th>slot</th><th>metric</th></tr></thead><tbody><tr><td>1</td><td>1</td><td>visits</td></tr><tr><td>1</td><td>2</td><td>bounces</td></tr><tr><td>2</td><td>1</td><td>website_visits</td></tr><tr><td>2</td><td>2</td><td>website_pageviews</td></tr><tr><td>2</td><td>3</td><td>ecommerce_revenue</td></tr><tr><td>2</td><td>4</td><td>goal_values</td></tr></tbody></table><p><strong>Table 2: The slot_mappings table contains the relationships between slot and metric for each user. It has a unique
+constraint on combinations of (user_id, slot).</strong></p><p>When a new metric is written, the counter is incremented and a new slot_mapping row is written. The slot_mapping table
 must also have a unique compound index on the <code>user_id</code> and <code>slot</code> columns. This unique index prevents
 potential race conditions from multiple API requests trying to grab the next slot number at the same time. In the case of a race condition,
 one of the attempts to write to the slot_mapping table will fail on the unique-constraint and we can roll back the transaction and
-simply retry again.</p>
-<img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/slot_tx.svg>
-<p><strong>Figure 2: A flow diagram of how using a transaction, a unique constraint on the slot_mappings table and a retry mechanism
-keeps concurrent requests from creating the same slot mapping.</strong></p>
-<p>Before writing to ElasticSearch, all metric names are converted to their slot numbers. When reading or aggregating metrics,
+simply retry again.</p><img alt="ElasticSearch Slots" src=https://blog.lobocv.com/posts/elasticsearch_slots/slot_tx.svg><p><strong>Figure 2: A flow diagram of how using a transaction, a unique constraint on the slot_mappings table and a retry mechanism
+keeps concurrent requests from creating the same slot mapping.</strong></p><p>Before writing to ElasticSearch, all metric names are converted to their slot numbers. When reading or aggregating metrics,
 the slot names retrieved from ElasticSearch are translated back to the original metric names with the same slot_mapping table.
-This whole process is completely transparent to the user of the API.</p>
-<p>A small LRU caching layer is added around the metric slot-mapping values to reduce the number of times we need to go
-to the database. Since these values are static and small, this ends up working very well.</p>
-<h2 id=conclusion>Conclusion</h2>
-<p>ElasticSearch / OpenSearch works well for indexing complex data schemas but has limitations when the the number of fields
+This whole process is completely transparent to the user of the API.</p><p>A small LRU caching layer is added around the metric slot-mapping values to reduce the number of times we need to go
+to the database. Since these values are static and small, this ends up working very well.</p><h2 id=conclusion>Conclusion</h2><p>ElasticSearch / OpenSearch works well for indexing complex data schemas but has limitations when the the number of fields
 is unbounded. Using application-level translation with the <code>Slots</code> approach, we can multiplex a fixed number of fields to
 represent a larger number of fields and prevent a mapping explosion. The trade off is an overall increase in complexity
 and reduction to the ease of debugging. The performance impact of adding an additional translation layer is negligible
-with the help of an LRU cache.</p>
-<h3 id=footnotes>Footnotes</h3>
-<p><strong>[1]</strong> In 2021, Elastic.co, the company that owns the license to ElasticSearch, changed their license to be more restrictive
+with the help of an LRU cache.</p><h3 id=footnotes>Footnotes</h3><p><strong>[1]</strong> In 2021, Elastic.co, the company that owns the license to ElasticSearch, changed their license to be more restrictive
 and in conflict of open source values. In response, Amazon created a fork of ElasticSearch 7.10.2 named OpenSearch which
-continues the Apache 2.0 license.</p>
-<p><strong>[2]</strong> ElasticSearch prevents you from shooting yourself in the foot too much by setting an
+continues the Apache 2.0 license.</p><p><strong>[2]</strong> ElasticSearch prevents you from shooting yourself in the foot too much by setting an
 <a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html>upper limit</a> on the number of
-fields in a mapping. As of writing this, the default is 1000. This limit can be increased at any time.</p>
-<p><strong>[3]</strong> Dynamic mapping has another problem, it will set the field settings to general purpose presets. If you want
+fields in a mapping. As of writing this, the default is 1000. This limit can be increased at any time.</p><p><strong>[3]</strong> Dynamic mapping has another problem, it will set the field settings to general purpose presets. If you want
 more control of your fields, such as defining a
 <a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-custom-analyzer.html>custom analyzer</a>,
-you should define the field mappings explicitly.</p>
-<p><strong>[4]</strong> Generally speaking, having hundreds or even thousands of fields in an ElasticSearch mapping is
-not as much of an issue as the unbounded growth of the mapping.</p>
-</div>
-<footer>
-<div class=stats>
-<ul class=categories>
-<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
-</ul>
-<ul class=tags>
-<li>None</li>
-</ul>
-</div>
-</footer>
-</div>
-</article>
-<div class=pagination>
-<a href=/posts/event_folding/ class="button right"><span>Reducing System Load With Event Folding</span></a>
-</div>
-</main>
-<section id=site-sidebar>
-<section id=recent-posts>
-<header>
-<h1>Recent Posts</h1>
-</header>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
-<time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
-<time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2>
-<time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
-<time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
-</header>
-</article>
-</section>
-<section id=categories>
-<header>
-<h1><a href=/categories>Categories</a></h1>
-</header>
-<ul>
-<li>
-<a href=/categories/databases/>databases<span class=count>2</span></a>
-<li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
-<li>
-<a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
-</li>
-</ul>
-</section>
-<section id=mini-bio>
-<header>
-<h1>About</h1>
-</header>
-<p>Backend software developer</p>
-<footer>
-<a href=/about class=button>Learn More</a>
-</footer>
-</section>
-</section>
-<footer id=site-footer>
-<ul class=socnet-icons>
-<li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
-<li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
-<li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
-</ul>
-<p class=copyright>
-© 2021 Lobocv Blog
-<br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.92.2 target=_blank rel=noopener>Hugo</a>
-</p>
-</footer>
-<a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
+you should define the field mappings explicitly.</p><p><strong>[4]</strong> Generally speaking, having hundreds or even thousands of fields in an ElasticSearch mapping is
+not as much of an issue as the unbounded growth of the mapping.</p></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/databases/>Databases</a></li></ul><ul class=tags><li>None</li></ul></div></footer></div></article><div class=pagination><a href=/posts/richer_golang_errors/ class="button left"><span>Advanced Go Error Handling Made Simple</span></a>
+<a href=/posts/event_folding/ class="button right"><span>Reducing System Load With Event Folding</span></a></div></main><section id=site-sidebar><section id=recent-posts><header><h1>Recent Posts</h1></header><article class=mini-post><header><h2><a href=/posts/richer_golang_errors/>Advanced Go Error Handling Made Simple</a></h2><time class=published datetime="2022-03-22 00:00:00 +0000 UTC">March 22, 2022</time></header></article><article class=mini-post><header><h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2><time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2><time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2><time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2><time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time></header></article><footer><a href=/blog/ class=button>See More</a></footer></section><section id=categories><header><h1><a href=/categories>Categories</a></h1></header><ul><li><a href=/categories/databases/>databases<span class=count>2</span></a><li><a href=/categories/architecture/>architecture<span class=count>1</span></a><li><a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a><li><a href=/categories/golang/>golang<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>About</h1></header><p>Backend software developer</p><footer><a href=/about class=button>Learn More</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2022 Lobocv Blog<br>Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.95.0 target=_blank rel=noopener>Hugo</a></p></footer><a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
 <script src=/js/highlight.js></script>
-<script>hljs.highlightAll()</script><script src=/js/bundle.min.c71e1ad682a1b9030ea4c63475579f1d8d13af96a92f718403ba99cf722ec3e2.js integrity="sha256-xx4a1oKhuQMOpMY0dVefHY0Tr5apL3GEA7qZz3Iuw+I="></script>
+<script>hljs.highlightAll()</script><script src=/js/bundle.min.5da94043802b6a43c982ca808d666f3d978d12542580d57d55b4fb5be7dbbcfd.js integrity="sha256-XalAQ4ArakPJgsqAjWZvPZeNElQlgNV9VbT7W+fbvP0="></script>
 <script src=/js/add-on.js></script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-196196121-1','auto'),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-</div>
-</body>
-</html>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-196196121-1","auto"),ga("send","pageview"))</script><script async src=https://www.google-analytics.com/analytics.js></script></div></body></html>

@@ -1,109 +1,11 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<title>Reducing System Load With Event Folding - Lobocv Blog</title>
-<meta name=description content="Software Development Blog">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=twitter:card content="summary_large_image">
-<meta property="og:site_name" content="Lobocv Blog">
-<meta property="og:title" content="Reducing System Load With Event Folding">
-<meta property="og:description" content="Software Development Blog">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://blog.lobocv.com/posts/event_folding/">
-<meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
-<link rel="shortcut icon" href="/favicon.ico?v=1">
-<meta name=generator content="Hugo 0.92.2">
-<link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css>
-<link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css>
-</head>
-<body>
-<header id=site-header>
-<nav id=site-nav>
-<h1 class=nav-title>
-<a href=/ class=nav>
-lobocv
-</a>
-</h1>
-<menu id=site-nav-menu class="flyout-menu menu">
-<a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
+<!doctype html><html lang=en><head><meta charset=utf-8><title>Reducing System Load With Event Folding - Lobocv Blog</title><meta name=description content="Software Development Blog"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=twitter:card content="summary_large_image"><meta property="og:site_name" content="Lobocv Blog"><meta property="og:title" content="Reducing System Load With Event Folding"><meta property="og:description" content="Software Development Blog"><meta property="og:type" content="article"><meta property="og:url" content="http://blog.lobocv.com/posts/event_folding/"><meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg"><link rel="shortcut icon" href="/favicon.ico?v=1"><meta name=generator content="Hugo 0.95.0"><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css><link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>lobocv</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
 <a href=/categories/ class="nav link"><i class="fas fa-sitemap"></i> Categories</a>
 <a href=/about/ class="nav link"><i class="far fa-id-card"></i> About</a>
 <a href=#share-menu class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
-<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
-</menu>
+<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu>
 <a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
 <a href=#share-menu class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
-</nav>
-<menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu>
-<menu id=share-menu class="flyout-menu menu">
-<h1>Share Post</h1>
-<a href="//twitter.com/share?text=Reducing%20System%20Load%20With%20Event%20Folding&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn twitter">
-<p>Twitter</p>
-</a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn facebook">
-<p>Facebook</p>
-</a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn reddit">
-<p>Reddit</p>
-</a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn linkedin">
-<p>LinkedIn</p>
-</a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
-<p>Email</p>
-</a>
-</menu>
-</header>
-<div id=wrapper>
-<section id=site-intro>
-<a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a>
-<header>
-<h1>Calvin Lobo</h1>
-</header>
-<main>
-<p>software design, architecture and philosophy</p>
-</main>
-<footer>
-<ul class=socnet-icons>
-<li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
-<li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
-<li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
-</ul>
-</footer>
-</section>
-<main id=site-main>
-<article>
-<div class=post>
-<header>
-<div class=title>
-<h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
-</div>
-<div class=meta>
-<time datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time>
-<p>12-Minute Read</p>
-</div>
-</header>
-<div id=socnet-share>
-<a href="//twitter.com/share?text=Reducing%20System%20Load%20With%20Event%20Folding&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn twitter">
-<p>Twitter</p>
-</a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn facebook">
-<p>Facebook</p>
-</a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn reddit">
-<p>Reddit</p>
-</a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn linkedin">
-<p>LinkedIn</p>
-</a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
-<p>Email</p>
-</a>
-</div>
-<div class=content>
-<style type=text/css>code.has-jax{font:inherit;font-size:100%;background:inherit;border:inherit}</style>
-<script type=text/x-mathjax-config>
+<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a></nav><menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu><menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=Reducing%20System%20Load%20With%20Event%20Folding&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a><header><h1>Calvin Lobo</h1></header><main><p>software design, architecture and philosophy</p></main><footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2></div><div class=meta><time datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time><p>12-Minute Read</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=Reducing%20System%20Load%20With%20Event%20Folding&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f&title=Reducing%20System%20Load%20With%20Event%20Folding" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fevent_folding%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><style type=text/css>code.has-jax{font:inherit;font-size:100%;background:inherit;border:inherit}</style><script type=text/x-mathjax-config>
 MathJax.Hub.Config({
     tex2jax: {
         inlineMath: [['$','$'], ['\\(','\\)']],
@@ -116,338 +18,149 @@ MathJax.Hub.Queue(function() {
         all[i].SourceElement().parentNode.className += ' has-jax';
     }
 });
-</script>
-<script type=text/javascript src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML-full"></script>
-<div style=text-align:center>
-<img alt="Event Folder" src=https://blog.lobocv.com/posts/event_folding/event_folder.png>
-</div>
-<p>One of the prevailing forms of communication in modern microservice architectures is asynchronous messaging.
+</script><script type=text/javascript src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML-full"></script><div style=text-align:center><img alt="Event Folder" src=https://blog.lobocv.com/posts/event_folding/event_folder.png></div><p>One of the prevailing forms of communication in modern microservice architectures is asynchronous messaging.
 This is the backbone of the event-driven architecture model. In this model, services send messages to a message
 broker, which then distributes (publishes) the messages to interested (subscribed) clients. A message can be used to
 describe an event in the system, such as the creation or update of an entity. This allows you to loosely couple different
-components of your system by having them publish or subscribe to events that they care about.</p>
-<p>But what happens if there is a subscriber that wants to react to a group of events as an aggregate? In other words, what
+components of your system by having them publish or subscribe to events that they care about.</p><p>But what happens if there is a subscriber that wants to react to a group of events as an aggregate? In other words, what
 if you wanted to do something only after all the <code>update</code> events stop being published, rather than reacting to each and
-every one as they come in?</p>
-<p>Let&rsquo;s look at a concrete example.</p>
-<h3 id=aggregating-social-media-metrics>Aggregating Social Media Metrics</h3>
-<p>Let&rsquo;s say you are building a system that collects metrics on your social media posts. Your system needs to provide both an individual
-view of post performance and view of posts' performance as a whole. Let&rsquo;s call metrics on individual posts <code>post-level</code> metrics
+every one as they come in?</p><p>Let&rsquo;s look at a concrete example.</p><h3 id=aggregating-social-media-metrics>Aggregating Social Media Metrics</h3><p>Let&rsquo;s say you are building a system that collects metrics on your social media posts. Your system needs to provide both an individual
+view of post performance and view of posts&rsquo; performance as a whole. Let&rsquo;s call metrics on individual posts <code>post-level</code> metrics
 and metrics on your posts as a whole <code>account-level</code> metrics. To keep things simple, let&rsquo;s assume all post-level metrics can
-be aggregated using a sum:</p>
-<p style=text-align:center>$M_{account} = \sum_{i=0}^{N_{posts}} M_{post_{i}}$</p>
-<p>From the equation above, it is clear that account-level metrics depend on the post-level metrics. Every time a metric on a post changes, we will
+be aggregated using a sum:</p><p style=text-align:center>$M_{account} = \sum_{i=0}^{N_{posts}} M_{post_{i}}$</p><p>From the equation above, it is clear that account-level metrics depend on the post-level metrics. Every time a metric on a post changes, we will
 need to recompute this sum[1]. In an event-driven architecture, you may have a service that performs this aggregation by
 listening to <code>post-metric-updated</code> events. If many of these events are produced within a short period of time, the service
 will be computing this sum many times over, with only the last computation being valuable (all other computations would produce
 a stale value). What we would really like to do in this situation is detect when the last <code>post-metric-updated</code> event comes
-in and only then compute the sum. But how do we know which event is the last?</p>
-<p>Determining which event is last is actually a difficult problem and can&rsquo;t be solved in a general context. The concept of &ldquo;last&rdquo;
+in and only then compute the sum. But how do we know which event is the last?</p><p>Determining which event is last is actually a difficult problem and can&rsquo;t be solved in a general context. The concept of &ldquo;last&rdquo;
 is application specific. In our example, a post can have it&rsquo;s metrics updated at any time. If we are okay with some degree
 of staleness to our account metrics, we can implement a delayed computation that occurs only after we stop receiving events for
-a certain amount of time.</p>
-<h3 id=the-ideal-event>The Ideal Event</h3>
-<p>Ideally, what we would like to have is to have a slightly different event than our <code>post-metric-updated</code> event. What we really
+a certain amount of time.</p><h3 id=the-ideal-event>The Ideal Event</h3><p>Ideally, what we would like to have is to have a slightly different event than our <code>post-metric-updated</code> event. What we really
 want is a <code>post-metric-last-updated-X-minutes-ago</code> event, where <code>X</code> is some acceptable delay. If each <code>post-metric-updated</code>
 event contains a list of all the updated metrics, then the <code>post-metric-last-updated-X-minutes-ago</code> event should contain
 the superset of all the metrics that were updated. Let&rsquo;s define the time duration, <code>X</code>, the <code>folding window</code> because it is
-the minimum duration of time at which similar events will be folded into a single event.</p>
-<p>But how do we produce such an event?</p>
-<p>We will need some code that will do the following for each account:</p>
-<ul>
-<li>Listen for <code>post-metric-updated</code> events</li>
-<li>Keep a super-set of all the updated metrics in the events</li>
-<li>Keep track of the last time a <code>post-metric-updated</code> event comes in</li>
-<li>Produce a <code>post-metric-last-updated-X-minutes-ago</code> when we don&rsquo;t receive an event for <code>X</code> minutes</li>
-</ul>
-<p>This turns out to be fairly simple to implement with the use of Redis <a href=https://redis.io/topics/data-types>sorted-sets</a>.</p>
-<h3 id=sorted-set>Sorted Set</h3>
-<p>A sorted set is a <em>unique</em> collection of strings that have an associated <code>score</code>. The score is used to sort the entries
+the minimum duration of time at which similar events will be folded into a single event.</p><p>But how do we produce such an event?</p><p>We will need some code that will do the following for each account:</p><ul><li>Listen for <code>post-metric-updated</code> events</li><li>Keep a super-set of all the updated metrics in the events</li><li>Keep track of the last time a <code>post-metric-updated</code> event comes in</li><li>Produce a <code>post-metric-last-updated-X-minutes-ago</code> when we don&rsquo;t receive an event for <code>X</code> minutes</li></ul><p>This turns out to be fairly simple to implement with the use of Redis <a href=https://redis.io/topics/data-types>sorted-sets</a>.</p><h3 id=sorted-set>Sorted Set</h3><p>A sorted set is a <em>unique</em> collection of strings that have an associated <code>score</code>. The score is used to sort the entries
 within the set.
-For example, a sorted set would be a perfect data structure for storing a user scoreboard:</p>
-<table>
-<thead>
-<tr>
-<th>Rank</th>
-<th>Name</th>
-<th>Highscore</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Sharon</td>
-<td>1050</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Abdul</td>
-<td>800</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Calvin</td>
-<td>780</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Pirakalan</td>
-<td>660</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Nirav</td>
-<td>600</td>
-</tr>
-</tbody>
-</table>
-<p>We can insert the data above into the sorted set in any order and it will maintain the entries in the order of high-score.</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>780</span> Calvin
-&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
-&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>1050</span> Sharon
-&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
-&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>660</span> Pirakalan
-&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
-&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>600</span> Nirav
-&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
-&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>800</span> Abdul
-&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
-</code></pre></div><p>It is then very simple to ask the sorted set for the top <code>N</code> results with <a href=https://redis.io/commands/zrevrange>ZREVRANGE</a>.
-(You could also get the results sorted by ascending order by using <a href=https://redis.io/commands/zrange>ZRANGE</a>)</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREVRANGE highscores <span style=color:#60e;font-weight:700>0</span> <span style=color:#60e;font-weight:700>5</span> WITHSCORES
-1<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Sharon&#34;</span>
-2<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1050</span>
-3<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Abdul&#34;</span>
-4<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>800</span>
-5<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Calvin&#34;</span>
-6<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>780</span>
-7<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Pirakalan&#34;</span>
-8<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>660</span>
-9<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Nirav&#34;</span>
-10<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>600</span>
-</code></pre></div><p>Or get values within a range of scores with <a href=https://redis.io/commands/zrangebyscore>ZRANGEBYSCORE</a>.</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZRANGEBYSCORE highscores <span style=color:#60e;font-weight:700>700</span> <span style=color:#60e;font-weight:700>800</span> WITHSCORES
-1<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Abdul&#34;</span>
-2<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>800</span>
-3<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Calvin&#34;</span>
-4<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>780</span>
-</code></pre></div><p>And of course you can delete keys from the sorted-set with <a href=https://redis.io/commands/zrem>ZREM</a>.</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>&gt;&gt; ZREM highscores Abdul
-<span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
-</code></pre></div><h3 id=folding-events>Folding Events</h3>
-<p>Since the sorted set can only have unique values, we can use it to &ldquo;fold&rdquo; a group of events into a single event.
+For example, a sorted set would be a perfect data structure for storing a user scoreboard:</p><table><thead><tr><th>Rank</th><th>Name</th><th>Highscore</th></tr></thead><tbody><tr><td>1</td><td>Sharon</td><td>1050</td></tr><tr><td>2</td><td>Abdul</td><td>800</td></tr><tr><td>3</td><td>Calvin</td><td>780</td></tr><tr><td>4</td><td>Pirakalan</td><td>660</td></tr><tr><td>5</td><td>Nirav</td><td>600</td></tr></tbody></table><p>We can insert the data above into the sorted set in any order and it will maintain the entries in the order of high-score.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>780</span> Calvin
+</span></span><span style=display:flex><span>&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
+</span></span><span style=display:flex><span>&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>1050</span> Sharon
+</span></span><span style=display:flex><span>&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
+</span></span><span style=display:flex><span>&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>660</span> Pirakalan
+</span></span><span style=display:flex><span>&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
+</span></span><span style=display:flex><span>&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>600</span> Nirav
+</span></span><span style=display:flex><span>&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
+</span></span><span style=display:flex><span>&gt;&gt; ZADD highscores <span style=color:#60e;font-weight:700>800</span> Abdul
+</span></span><span style=display:flex><span>&gt;&gt; <span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
+</span></span></code></pre></div><p>It is then very simple to ask the sorted set for the top <code>N</code> results with <a href=https://redis.io/commands/zrevrange>ZREVRANGE</a>.
+(You could also get the results sorted by ascending order by using <a href=https://redis.io/commands/zrange>ZRANGE</a>)</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt;&gt; ZREVRANGE highscores <span style=color:#60e;font-weight:700>0</span> <span style=color:#60e;font-weight:700>5</span> WITHSCORES
+</span></span><span style=display:flex><span>1<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Sharon&#34;</span>
+</span></span><span style=display:flex><span>2<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1050</span>
+</span></span><span style=display:flex><span>3<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Abdul&#34;</span>
+</span></span><span style=display:flex><span>4<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>800</span>
+</span></span><span style=display:flex><span>5<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Calvin&#34;</span>
+</span></span><span style=display:flex><span>6<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>780</span>
+</span></span><span style=display:flex><span>7<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Pirakalan&#34;</span>
+</span></span><span style=display:flex><span>8<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>660</span>
+</span></span><span style=display:flex><span>9<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Nirav&#34;</span>
+</span></span><span style=display:flex><span>10<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>600</span>
+</span></span></code></pre></div><p>Or get values within a range of scores with <a href=https://redis.io/commands/zrangebyscore>ZRANGEBYSCORE</a>.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt;&gt; ZRANGEBYSCORE highscores <span style=color:#60e;font-weight:700>700</span> <span style=color:#60e;font-weight:700>800</span> WITHSCORES
+</span></span><span style=display:flex><span>1<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Abdul&#34;</span>
+</span></span><span style=display:flex><span>2<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>800</span>
+</span></span><span style=display:flex><span>3<span style=color:#333>)</span> <span style=background-color:#fff0f0>&#34;Calvin&#34;</span>
+</span></span><span style=display:flex><span>4<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>780</span>
+</span></span></code></pre></div><p>And of course you can delete keys from the sorted-set with <a href=https://redis.io/commands/zrem>ZREM</a>.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt;&gt; ZREM highscores Abdul
+</span></span><span style=display:flex><span><span style=color:#333>(</span>integer<span style=color:#333>)</span> <span style=color:#60e;font-weight:700>1</span>
+</span></span></code></pre></div><h3 id=folding-events>Folding Events</h3><p>Since the sorted set can only have unique values, we can use it to &ldquo;fold&rdquo; a group of events into a single event.
 In order to do that, we need to remove unique information from the events such that they serialize to the
 same string value. We can use the time of the event as the <code>score</code> in the sorted-set. Each time an event is added, we update
 the <code>score</code>, thus keeping track of the last event in the group. Our sorted-set then holds a time-ordered collection
 of events, where each element represents a folded view of events from each group. We can then regularly query the
 sorted-set with <code>ZRANGEBYSCORE</code> to get values with timestamps (scores) before <code>time.Now()-X</code>.
-These values are then published as <code>post-metric-last-updated-X-minutes-ago</code> events and removed from the sorted set[2].</p>
-<p>Back to our example, the <code>post-metric-updated</code> event has the following schema:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#888>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
-</span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> PostMetricUpdatedEvent <span style=color:#080;font-weight:700>struct</span> {
-	PostID <span style=color:#339;font-weight:700>string</span>                      <span style=background-color:#fff0f0>`json:&#34;id&#34;`</span>
-	AccountID <span style=color:#339;font-weight:700>string</span>                   <span style=background-color:#fff0f0>`json:&#34;account_id&#34;`</span>
-	UpdatedMetrics <span style=color:#080;font-weight:700>map</span>[<span style=color:#339;font-weight:700>string</span>]<span style=color:#339;font-weight:700>float64</span>  <span style=background-color:#fff0f0>`json:&#34;metrics&#34;`</span>
-}
-</code></pre></div><p>And we have the following events being published, shown below in their JSON serialized form:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_1&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>10</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>5</span>}}
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_2&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;comments&#34;</span>: <span style=color:#00d;font-weight:700>25</span>, <span style=color:#070>&#34;impressions&#34;</span>: <span style=color:#00d;font-weight:700>16</span>}}
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_3&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>5</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>2</span>}}
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_4&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;comments&#34;</span>: <span style=color:#00d;font-weight:700>33</span>, <span style=color:#070>&#34;impressions&#34;</span>: <span style=color:#00d;font-weight:700>8</span>}}
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_5&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>12</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>15</span>}}
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_6&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>3</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>1</span>}}
-</code></pre></div><p>These 6 events span two unique accounts (<code>account_1</code> and <code>account_2</code>) and should therefore ideally create two separate
+These values are then published as <code>post-metric-last-updated-X-minutes-ago</code> events and removed from the sorted set[2].</p><p>Back to our example, the <code>post-metric-updated</code> event has the following schema:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#888>// PostMetricUpdatedEvent is published when metrics change on a post. It contains the changed metric values.
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> PostMetricUpdatedEvent <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	PostID <span style=color:#339;font-weight:700>string</span>                      <span style=background-color:#fff0f0>`json:&#34;id&#34;`</span>
+</span></span><span style=display:flex><span>	AccountID <span style=color:#339;font-weight:700>string</span>                   <span style=background-color:#fff0f0>`json:&#34;account_id&#34;`</span>
+</span></span><span style=display:flex><span>	UpdatedMetrics <span style=color:#080;font-weight:700>map</span>[<span style=color:#339;font-weight:700>string</span>]<span style=color:#339;font-weight:700>float64</span>  <span style=background-color:#fff0f0>`json:&#34;metrics&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>And we have the following events being published, shown below in their JSON serialized form:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_1&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>10</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>5</span>}}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_2&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;comments&#34;</span>: <span style=color:#00d;font-weight:700>25</span>, <span style=color:#070>&#34;impressions&#34;</span>: <span style=color:#00d;font-weight:700>16</span>}}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_3&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>5</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>2</span>}}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_4&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;comments&#34;</span>: <span style=color:#00d;font-weight:700>33</span>, <span style=color:#070>&#34;impressions&#34;</span>: <span style=color:#00d;font-weight:700>8</span>}}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_5&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>12</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>15</span>}}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_6&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>3</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>1</span>}}
+</span></span></code></pre></div><p>These 6 events span two unique accounts (<code>account_1</code> and <code>account_2</code>) and should therefore ideally create two separate
 <code>post-metric-last-updated-X-minutes-ago</code> events. Remember, a sorted set stores <em>unique</em> strings, so we cannot just
 insert these JSON strings into the sorted-set as is. If we did, they would be stored as 6 different entries in the set.
 We need to identify the <code>group key</code> for all the events that we want to fold.
 The group key should remove all uniquely identifying information in the event such that events within the same group have the same
-serialized value. In our example, the group key would be just the <code>account_id</code> field, since we just want one event per account:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>}
-{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>}
-</code></pre></div><p>But wait&mldr; We just lost a bunch of information from our events! That&rsquo;s right. I never said this folding was lossless!
+serialized value. In our example, the group key would be just the <code>account_id</code> field, since we just want one event per account:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>}
+</span></span></code></pre></div><p>But wait&mldr; We just lost a bunch of information from our events! That&rsquo;s right. I never said this folding was lossless!
 In some cases this may be acceptable, you may be able to gather that information elsewhere, say from an API call, or it
-may not be relevant for what you are trying to do on the subscriber side.</p>
-<p>In cases where you <em>do</em> need that information, we can store it separately in a database as we are inserting values into
+may not be relevant for what you are trying to do on the subscriber side.</p><p>In cases where you <em>do</em> need that information, we can store it separately in a database as we are inserting values into
 the sorted-set. When querying the sorted-set for events to publish, we can &ldquo;unfold&rdquo; the event by enriching it with
-the information we stored in the database.</p>
-<p>In our example, we need a list of metrics that have changed so that we know which metrics to aggregate.
+the information we stored in the database.</p><p>In our example, we need a list of metrics that have changed so that we know which metrics to aggregate.
 We can easily keep track of these metrics in a regular Redis set. When we query the sorted-set to get
 the folded event older than <code>X</code>, we also grab the metrics that have changed from the regular set. We can then assemble
-the <code>post-metric-last-updated-X-minutes-ago</code> event:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#080;font-weight:700>type</span> PostMetricUpdatedEvent  <span style=color:#080;font-weight:700>struct</span> {
-	AccountID <span style=color:#339;font-weight:700>string</span>        <span style=background-color:#fff0f0>`json:&#34;account_id&#34;`</span>
-	UpdatedMetrics []<span style=color:#339;font-weight:700>string</span> <span style=background-color:#fff0f0>`json:&#34;metrics&#34;`</span>
-}
-</code></pre></div><p>which in our example looks like:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: [<span style=background-color:#fff0f0>&#34;likes&#34;</span>, <span style=background-color:#fff0f0>&#34;shares&#34;</span>, <span style=background-color:#fff0f0>&#34;comments&#34;</span>, <span style=background-color:#fff0f0>&#34;impressions&#34;</span>]}
-{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: [<span style=background-color:#fff0f0>&#34;likes&#34;</span>, <span style=background-color:#fff0f0>&#34;shares&#34;</span>]}
-</code></pre></div><p>The service performing the aggregation can then subscribe to these events and be notified only once metrics have stopped
+the <code>post-metric-last-updated-X-minutes-ago</code> event:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>type</span> PostMetricUpdatedEvent  <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	AccountID <span style=color:#339;font-weight:700>string</span>        <span style=background-color:#fff0f0>`json:&#34;account_id&#34;`</span>
+</span></span><span style=display:flex><span>	UpdatedMetrics []<span style=color:#339;font-weight:700>string</span> <span style=background-color:#fff0f0>`json:&#34;metrics&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>which in our example looks like:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: [<span style=background-color:#fff0f0>&#34;likes&#34;</span>, <span style=background-color:#fff0f0>&#34;shares&#34;</span>, <span style=background-color:#fff0f0>&#34;comments&#34;</span>, <span style=background-color:#fff0f0>&#34;impressions&#34;</span>]}
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: [<span style=background-color:#fff0f0>&#34;likes&#34;</span>, <span style=background-color:#fff0f0>&#34;shares&#34;</span>]}
+</span></span></code></pre></div><p>The service performing the aggregation can then subscribe to these events and be notified only once metrics have stopped
 being updated. We can rest assured that we will compute the value at most once in the <code>X</code> minutes since the
-last time a post metric was updated.</p>
-<h3 id=folding-ratio>Folding Ratio</h3>
-<p>To get a feel for how long we should set our folding window to be, we can calculate the folding ratio, ${F}_{R}$:</p>
-<p style=text-align:center>${F}_{R}=\frac{N_F}{N_E}$</p>
-<p>where $N_E$ = Number of fold-eligible events and $N_F$ = Number of actually folded events.</p>
-<p>When inserting into a Redis sorted-set with the <code>ZADD</code> operator, Redis will tell you how many new elements were added to
+last time a post metric was updated.</p><h3 id=folding-ratio>Folding Ratio</h3><p>To get a feel for how long we should set our folding window to be, we can calculate the folding ratio, ${F}_{R}$:</p><p style=text-align:center>${F}_{R}=\frac{N_F}{N_E}$</p><p>where $N_E$ = Number of fold-eligible events and $N_F$ = Number of actually folded events.</p><p>When inserting into a Redis sorted-set with the <code>ZADD</code> operator, Redis will tell you how many new elements were added to
 the sorted-set (score updates excluded). Assuming we are inserting one event at a time, the number of folded events is
 measured by how many times the <code>ZADD</code> operation returns <code>0</code> and the number of new events is measured by how many times
-<code>ZADD</code> returns <code>1</code>. With this in mind, we can measure the following values:</p>
-<p style=text-align:center>$N_E= N_{Total} - Count(ZADD == 1)$</p>
-<p style=text-align:center>$N_F$ = Count(ZADD == 0)</p>
-<p style=text-align:center>$F_R = \frac{Count(ZADD == 0)}{N_{Total} - Count(ZADD == 1)}$</p>
-<p>where $N_{Total}$ is the total number of events.</p>
-<p>But there is a caveat; we are also popping elements off of the sorted set in order to publish the folded event.
+<code>ZADD</code> returns <code>1</code>. With this in mind, we can measure the following values:</p><p style=text-align:center>$N_E= N_{Total} - Count(ZADD == 1)$</p><p style=text-align:center>$N_F$ = Count(ZADD == 0)</p><p style=text-align:center>$F_R = \frac{Count(ZADD == 0)}{N_{Total} - Count(ZADD == 1)}$</p><p>where $N_{Total}$ is the total number of events.</p><p>But there is a caveat; we are also popping elements off of the sorted set in order to publish the folded event.
 If the folding window is too short for the timing of our incoming events, we are going to be removing an element
 from the sorted set just before adding a new event that would have otherwise been folded.
 In this situation, we will be over measuring our number of new events and under measuring the number of folded events.
-Another way to look at this is that the value of <code>ZADD</code> only acts as a proxy for the folded count from <em>Redis</em>' perspective.</p>
-<p>Below is an example of what that could look like:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_1&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>10</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>5</span>}}  <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>1</span> <span style=color:red;background-color:#faa>(new)</span> 
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_2&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>25</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>16</span>}} <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>0</span> <span style=color:red;background-color:#faa>(folded)</span>
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_3&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>5</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>2</span>}}   <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>0</span> <span style=color:red;background-color:#faa>(folded)</span>
-
-                    <span style=color:red;background-color:#faa>Publish</span> <span style=color:red;background-color:#faa>folded</span> <span style=color:red;background-color:#faa>event</span>  {<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>}
-
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_4&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>33</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>8</span>}}  <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>1</span> <span style=color:red;background-color:#faa>(fake</span> <span style=color:red;background-color:#faa>new)</span>
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_5&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>12</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>15</span>}} <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>0</span> <span style=color:red;background-color:#faa>(new)</span>
-
-                    <span style=color:red;background-color:#faa>Publish</span> <span style=color:red;background-color:#faa>folded</span> <span style=color:red;background-color:#faa>event</span>  {<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>}
-
-{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_6&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>3</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>1</span>}}   <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>1</span> <span style=color:red;background-color:#faa>(fake</span> <span style=color:red;background-color:#faa>new)</span>
-</code></pre></div><p>If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
-window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:</p>
-<p style=text-align:center>${F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p>
-<p>If it is really important that you have the most optimal folding ratio, you will need to do some offline analysis such as looking
+Another way to look at this is that the value of <code>ZADD</code> only acts as a proxy for the folded count from <em>Redis</em>&rsquo; perspective.</p><p>Below is an example of what that could look like:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_1&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>10</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>5</span>}}  <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>1</span> <span style=color:red;background-color:#faa>(new)</span> 
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_2&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>25</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>16</span>}} <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>0</span> <span style=color:red;background-color:#faa>(folded)</span>
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_3&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>5</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>2</span>}}   <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>0</span> <span style=color:red;background-color:#faa>(folded)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                    <span style=color:red;background-color:#faa>Publish</span> <span style=color:red;background-color:#faa>folded</span> <span style=color:red;background-color:#faa>event</span>  {<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_4&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_1&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>33</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>8</span>}}  <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>1</span> <span style=color:red;background-color:#faa>(fake</span> <span style=color:red;background-color:#faa>new)</span>
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_5&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>12</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>15</span>}} <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>0</span> <span style=color:red;background-color:#faa>(new)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                    <span style=color:red;background-color:#faa>Publish</span> <span style=color:red;background-color:#faa>folded</span> <span style=color:red;background-color:#faa>event</span>  {<span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{<span style=color:#070>&#34;id&#34;</span>: <span style=background-color:#fff0f0>&#34;post_6&#34;</span>, <span style=color:#070>&#34;account_id&#34;</span>: <span style=background-color:#fff0f0>&#34;account_2&#34;</span>, <span style=color:#070>&#34;metrics&#34;</span>: {<span style=color:#070>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>3</span>, <span style=color:#070>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>1</span>}}   <span style=color:red;background-color:#faa>-&gt;</span> <span style=color:red;background-color:#faa>ZADD</span> <span style=color:red;background-color:#faa>Returns</span> <span style=color:#00d;font-weight:700>1</span> <span style=color:red;background-color:#faa>(fake</span> <span style=color:red;background-color:#faa>new)</span>
+</span></span></code></pre></div><p>If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
+window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:</p><p style=text-align:center>${F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p><p>If it is really important that you have the most optimal folding ratio, you will need to do some offline analysis such as looking
 at historical events within a time range. In this case, you will actually know the number of events that should be folded.
 In most cases, the timing of your events will be irregularly spaced and you will never consistently achieve 100% folding.
-Even then, <em>any</em> non-zero folding is still cutting the amount of work your system is doing.</p>
-<p>The example we have been using throughout this article is a real world scenario. In production we see anywhere between
+Even then, <em>any</em> non-zero folding is still cutting the amount of work your system is doing.</p><p>The example we have been using throughout this article is a real world scenario. In production we see anywhere between
 85% and 98% folding over hundreds of thousands of events per day. Without event folding, we would have overloaded our
 database a long time ago and be forced to drop our event-driven approach in favour of something more traditional such
-as scheduled cron jobs.</p>
-<h3 id=placement-of-the-event-folder>Placement of the Event Folder</h3>
-<p>The event folder can be placed on either the publisher side or on the consumer side. Where you
+as scheduled cron jobs.</p><h3 id=placement-of-the-event-folder>Placement of the Event Folder</h3><p>The event folder can be placed on either the publisher side or on the consumer side. Where you
 decide to place the event folder ultimately comes down to how many consumers want folded events. By folding on the
 publisher side, you can reduce complexity for consumers downstream. However, if only one consumer cares about folding
 events, it may be cleaner to place the event folder on the consumer side and not have to make any changes at the producer.
 If you place the event folder on the publisher side, there is nothing wrong with publishing both folded and
-unfolded events, just be sure to place them on separate topics to prevent confusion.</p>
-<h3 id=another-use-case-database-syncing>Another Use-case: Database Syncing</h3>
-<p>Another use-case where the event folder is highly effective is during database syncing. In a
+unfolded events, just be sure to place them on separate topics to prevent confusion.</p><h3 id=another-use-case-database-syncing>Another Use-case: Database Syncing</h3><p>Another use-case where the event folder is highly effective is during database syncing. In a
 <a href=https://martinfowler.com/bliki/CQRS.html>CQRS</a> pattern,
 we can separate database technologies used for writing and reading by syncing all writes to the read database. Some databases
 such as ElasticSearch perform poorly for document updates[4]. Using an event folder we can reduce the number of
-writes to ElasticSearch, significantly reducing the number of deleted documents that need to be garbage collected.</p>
-<h3 id=a-powerful-tool>A Powerful Tool</h3>
-<p>The event folder can be a powerful tool in your system&rsquo;s architecture. It can be the difference in an event driven
+writes to ElasticSearch, significantly reducing the number of deleted documents that need to be garbage collected.</p><h3 id=a-powerful-tool>A Powerful Tool</h3><p>The event folder can be a powerful tool in your system&rsquo;s architecture. It can be the difference in an event driven
 system&rsquo;s viability. The event folder I have outlined in this article is designed around transient spikes in
 events. If your events are not transient, you may find that your folded events may never be published due to a
 constantly resetting folding window. With a few adjustments, this design can be used for non-transient event streams
-as well.</p>
-<h3 id=appendix>Appendix</h3>
-<p>[1] Many social networks provide APIs for gathering account level metrics so you don&rsquo;t need to do this aggregation yourself.
-However, there are certain metrics which are not supported and cause us to have to do the aggregation ourselves.</p>
-<p>[2] While Redis sorted-sets do have the ability to atomically pop elements from the top or bottom of the sorted set, it
+as well.</p><h3 id=appendix>Appendix</h3><p>[1] Many social networks provide APIs for gathering account level metrics so you don&rsquo;t need to do this aggregation yourself.
+However, there are certain metrics which are not supported and cause us to have to do the aggregation ourselves.</p><p>[2] While Redis sorted-sets do have the ability to atomically pop elements from the top or bottom of the sorted set, it
 unfortunately does not have an atomic way to query and remove elements from the middle. This means that we have to make
 two separate commands: <code>ZRANGE</code> to get the values and <code>ZREM</code> to remove the key after we publish the event.
 The consequence of this is that there is are race conditions if you have multiple threads looking for folded events
 to publish. This means a folded event can be published more than once. If this is a real issue you can consider using
-global locks or partitioning the key-space, with the trade-off of added complexity.</p>
-<p>[3] You should have some reasonable initial guess for your folding window. If not, take a sampling of events and
+global locks or partitioning the key-space, with the trade-off of added complexity.</p><p>[3] You should have some reasonable initial guess for your folding window. If not, take a sampling of events and
 determine it retrospectively offline. If your latency requirements allow for it, start with a larger folding window and
-gradually reduce it while monitoring your folding ratio.</p>
-<p>[4] Even though ElasticSearch has APIs for updating documents, under the hood it is actually indexing a new document and
-marking the old document for deletion.</p>
-</div>
-<footer>
-<div class=stats>
-<ul class=categories>
-<li><a class=article-terms-link href=/categories/architecture/>Architecture</a></li>
-</ul>
-<ul class=tags>
-<li>None</li>
-</ul>
-</div>
-</footer>
-</div>
-</article>
-<div class=pagination>
-<a href=/posts/elasticsearch_slots/ class="button left"><span>Defusing an ElasticSearch Mapping Explosion with Slots</span></a>
-<a href=/posts/dev_environment/ class="button right"><span>Building a Comfortable Dev Environment</span></a>
-</div>
-</main>
-<section id=site-sidebar>
-<section id=recent-posts>
-<header>
-<h1>Recent Posts</h1>
-</header>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
-<time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
-<time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2>
-<time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
-<time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
-</header>
-</article>
-</section>
-<section id=categories>
-<header>
-<h1><a href=/categories>Categories</a></h1>
-</header>
-<ul>
-<li>
-<a href=/categories/databases/>databases<span class=count>2</span></a>
-<li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
-<li>
-<a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
-</li>
-</ul>
-</section>
-<section id=mini-bio>
-<header>
-<h1>About</h1>
-</header>
-<p>Backend software developer</p>
-<footer>
-<a href=/about class=button>Learn More</a>
-</footer>
-</section>
-</section>
-<footer id=site-footer>
-<ul class=socnet-icons>
-<li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
-<li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
-<li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
-</ul>
-<p class=copyright>
-© 2021 Lobocv Blog
-<br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.92.2 target=_blank rel=noopener>Hugo</a>
-</p>
-</footer>
-<a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
+gradually reduce it while monitoring your folding ratio.</p><p>[4] Even though ElasticSearch has APIs for updating documents, under the hood it is actually indexing a new document and
+marking the old document for deletion.</p></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/architecture/>Architecture</a></li></ul><ul class=tags><li>None</li></ul></div></footer></div></article><div class=pagination><a href=/posts/elasticsearch_slots/ class="button left"><span>Defusing an ElasticSearch Mapping Explosion with Slots</span></a>
+<a href=/posts/dev_environment/ class="button right"><span>Building a Comfortable Dev Environment</span></a></div></main><section id=site-sidebar><section id=recent-posts><header><h1>Recent Posts</h1></header><article class=mini-post><header><h2><a href=/posts/richer_golang_errors/>Advanced Go Error Handling Made Simple</a></h2><time class=published datetime="2022-03-22 00:00:00 +0000 UTC">March 22, 2022</time></header></article><article class=mini-post><header><h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2><time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2><time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2><time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2><time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time></header></article><footer><a href=/blog/ class=button>See More</a></footer></section><section id=categories><header><h1><a href=/categories>Categories</a></h1></header><ul><li><a href=/categories/databases/>databases<span class=count>2</span></a><li><a href=/categories/architecture/>architecture<span class=count>1</span></a><li><a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a><li><a href=/categories/golang/>golang<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>About</h1></header><p>Backend software developer</p><footer><a href=/about class=button>Learn More</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2022 Lobocv Blog<br>Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.95.0 target=_blank rel=noopener>Hugo</a></p></footer><a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
 <script src=/js/highlight.js></script>
-<script>hljs.highlightAll()</script><script src=/js/bundle.min.c71e1ad682a1b9030ea4c63475579f1d8d13af96a92f718403ba99cf722ec3e2.js integrity="sha256-xx4a1oKhuQMOpMY0dVefHY0Tr5apL3GEA7qZz3Iuw+I="></script>
+<script>hljs.highlightAll()</script><script src=/js/bundle.min.5da94043802b6a43c982ca808d666f3d978d12542580d57d55b4fb5be7dbbcfd.js integrity="sha256-XalAQ4ArakPJgsqAjWZvPZeNElQlgNV9VbT7W+fbvP0="></script>
 <script src=/js/add-on.js></script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-196196121-1','auto'),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-</div>
-</body>
-</html>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-196196121-1","auto"),ga("send","pageview"))</script><script async src=https://www.google-analytics.com/analytics.js></script></div></body></html>

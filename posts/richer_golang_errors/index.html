@@ -1,0 +1,282 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><title>Advanced Go Error Handling Made Simple - Lobocv Blog</title><meta name=description content="Software Development Blog"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=twitter:card content="summary_large_image"><meta property="og:site_name" content="Lobocv Blog"><meta property="og:title" content="Advanced Go Error Handling Made Simple"><meta property="og:description" content="Software Development Blog"><meta property="og:type" content="article"><meta property="og:url" content="http://blog.lobocv.com/posts/richer_golang_errors/"><meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg"><link rel="shortcut icon" href="/favicon.ico?v=1"><meta name=generator content="Hugo 0.95.0"><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css><link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>lobocv</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
+<a href=/categories/ class="nav link"><i class="fas fa-sitemap"></i> Categories</a>
+<a href=/about/ class="nav link"><i class="far fa-id-card"></i> About</a>
+<a href=#share-menu class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu>
+<a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+<a href=#share-menu class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a></nav><menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu><menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=Advanced%20Go%20Error%20Handling%20Made%20Simple&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f&title=Advanced%20Go%20Error%20Handling%20Made%20Simple" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f&title=Advanced%20Go%20Error%20Handling%20Made%20Simple" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a><header><h1>Calvin Lobo</h1></header><main><p>software design, architecture and philosophy</p></main><footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/posts/richer_golang_errors/>Advanced Go Error Handling Made Simple</a></h2></div><div class=meta><time datetime="2022-03-22 00:00:00 +0000 UTC">March 22, 2022</time><p>15-Minute Read</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=Advanced%20Go%20Error%20Handling%20Made%20Simple&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f&title=Advanced%20Go%20Error%20Handling%20Made%20Simple" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f&title=Advanced%20Go%20Error%20Handling%20Made%20Simple" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fricher_golang_errors%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><p>One of the most notorious design decisions of Go is how it approaches error handling. Go handles errors explicitly by
+returning them as values from any function that can possibly raise an error. To many, this way of error
+handling is uncomfortable at first. The tediousness of having every function not only return an optional error but also check the
+returned error from every function seemed to be too tedious.</p><p>After working with the language for several years, I have come to love the way Go approaches error handling. Requiring the programmer
+explicitly think of all error paths and forcing them to handle them immediately leads to higher quality code and a
+deeper understanding of how their software can react. There are several high quality articles on the practical usages of
+standard library errors in Go, so I will just briefly touch upon the main concepts laid out in order to build some
+foundation for what is next.</p><p>In Go, errors are interfaces with a single method:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>type</span> <span style=color:#339;font-weight:700>error</span> <span style=color:#080;font-weight:700>interface</span> {
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Error</span>() <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>The standard library provides an easy way to create simple errors using the <code>fmt</code> package:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>userID <span style=color:#333>:=</span> <span style=background-color:#fff0f0>&#34;23&#34;</span>
+</span></span><span style=display:flex><span>err <span style=color:#333>:=</span> fmt.<span style=color:#06b;font-weight:700>Errorf</span>(<span style=background-color:#fff0f0>&#34;user with id = %s already exists&#34;</span>, userID)
+</span></span><span style=display:flex><span><span style=color:#888>// &#34;user with id 23 already exists&#34;
+</span></span></span></code></pre></div><p>You can also &ldquo;wrap&rdquo; an existing errors with additional information. The underlying, or &ldquo;wrapped&rdquo; error, can still be
+extracted using the <a href=https://pkg.go.dev/errors#As><code>errors.As()</code></a> or <a href=https://pkg.go.dev/errors#Is><code>errors.Is()</code></a>
+functions. Note the use of <code>%w</code> instead of <code>%s</code> to indicate wrapping:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>errWrapped <span style=color:#333>:=</span> fmt.<span style=color:#06b;font-weight:700>Errorf</span>(<span style=background-color:#fff0f0>&#34;failed to create user: %w&#34;</span>, err)
+</span></span><span style=display:flex><span><span style=color:#888>// &#34;failed to create user: user with id 23 already exists&#34;
+</span></span></span></code></pre></div><p>Both these methods return a very primitive implementation of the <code>error</code> interface, which essentially only contains a
+string and the wrapped error (if it exists). This is in-line with Go&rsquo;s light-weight, less-is-more philosophy. On the
+other hand, there is a lot lacking from these basic errors. Fortunately, because <code>error</code> is an interface, we are free to
+define our own implementation.</p><p>In this article, we will introduce a new error implementation from the <a href=https://github.com/lobocv/simplerr>simplerr</a> package,
+with a main goal of reducing boilerplate and increasing code legibility for practical and common error handling scenarios.
+The primary design decision of the package was to have error handling logic confined to middleware layers and to propagate
+any input parameters for the logic on the error itself.</p><p>But before we jump into it, I want to talk about what errors are, are not, and some use-cases in which the standard
+library implementation is insufficient.</p><h3 id=errors-are-meant-to-be-handled>Errors are meant to be handled</h3><p>The main purpose of errors are to convey when something has gone wrong and to provide enough information so
+that the software or the client can handle it. There are an infinite number of ways software can error, so to
+assist with error handling on the client side, specifications such as HTTP and gRPC define categories of
+errors. Developers using these protocols need to translate errors raised in the application to the specification&rsquo;s
+error codes.</p><p><strong>Table 1: Table of some HTTP status codes and equivalent gRPC codes. <a href=https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md>[Reference]</a></strong></p><table><thead><tr><th>HTTP Status Code</th><th>gRPC Status Code</th></tr></thead><tbody><tr><td>400 Bad Request</td><td>13 Internal</td></tr><tr><td>401 Unauthorized</td><td>16 Unauthenticated</td></tr><tr><td>403 Forbidden</td><td>7 Permission Denied</td></tr><tr><td>404 Not Found</td><td>12 Unimplemented</td></tr><tr><td>429 Too Many Requests</td><td>14 Unavailable</td></tr><tr><td>502 Bad Gateway</td><td>14 Unavailable</td></tr><tr><td>503 Service Unavailable</td><td>14 Unavailable</td></tr><tr><td>504 Gateway Timeout</td><td>14 Unavailable</td></tr><tr><td>All other codes</td><td>2 Unknown</td></tr></tbody></table><p>Often times I see this translation being done manually over each segment of code that returns an error in the API layer.</p><blockquote><p><strong>Problem 1: Error translation to HTTP/gRPC specifications must be done manually for every function that returns an error.</strong></p></blockquote><h3 id=contextual-errors-and-structured-loggers>Contextual Errors and Structured Loggers</h3><p>Structured logging is one of the best ways to build observability into your system. By attaching key-value pairs to log
+statements, one can more readily parse, filter and query specific log messages based on the context of the code at the time.
+Observability stacks such as <a href=https://www.elastic.co/elastic-stack/>ELK</a> or <a href=https://www.sumologic.com/>Sumologic</a> can
+provide a powerful way to aggregate, index and search through millions of logs messages.</p><p><strong>Figure 1: Example of a structured log in JSON formatting.</strong></p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;level&#34;</span>:<span style=background-color:#fff0f0>&#34;info&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;time&#34;</span>:<span style=background-color:#fff0f0>&#34;2022-02-19T10:16:42Z&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;caller&#34;</span>:<span style=background-color:#fff0f0>&#34;eventgenerator/processor.go:90&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;msg&#34;</span>:<span style=background-color:#fff0f0>&#34;Generating event&#34;</span>, 
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;shard&#34;</span>:<span style=color:#00d;font-weight:700>1</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;operation_type&#34;</span>:<span style=background-color:#fff0f0>&#34;update&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;cluster_time&#34;</span>:<span style=background-color:#fff0f0>&#34;2022-02-19T10:16:42Z&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;stream_lag&#34;</span>:<span style=background-color:#fff0f0>&#34;561.806189ms&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;content_id&#34;</span>:<span style=background-color:#fff0f0>&#34;6INvoQTXzZM&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#070>&#34;event_name&#34;</span>:<span style=background-color:#fff0f0>&#34;content-modified&#34;</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>In the majority of cases, you should be logging errors and providing as much contextual information as possible
+in order to make debugging as smooth as possible[1]. The standard library errors do not provide a way to
+pass this contextual information in a way that can easily be extracted and passed to structured loggers.
+This often results in errors being logged manually at the return-site of the error in order to transfer context to the logs.
+This leads to bloated error handling logic which distracts from the intent of the code.</p><blockquote><p><strong>Problem 2: Logging of errors is often a manual process due to a disjointed interaction between error and logging packages.</strong></p></blockquote><p>If we were able to attach key-value information to the error, we may be able to automate the logging of errors in a middleware
+layer. Unfortunately, the standard library <code>http</code> package does not have an <code>error</code> return argument to HTTP handlers, which
+makes writing error logging middleware difficult. The gRPC framework, on the other hand, does return an error and makes this possible.</p><h3 id=decoupling-errors-from-different-layers-is-tedious>Decoupling errors from different layers is tedious</h3><p>In order to decouple layers of in our software, we need to prevent leaking of implementation details
+via errors that need to be detected in above layers. For example, in order to detect that a unique constraint has been
+violated when using MongoDB in the persistence layer, we need to detect a particular error raised by the mongo library:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#888>// IsDuplicateKeyError checks that the error is a mongo duplicate key error
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>func</span> <span style=color:#06b;font-weight:700>IsDuplicateKeyError</span>(err <span style=color:#339;font-weight:700>error</span>) <span style=color:#339;font-weight:700>bool</span> {
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>const</span> mongoDuplicateKeyErrorCode = <span style=color:#00d;font-weight:700>11000</span>
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>if</span> mongoErr, ok <span style=color:#333>:=</span> err.(mongo.WriteException); ok {
+</span></span><span style=display:flex><span>		<span style=color:#080;font-weight:700>for</span> _, writeErr <span style=color:#333>:=</span> <span style=color:#080;font-weight:700>range</span> mongoErr.WriteErrors {
+</span></span><span style=display:flex><span>			<span style=color:#080;font-weight:700>if</span> writeErr.Code <span style=color:#333>==</span> mongoDuplicateKeyErrorCode {
+</span></span><span style=display:flex><span>				<span style=color:#080;font-weight:700>return</span> <span style=color:#080;font-weight:700>true</span>
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>return</span> <span style=color:#080;font-weight:700>false</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>While this function is fine to be used inside the persistence layer, we should not use it inside the application layer
+with which it interfaces due to the direct reference to the <code>mongo</code> package. One method of abstracting the <code>mongo</code> package
+is to have the persistence layer define it&rsquo;s own <code>DuplicateKeyError</code> that is raised instead whenever the <code>mongo</code> library returns an
+error from writing to a duplicate key. This allows us to change the storage library used in the persistence layer away
+from MongoDB without breaking changing any other software layers.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Define an error in the persistence layer package that we can return instead of the mongo.WriteException
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> DuplicateKeyError <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    Field <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>    Value <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Error implements the error interface
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> (e <span style=color:#333>*</span>DuplicateKeyError) <span style=color:#06b;font-weight:700>Error</span>() <span style=color:#339;font-weight:700>string</span> {
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>return</span> fmt.<span style=color:#06b;font-weight:700>Sprintf</span>(<span style=background-color:#fff0f0>&#34;duplicate key error, &#39;%s&#39; already exists with value &#39;%s&#39;&#34;</span>, e.Field, e.Value)   
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Create a user by it&#39;s email. The email is the unique key for looking up users.
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>Database) <span style=color:#06b;font-weight:700>CreateUser</span>(ctx context.Context, email <span style=color:#339;font-weight:700>string</span>) (<span style=color:#339;font-weight:700>string</span>, <span style=color:#339;font-weight:700>error</span>) {
+</span></span><span style=display:flex><span>    user <span style=color:#333>:=</span> User{email: email}
+</span></span><span style=display:flex><span>    result, err <span style=color:#333>:=</span> s.mongodb.<span style=color:#06b;font-weight:700>InsertOne</span>(ctx, user)
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#888>// Check if the error was from mongo.WriteException and return DuplicateKeyError instead
+</span></span></span><span style=display:flex><span><span style=color:#888></span>    <span style=color:#080;font-weight:700>if</span> <span style=color:#06b;font-weight:700>IsDuplicateKeyError</span>(err) {
+</span></span><span style=display:flex><span>        <span style=color:#080;font-weight:700>return</span> <span style=color:#333>&amp;</span>DuplicateKeyError{Field: <span style=background-color:#fff0f0>&#34;email&#34;</span>, Value: email}
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>if</span> err <span style=color:#333>!=</span> <span style=color:#080;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>        <span style=color:#080;font-weight:700>return</span> <span style=background-color:#fff0f0>&#34;&#34;</span>, fmt.<span style=color:#06b;font-weight:700>Errorf</span>(<span style=background-color:#fff0f0>&#34;failed to create user: %w&#34;</span>, err)
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>return</span> result.<span style=color:#06b;font-weight:700>Hex</span>(), <span style=color:#080;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>While this is not a huge amount of added code, this work compounds if you have several separate persistence packages or
+different data storage libraries that each need their own abstracting. To make things worse, if you are using a transport
+layer, you will need to do the same detection and translation yet again in order to return the proper error statuses
+defined in the transport specification.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>Server) <span style=color:#06b;font-weight:700>CreateUser</span>(resp http.ResponseWriter, req <span style=color:#333>*</span>http.Request) {
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>    <span style=color:#888>// extract email from request...
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	
+</span></span><span style=display:flex><span>    err <span style=color:#333>:=</span> s.db.<span style=color:#06b;font-weight:700>CreateUser</span>(email)
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>if</span> err <span style=color:#333>!=</span> <span style=color:#080;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>	    statusCode <span style=color:#333>:=</span> http.StatusInternalServerError
+</span></span><span style=display:flex><span>		
+</span></span><span style=display:flex><span>		<span style=color:#888>// If the error was from a duplicate key, change the status code to BadRequest
+</span></span></span><span style=display:flex><span><span style=color:#888></span>		<span style=color:#080;font-weight:700>var</span> duplicateKeyErr storage.DuplicateKeyError
+</span></span><span style=display:flex><span>	    <span style=color:#080;font-weight:700>if</span> errors.<span style=color:#06b;font-weight:700>As</span>(err, <span style=color:#333>&amp;</span>duplicateKeyErr);
+</span></span><span style=display:flex><span>	        statusCode = http.StatusBadRequest
+</span></span><span style=display:flex><span>	    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        resp.<span style=color:#06b;font-weight:700>WriteHeader</span>(statusCode)
+</span></span><span style=display:flex><span>	    <span style=color:#080;font-weight:700>return</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    resp.<span style=color:#06b;font-weight:700>WriteHeader</span>(http.StatusOK)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>If we take a deeper look into the duplicate key error, we may be
+able to capture the essence of what this error signifies and fit it into a category much like the ones used by gRPC and
+HTTP specifications.</p><blockquote><p><strong>Problem 3: Abstracting errors from third party dependencies is manually intensive.</strong></p></blockquote><h3 id=not-all-errors-are-bad>Not all errors are bad</h3><p>In Go, errors are sometimes intentionally returned as a way of signaling a certain code path or expected state is reached.
+For example, the <code>io</code> package defines an <code>io.EOF</code> sentinel error to signal that the reader has reached the end of a byte stream.
+In this case, <code>io.EOF</code> isn&rsquo;t a true error, but instead a convenient way to indicate a special case in the programming flow.
+Let&rsquo;s call these types of errors <strong>benign errors</strong>.</p><p>Benign errors can often be difficult to work with. Let&rsquo;s look at an example of an API which returns some resource,
+such as a <code>Settings</code> object for a particular optional feature.
+Callers of this API can look for response codes <code>404</code> (HTTP) or <code>5</code> (gRPC) to determine if the user has enabled this
+feature.
+On the server side, the SQL-based storage layer may return a <code>sql.ErrNoRows</code> error for such calls. If we were to log each of
+these errors at the <code>ERROR</code> level we would be flooding the logs with benign errors. In this situation, the real error
+is on the client side, depending on whether the caller is expecting the user to have the feature or not. The client may be simply checking
+whether the user has the feature enabled, in which case, it is also a <code>benign error</code> on the caller side. On the server, we should be able to
+detect these kind of errors and choose not to log them as errors, yet still return them as errors to the client. This
+becomes particularly difficult when error translation and logging are done within middleware.</p><blockquote><p><strong>Problem 4: Handling of benign errors on the server side cannot be done from within middleware.</strong></p></blockquote><h3 id=no-control-over-how-errors-are-retried>No control over how errors are retried</h3><p>Some errors are transient in nature. A hiccup in the network or temporarily unavailable service may cause a request, that
+failed a moment ago, to succeed by just retrying the request. In these cases, it can be useful to retry the request with
+an exponential backoff, in hopes of eventually succeeding. However, not all errors should be retried[3] and there is not
+a standard way to convey this information to upstream callers.</p><blockquote><p><strong>Problem 5: Standard library errors have no way to convey additional information on how to handle the error.</strong></p></blockquote><h2 id=designing-a-better-error>Designing a Better Error</h2><p>Given that the <code>error</code> interface is so small, we can implement our own implementation that to alleviate the
+aforementioned problems. The rest of the article will be used to introduce you to the <a href=https://github.com/lobocv/simplerr>simplerr</a>
+package and show you how it can help you implement better error handling.</p><p>Simplerr defines a single error implementation, called the <code>SimpleError</code>. The SimpleError has several traits that make
+it very flexible for describing and handling errors. Let&rsquo;s look at how the SimpleError solves each of the problems previously
+outlined.</p><h5 id=problem-1-error-translation-to-httpgrpc-specifications-must-be-done-manually-for-every-function-that-returns-an-error>Problem 1: Error translation to HTTP/gRPC specifications must be done manually for every function that returns an error.</h5><p>Simplerr defines a set of standard error codes for common errors that occur in software. Codes such as <code>NotFound</code> or
+<code>PermissionDenied</code> are self explanatory and have analogs in HTTP and gRPC specifications. If the list of standard codes does
+not fit your error, you can globally register your own error codes with the package. Errors can then be handled by their error
+code rather than type or value. This allows us to label and detect errors in a more human-readable and dependency-agnostic way.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>userID <span style=color:#333>:=</span> <span style=color:#00d;font-weight:700>123</span>
+</span></span><span style=display:flex><span>companyID <span style=color:#333>:=</span> <span style=color:#00d;font-weight:700>456</span>
+</span></span><span style=display:flex><span>err <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>New</span>(<span style=background-color:#fff0f0>&#34;user %d does not exist in company %d&#34;</span>, userID, companyID).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Code</span>(CodeNotFound)
+</span></span></code></pre></div><p>These error codes can also be translated directly to HTTP / gRPC specifications
+(see <a href=https://github.com/lobocv/simplerr/ecosystem/http>ecosystem/http</a> and
+<a href=https://github.com/lobocv/simplerr/ecosystem/grpc>ecosystem/grpc</a> packages). In the case of gRPC, an interceptor (middleware)
+allows us to handle this translation automatically via an interceptor.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> <span style=color:#06b;font-weight:700>main</span>() {
+</span></span><span style=display:flex><span>    <span style=color:#888>// Get the default mapping provided by simplerr
+</span></span></span><span style=display:flex><span><span style=color:#888></span>    m <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>DefaultMapping</span>()
+</span></span><span style=display:flex><span>    <span style=color:#888>// Add another mapping from simplerr code to gRPC code
+</span></span></span><span style=display:flex><span><span style=color:#888></span>    m[simplerr.CodeMalformedRequest] = codes.InvalidArgument
+</span></span><span style=display:flex><span>    <span style=color:#888>// Create the interceptor by providing the mapping
+</span></span></span><span style=display:flex><span><span style=color:#888></span>    interceptor <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>TranslateErrorCode</span>(m)
+</span></span><span style=display:flex><span>    <span style=color:#888>// Apply the interceptor to the gRPC server...
+</span></span></span><span style=display:flex><span><span style=color:#888></span>}
+</span></span></code></pre></div><h5 id=problem-2-logging-of-errors-is-often-a-manual-process-due-to-a-disjointed-interaction-between-error-and-logging-packages>Problem 2: Logging of errors is often a manual process due to a disjointed interaction between error and logging packages.</h5><p>With <code>SimpleError</code>, you can attach auxiliary information to the error as key-value pairs, using the
+<a href=https://pkg.go.dev/github.com/lobocv/simplerr#SimpleError.Aux><code>Aux()</code></a> and
+<a href=https://pkg.go.dev/github.com/lobocv/simplerr#SimpleError.AuxMap><code>AuxMap()</code></a> methods.
+These fields can be extracted and used with structured loggers in a middleware layer. This eliminates the need to choose
+between manually logging errors at the point at which they are raised or surrendering structured logging fields.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>userID <span style=color:#333>:=</span> <span style=color:#00d;font-weight:700>123</span>
+</span></span><span style=display:flex><span>companyID <span style=color:#333>:=</span> <span style=color:#00d;font-weight:700>456</span>
+</span></span><span style=display:flex><span>err <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>New</span>(<span style=background-color:#fff0f0>&#34;user %d does not exist in company %d&#34;</span>, userID, companyID).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Code</span>(CodeNotFound).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Aux</span>(<span style=background-color:#fff0f0>&#34;user_id&#34;</span>, userID, <span style=background-color:#fff0f0>&#34;company_id&#34;</span>, companyID)
+</span></span></code></pre></div><p>Retrieving the fields should be done with the <a href=https://pkg.go.dev/github.com/lobocv/simplerr#ExtractAuxiliary><code>ExtractAuxiliary()</code></a>
+function so that auxiliary fields from each wrapped error in the chain are retrieved as well.</p><p><code>SimpleError</code> does not have logging integration due to the difficulty of defining a logging interface that works well
+with the variety of loggers out there. Although adapters could always be written to satisfy the interface, it would
+involve extra steps and does not follow the philosophy of &ldquo;keeping it simple&rdquo;. Fortunately, integrating logging (and more
+particularly, structured logging) is simple with the use of custom attributes.</p><p>Much like the <code>context</code> package, <code>SimpleError</code> allows you to attach arbitrary key-value information onto the error.
+We can use this feature to attach the structured logger at the site at which the error is raised, capturing all the
+scoped logging fields with it.</p><p>The following is an example of attaching a <a href=https://github.com/uber-go/zap>zap logger</a> to a raised error.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Define a custom type so we don&#39;t get naming collisions for value == 1
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> ErrorAttribute <span style=color:#339;font-weight:700>int</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Define a specific key for the attribute
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>const</span> LoggerAttr = <span style=color:#06b;font-weight:700>ErrorAttribute</span>(<span style=color:#00d;font-weight:700>1</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Attach the `LoggerAttr` attribute on the error
+</span></span></span><span style=display:flex><span><span style=color:#888></span>serr <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>New</span>(<span style=background-color:#fff0f0>&#34;user with that email already exists&#34;</span>).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Code</span>(CodeConstraintViolated).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Attr</span>(LoggerAttr, logger)
+</span></span></code></pre></div><p>We can then write middleware which extracts this logger (if it exists) from the error to log the error.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> <span style=color:#06b;font-weight:700>ErrorHandlingMiddleware</span>(<span style=color:#333>...</span>.) (<span style=color:#333>...</span>) {
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>if</span> err <span style=color:#333>!=</span> <span style=color:#080;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>        <span style=color:#888>// Get the logger by using the LoggerAttr key
+</span></span></span><span style=display:flex><span><span style=color:#888></span>        scopedLogger, ok = simplerr.<span style=color:#06b;font-weight:700>GetAttribute</span>(err, LoggerAttr).(<span style=color:#333>*</span>zap.Logger)
+</span></span><span style=display:flex><span>        <span style=color:#080;font-weight:700>if</span> ok {
+</span></span><span style=display:flex><span>            auxFields <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>ExtractAuxiliary</span>(err)
+</span></span><span style=display:flex><span>            <span style=color:#888>// log the error with the scoped logger and the auxiliary fields
+</span></span></span><span style=display:flex><span><span style=color:#888></span>            scopedLogger.<span style=color:#06b;font-weight:700>Error</span>(<span style=color:#333>...</span>)
+</span></span><span style=display:flex><span>        } <span style=color:#080;font-weight:700>else</span> {
+</span></span><span style=display:flex><span>            <span style=color:#888>// log the error with the standard logger
+</span></span></span><span style=display:flex><span><span style=color:#888></span>            log.<span style=color:#06b;font-weight:700>Error</span>(<span style=color:#333>...</span>)     
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h5 id=problem-3-abstracting-errors-from-third-party-dependencies-is-manually-intensive>Problem 3: Abstracting errors from third party dependencies is manually intensive.</h5><p>By using error codes rather than sentinel errors or custom error types, we can greatly simplify how we abstract errors
+from third parties. We can either detect and convert errors, as we would traditionally, or simplify the flow further by
+using the <a href=https://pkg.go.dev/github.com/lobocv/simplerr#Convert><code>Convert()</code></a> function.</p><p><code>Convert()</code> works by running the error through a list of registered error conversion functions in order to convert
+it to a <code>SimpleError</code>. The first conversion function that returns a <code>SimpleError</code> will be used. If no
+conversions are found, the error is converted to a <code>SimpleError</code> with error code <code>CodeUnknown</code>.</p><p>Earlier in the article, we showed an example of detecting a mongodb duplicate key error. Instead of doing this for
+every package that uses mongodb, we can create and register an error conversion function that now is globally checked
+against whenever <code>Convert()</code> is used.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#888>// IsDuplicateKeyError checks that the error is a mongo duplicate key error
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>func</span> <span style=color:#06b;font-weight:700>IsDuplicateKeyError</span>(err <span style=color:#339;font-weight:700>error</span>) <span style=color:#333>*</span>simplerr.SimpleError {
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>const</span> mongoDuplicateKeyErrorCode = <span style=color:#00d;font-weight:700>11000</span>
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>if</span> mongoErr, ok <span style=color:#333>:=</span> err.(mongo.WriteException); ok {
+</span></span><span style=display:flex><span>		<span style=color:#080;font-weight:700>for</span> _, writeErr <span style=color:#333>:=</span> <span style=color:#080;font-weight:700>range</span> mongoErr.WriteErrors {
+</span></span><span style=display:flex><span>			<span style=color:#080;font-weight:700>if</span> writeErr.Code <span style=color:#333>==</span> mongoDuplicateKeyErrorCode {
+</span></span><span style=display:flex><span>				<span style=color:#080;font-weight:700>return</span> simplerr.<span style=color:#06b;font-weight:700>Wrap</span>(err).<span style=color:#06b;font-weight:700>Code</span>(simplerr.CodeConstraintViolated)
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>return</span> <span style=color:#080;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> <span style=color:#06b;font-weight:700>main</span>() {
+</span></span><span style=display:flex><span>    r <span style=color:#333>:=</span> <span style=color:#06b;font-weight:700>GetRegistry</span>()
+</span></span><span style=display:flex><span>    r.<span style=color:#06b;font-weight:700>RegisterErrorConversions</span>(IsDuplicateKeyError)
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#888>// start up application ...
+</span></span></span><span style=display:flex><span><span style=color:#888></span>}
+</span></span></code></pre></div><h5 id=problem-4-handling-of-benign-errors-on-the-server-side-cannot-be-done-from-within-middleware>Problem 4: Handling of benign errors on the server side cannot be done from within middleware.</h5><p><code>SimpleErrors</code> can be marked as <code>silent</code> or <code>benign</code> so that logging middleware can handle them differently. Benign
+errors can optionally add a reason why they are considered benign. This information is useful to have in the log when it
+comes time to debug. How you decide to handle silent or benign errors is ultimately up to you, however it is recommended that silent errors
+not be logged at all, and benign errors be logged at a less severe level such as DEBUG or INFO.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>if</span> err <span style=color:#333>!=</span> <span style=color:#080;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>    <span style=color:#888>// Check if the errror is a SimpleError
+</span></span></span><span style=display:flex><span><span style=color:#888></span>    <span style=color:#080;font-weight:700>if</span> serr <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>As</span>(err); serr <span style=color:#333>!=</span> <span style=color:#080;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>        
+</span></span><span style=display:flex><span>        <span style=color:#080;font-weight:700>if</span> serr.<span style=color:#06b;font-weight:700>IsSilent</span>() {
+</span></span><span style=display:flex><span>            <span style=color:#888>// do not log silent errors
+</span></span></span><span style=display:flex><span><span style=color:#888></span>            <span style=color:#080;font-weight:700>return</span>
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        
+</span></span><span style=display:flex><span>        <span style=color:#888>// if the error is benign, log as INFO
+</span></span></span><span style=display:flex><span><span style=color:#888></span>        <span style=color:#080;font-weight:700>if</span> reason, benign <span style=color:#333>:=</span> serr.<span style=color:#06b;font-weight:700>IsBenign</span>(); benign {
+</span></span><span style=display:flex><span>            log.<span style=color:#06b;font-weight:700>Info</span>(<span style=color:#333>...</span>.)
+</span></span><span style=display:flex><span>            <span style=color:#080;font-weight:700>return</span>
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#888>// log error at ERROR level
+</span></span></span><span style=display:flex><span><span style=color:#888></span>    log.<span style=color:#06b;font-weight:700>Error</span>(<span style=color:#333>...</span>.)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h5 id=problem-5-standard-library-errors-have-no-way-to-convey-additional-information-on-how-to-handle-the-error>Problem 5: Standard library errors have no way to convey additional information on how to handle the error</h5><p>Assigning additional attributes to errors can be done in a similar way to the <code>context</code> package and the
+<code>context.WithValues()</code> function. The following is an example of attaching an attribute to an error which
+indicates that this error should not be retried.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#888>// Define a custom type so we don&#39;t get naming collisions for value == 1
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> ErrorAttribute <span style=color:#339;font-weight:700>int</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Define a specific key for the attribute
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>const</span> NotRetryable = <span style=color:#06b;font-weight:700>ErrorAttribute</span>(<span style=color:#00d;font-weight:700>1</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Attach the `NotRetryable` attribute on the error
+</span></span></span><span style=display:flex><span><span style=color:#888></span>serr <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>New</span>(<span style=background-color:#fff0f0>&#34;user with that email already exists&#34;</span>).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Code</span>(CodeConstraintViolated).
+</span></span><span style=display:flex><span>	<span style=color:#06b;font-weight:700>Attr</span>(NotRetryable, <span style=color:#080;font-weight:700>true</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Get the value of the NotRetryable attribute
+</span></span></span><span style=display:flex><span><span style=color:#888></span>doNotRetry <span style=color:#333>:=</span> simplerr.<span style=color:#06b;font-weight:700>GetAttribute</span>(err, NotRetryable).(<span style=color:#339;font-weight:700>bool</span>)
+</span></span><span style=display:flex><span><span style=color:#888>// doNotRetry == true
+</span></span></span></code></pre></div><h2 id=conclusion>Conclusion</h2><p>The <code>error</code> interface in Go allows us to define alternative implementations for errors. While the standard library errors
+are sufficient, they can be improved to better fit our workflow and style. The <a href=https://github.com/lobocv/simplerr><code>Simplerr</code></a> package is just one way to
+implement a custom error. It solves many of the issues that I had encountered while developing Go services and APIs.
+Hopefully it can help you too.</p><h3 id=footnotes>Footnotes</h3><p><strong>[1]</strong> Be careful who will be receiving the errors you are returning. If it is just software that you own, you can be
+more transparent about the root cause of the issue. However, if you are exposing your API publicly, you do not want
+to give a potentially malicious user implementation details of your system.</p><p><strong>[2]</strong> The <code>error</code> interface was intentionally kept small in order to be easily adopted. Forcing thing such as
+key-value pairs into the error would be enforcing too much on the user who may not care about structured logging
+(for example, CLI developers).</p><p><strong>[3]</strong> Not all errors should be retried. Make sure your request is idempotent so that you are not causing more problems
+for yourself.</p></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/golang/>Golang</a></li></ul><ul class=tags><li>None</li></ul></div></footer></div></article><div class=pagination><a href=/posts/elasticsearch_slots/ class="button right"><span>Defusing an ElasticSearch Mapping Explosion with Slots</span></a></div></main><section id=site-sidebar><section id=recent-posts><header><h1>Recent Posts</h1></header><article class=mini-post><header><h2><a href=/posts/richer_golang_errors/>Advanced Go Error Handling Made Simple</a></h2><time class=published datetime="2022-03-22 00:00:00 +0000 UTC">March 22, 2022</time></header></article><article class=mini-post><header><h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2><time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2><time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2><time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2><time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time></header></article><footer><a href=/blog/ class=button>See More</a></footer></section><section id=categories><header><h1><a href=/categories>Categories</a></h1></header><ul><li><a href=/categories/databases/>databases<span class=count>2</span></a><li><a href=/categories/architecture/>architecture<span class=count>1</span></a><li><a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a><li><a href=/categories/golang/>golang<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>About</h1></header><p>Backend software developer</p><footer><a href=/about class=button>Learn More</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2022 Lobocv Blog<br>Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.95.0 target=_blank rel=noopener>Hugo</a></p></footer><a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
+<script src=/js/highlight.js></script>
+<script>hljs.highlightAll()</script><script src=/js/bundle.min.5da94043802b6a43c982ca808d666f3d978d12542580d57d55b4fb5be7dbbcfd.js integrity="sha256-XalAQ4ArakPJgsqAjWZvPZeNElQlgNV9VbT7W+fbvP0="></script>
+<script src=/js/add-on.js></script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-196196121-1","auto"),ga("send","pageview"))</script><script async src=https://www.google-analytics.com/analytics.js></script></div></body></html>

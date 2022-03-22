@@ -1,344 +1,91 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<title>Recursively Merging JSONB in PostgreSQL - Lobocv Blog</title>
-<meta name=description content="Software Development Blog">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=twitter:card content="summary_large_image">
-<meta property="og:site_name" content="Lobocv Blog">
-<meta property="og:title" content="Recursively Merging JSONB in PostgreSQL">
-<meta property="og:description" content="Software Development Blog">
-<meta property="og:type" content="article">
-<meta property="og:url" content="http://blog.lobocv.com/posts/recursive_jsonb_merge/">
-<meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg">
-<link rel="shortcut icon" href="/favicon.ico?v=1">
-<meta name=generator content="Hugo 0.92.2">
-<link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css>
-<link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css>
-</head>
-<body>
-<header id=site-header>
-<nav id=site-nav>
-<h1 class=nav-title>
-<a href=/ class=nav>
-lobocv
-</a>
-</h1>
-<menu id=site-nav-menu class="flyout-menu menu">
-<a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
+<!doctype html><html lang=en><head><meta charset=utf-8><title>Recursively Merging JSONB in PostgreSQL - Lobocv Blog</title><meta name=description content="Software Development Blog"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=twitter:card content="summary_large_image"><meta property="og:site_name" content="Lobocv Blog"><meta property="og:title" content="Recursively Merging JSONB in PostgreSQL"><meta property="og:description" content="Software Development Blog"><meta property="og:type" content="article"><meta property="og:url" content="http://blog.lobocv.com/posts/recursive_jsonb_merge/"><meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg"><link rel="shortcut icon" href="/favicon.ico?v=1"><meta name=generator content="Hugo 0.95.0"><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css><link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>lobocv</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class="fa fa-home"></i> Home</a>
 <a href=/categories/ class="nav link"><i class="fas fa-sitemap"></i> Categories</a>
 <a href=/about/ class="nav link"><i class="far fa-id-card"></i> About</a>
 <a href=#share-menu class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
-<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a>
-</menu>
+<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu>
 <a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
 <a href=#share-menu class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
-<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a>
-</nav>
-<menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu>
-<menu id=share-menu class="flyout-menu menu">
-<h1>Share Post</h1>
-<a href="//twitter.com/share?text=Recursively%20Merging%20JSONB%20in%20PostgreSQL&url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn twitter">
-<p>Twitter</p>
-</a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn facebook">
-<p>Facebook</p>
-</a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn reddit">
-<p>Reddit</p>
-</a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn linkedin">
-<p>LinkedIn</p>
-</a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
-<p>Email</p>
-</a>
-</menu>
-</header>
-<div id=wrapper>
-<section id=site-intro>
-<a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a>
-<header>
-<h1>Calvin Lobo</h1>
-</header>
-<main>
-<p>software design, architecture and philosophy</p>
-</main>
-<footer>
-<ul class=socnet-icons>
-<li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
-<li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
-<li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
-</ul>
-</footer>
-</section>
-<main id=site-main>
-<article>
-<div class=post>
-<header>
-<div class=title>
-<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
-</div>
-<div class=meta>
-<time datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
-<p>5-Minute Read</p>
-</div>
-</header>
-<div id=socnet-share>
-<a href="//twitter.com/share?text=Recursively%20Merging%20JSONB%20in%20PostgreSQL&url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn twitter">
-<p>Twitter</p>
-</a>
-<a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn facebook">
-<p>Facebook</p>
-</a>
-<a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn reddit">
-<p>Reddit</p>
-</a>
-<a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn linkedin">
-<p>LinkedIn</p>
-</a>
-<a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank class="nav share-btn email" data-proofer-ignore>
-<p>Email</p>
-</a>
-</div>
-<div class=content>
-<div style=text-align:center>
-<img alt="Recursively Merging JSON in PostgreSQL" src=https://blog.lobocv.com/posts/recursive_jsonb_merge/banner.png>
-</div>
-<p>In addition to storing primitive data types such as <code>INT</code>, <code>FLOAT</code> and <code>VARCHAR</code>,
+<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a></nav><menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu><menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=Recursively%20Merging%20JSONB%20in%20PostgreSQL&url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a><header><h1>Calvin Lobo</h1></header><main><p>software design, architecture and philosophy</p></main><footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2></div><div class=meta><time datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time><p>5-Minute Read</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=Recursively%20Merging%20JSONB%20in%20PostgreSQL&url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f&title=Recursively%20Merging%20JSONB%20in%20PostgreSQL" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2frecursive_jsonb_merge%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><div style=text-align:center><img alt="Recursively Merging JSON in PostgreSQL" src=https://blog.lobocv.com/posts/recursive_jsonb_merge/banner.png></div><p>In addition to storing primitive data types such as <code>INT</code>, <code>FLOAT</code> and <code>VARCHAR</code>,
 PostgreSQL supports storing JSON and binary JSON (JSONB). These JSON types have a wide variety of
 <a href=https://www.postgresql.org/docs/12/functions-json.html>functions and operators[1]</a>.
 One of the more common and useful operators is the concatenation operator,
-<code>||</code>, which concatenates two jsonb values into a new JSONB value.</p>
-<p>Example:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql>postgres<span style=color:#333>=&gt;</span> <span style=color:#080;font-weight:700>SELECT</span> <span style=background-color:#fff0f0>&#39;{&#34;a&#34;: 1, &#34;b&#34;: 2}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#333>||</span> <span style=background-color:#fff0f0>&#39;{&#34;b&#34;: 5, &#34;c&#34;: 6}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>as</span> result;
-
-result
-<span style=color:#888>--------------------------
-</span><span style=color:#888></span>{<span style=background-color:#fff0f0>&#34;a&#34;</span>: <span style=color:#60e;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#34;b&#34;</span>: <span style=color:#60e;font-weight:700>5</span>, <span style=background-color:#fff0f0>&#34;c&#34;</span>: <span style=color:#60e;font-weight:700>6</span>}
-
-</code></pre></div><p>However, this concatenation is limiting. For one, if a key is present in both arguments, the
+<code>||</code>, which concatenates two jsonb values into a new JSONB value.</p><p>Example:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span>postgres<span style=color:#333>=&gt;</span> <span style=color:#080;font-weight:700>SELECT</span> <span style=background-color:#fff0f0>&#39;{&#34;a&#34;: 1, &#34;b&#34;: 2}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#333>||</span> <span style=background-color:#fff0f0>&#39;{&#34;b&#34;: 5, &#34;c&#34;: 6}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>as</span> result;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>result
+</span></span><span style=display:flex><span><span style=color:#888>--------------------------
+</span></span></span><span style=display:flex><span><span style=color:#888></span>{<span style=background-color:#fff0f0>&#34;a&#34;</span>: <span style=color:#60e;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#34;b&#34;</span>: <span style=color:#60e;font-weight:700>5</span>, <span style=background-color:#fff0f0>&#34;c&#34;</span>: <span style=color:#60e;font-weight:700>6</span>}
+</span></span></code></pre></div><p>However, this concatenation is limiting. For one, if a key is present in both arguments, the
 second value will completely overwrite the first. This is a problem for nested objects. The following
 example attempts to update the <code>"author.age"</code> value from <code>30</code> to <code>31</code>, but also ends up removing
-the <code>author.name</code> field.</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>SELECT</span> <span style=background-color:#fff0f0>&#39;{&#34;author&#34;: {&#34;age&#34;: 30, &#34;name&#34;: &#34;Calvin&#34;}}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#333>||</span> <span style=background-color:#fff0f0>&#39;{&#34;author&#34;: {&#34;age&#34;: 31}}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>as</span> result;
-
-result
-<span style=color:#888>--------------------
-</span><span style=color:#888></span>{<span style=background-color:#fff0f0>&#34;author&#34;</span>: {<span style=background-color:#fff0f0>&#34;age&#34;</span>: <span style=color:#60e;font-weight:700>31</span>}}
-</code></pre></div><p>In order to preserve objects and have their fields merged instead of overwritten,
-we need to write a custom function.</p>
-<p>Here is the full function which recursively merges two JSON objects <code>A </code> and <code>B</code>:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>CREATE</span> <span style=color:#080;font-weight:700>OR</span> <span style=color:#080;font-weight:700>REPLACE</span> <span style=color:#080;font-weight:700>FUNCTION</span> jsonb_recursive_merge(A <span style=color:#007020>jsonb</span>, B <span style=color:#007020>jsonb</span>) 
-<span style=color:#080;font-weight:700>RETURNS</span> <span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>LANGUAGE</span> SQL <span style=color:#080;font-weight:700>AS</span> <span style=background-color:#fff0f0>$$ 
-</span><span style=background-color:#fff0f0>SELECT 
-</span><span style=background-color:#fff0f0>    jsonb_object_agg( 
-</span><span style=background-color:#fff0f0>        coalesce(ka, kb), 
-</span><span style=background-color:#fff0f0>        CASE 
-</span><span style=background-color:#fff0f0>            WHEN va isnull THEN vb 
-</span><span style=background-color:#fff0f0>            WHEN vb isnull THEN va 
-</span><span style=background-color:#fff0f0>            WHEN jsonb_typeof(va) &lt;&gt; &#39;object&#39; OR jsonb_typeof(vb) &lt;&gt; &#39;object&#39; THEN vb 
-</span><span style=background-color:#fff0f0>            ELSE jsonb_recursive_merge(va, vb) END 
-</span><span style=background-color:#fff0f0>        ) 
-</span><span style=background-color:#fff0f0>    FROM jsonb_each(A) temptable1(ka, va)
-</span><span style=background-color:#fff0f0>    FULL JOIN jsonb_each(B) temptable2(kb, vb) ON ka = kb  
-</span><span style=background-color:#fff0f0>$$</span>;
-</code></pre></div><p>This function may be a bit hard to digest, so let&rsquo;s break it down:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>SELECT</span> jsonb_object_agg(
-    <span style=color:#60e;font-weight:700>...</span>
-)
-<span style=color:#080;font-weight:700>FROM</span> jsonb_each(A) temptableA(ka, va)
-<span style=color:#080;font-weight:700>FULL</span> <span style=color:#080;font-weight:700>JOIN</span> jsonb_each(B) temptableB(kb, vb) <span style=color:#080;font-weight:700>ON</span> ka <span style=color:#333>=</span> kb
-</code></pre></div><p><code>jsonb_object_agg</code> is a built-in postgresql function which aggregates a list of (key, value) pairs into a JSON object.
+the <code>author.name</code> field.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span><span style=color:#080;font-weight:700>SELECT</span> <span style=background-color:#fff0f0>&#39;{&#34;author&#34;: {&#34;age&#34;: 30, &#34;name&#34;: &#34;Calvin&#34;}}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#333>||</span> <span style=background-color:#fff0f0>&#39;{&#34;author&#34;: {&#34;age&#34;: 31}}&#39;</span><span style=color:#333>::</span><span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>as</span> result;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>result
+</span></span><span style=display:flex><span><span style=color:#888>--------------------
+</span></span></span><span style=display:flex><span><span style=color:#888></span>{<span style=background-color:#fff0f0>&#34;author&#34;</span>: {<span style=background-color:#fff0f0>&#34;age&#34;</span>: <span style=color:#60e;font-weight:700>31</span>}}
+</span></span></code></pre></div><p>In order to preserve objects and have their fields merged instead of overwritten,
+we need to write a custom function.</p><p>Here is the full function which recursively merges two JSON objects <code>A</code> and <code>B</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span><span style=color:#080;font-weight:700>CREATE</span> <span style=color:#080;font-weight:700>OR</span> <span style=color:#080;font-weight:700>REPLACE</span> <span style=color:#080;font-weight:700>FUNCTION</span> jsonb_recursive_merge(A <span style=color:#007020>jsonb</span>, B <span style=color:#007020>jsonb</span>) 
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>RETURNS</span> <span style=color:#007020>jsonb</span> <span style=color:#080;font-weight:700>LANGUAGE</span> SQL <span style=color:#080;font-weight:700>AS</span> <span style=background-color:#fff0f0>$$ 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>SELECT 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>    jsonb_object_agg( 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>        coalesce(ka, kb), 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>        CASE 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>            WHEN va isnull THEN vb 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>            WHEN vb isnull THEN va 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>            WHEN jsonb_typeof(va) &lt;&gt; &#39;object&#39; OR jsonb_typeof(vb) &lt;&gt; &#39;object&#39; THEN vb 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>            ELSE jsonb_recursive_merge(va, vb) END 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>        ) 
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>    FROM jsonb_each(A) temptable1(ka, va)
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>    FULL JOIN jsonb_each(B) temptable2(kb, vb) ON ka = kb  
+</span></span></span><span style=display:flex><span><span style=background-color:#fff0f0>$$</span>;
+</span></span></code></pre></div><p>This function may be a bit hard to digest, so let&rsquo;s break it down:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span><span style=color:#080;font-weight:700>SELECT</span> jsonb_object_agg(
+</span></span><span style=display:flex><span>    <span style=color:#60e;font-weight:700>...</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>FROM</span> jsonb_each(A) temptableA(ka, va)
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>FULL</span> <span style=color:#080;font-weight:700>JOIN</span> jsonb_each(B) temptableB(kb, vb) <span style=color:#080;font-weight:700>ON</span> ka <span style=color:#333>=</span> kb
+</span></span></code></pre></div><p><code>jsonb_object_agg</code> is a built-in postgresql function which aggregates a list of (key, value) pairs into a JSON object.
 This is what creates the final merged JSON result. Here we are applying <code>jsonb_object_agg</code> on the results of an
-in-memory temporary table that we are creating on the fly.</p>
-<h3 id=temporary-tables>Temporary tables</h3>
-<p><code>jsonb_each()</code> is a built-in postgresql function that iterates a JSON object returning (key, value) pairs.
+in-memory temporary table that we are creating on the fly.</p><h3 id=temporary-tables>Temporary tables</h3><p><code>jsonb_each()</code> is a built-in postgresql function that iterates a JSON object returning (key, value) pairs.
 We call this function on both input JSON object <code>A</code> and <code>B</code> and then store the results in temporary tables
-<code>temptableA</code> and <code>temptableB</code> respectively.</p>
-<p><code>temptableA(ka, va)</code> is the definition of a temporary table with columns <code>ka</code> and <code>va</code> for the key and value results
+<code>temptableA</code> and <code>temptableB</code> respectively.</p><p><code>temptableA(ka, va)</code> is the definition of a temporary table with columns <code>ka</code> and <code>va</code> for the key and value results
 of <code>jsonb_each()</code>. This is where <code>ka</code> and <code>va</code> are first introduced. We do the exact same thing for JSON
-object <code>B</code> to get <code>kb</code> and <code>vb</code>.</p>
-<p>Next we do a <code>FULL JOIN</code> with the two temporary tables on the key column. This gives us one
+object <code>B</code> to get <code>kb</code> and <code>vb</code>.</p><p>Next we do a <code>FULL JOIN</code> with the two temporary tables on the key column. This gives us one
 table that has all the (key, value) pairs from both JSON objects <code>A</code> and <code>B</code>. Below is an
-example of what the results of that table may look like:</p>
-<table>
-<thead>
-<tr>
-<th>ka</th>
-<th>va</th>
-<th>kb</th>
-<th>vb</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>likes</td>
-<td>5</td>
-<td>likes</td>
-<td>10</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>comments</td>
-<td>3</td>
-</tr>
-<tr>
-<td>shares</td>
-<td>1</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>impressions</td>
-<td>65</td>
-<td>impressions</td>
-<td>130</td>
-</tr>
-</tbody>
-</table>
-<p>Table 1: An example of a FULL JOIN with two temporary tables produced by <code>jsonb_each()</code></p>
-<p>It is this table from which we select the input to <code>jsonb_object_agg()</code>.
+example of what the results of that table may look like:</p><table><thead><tr><th>ka</th><th>va</th><th>kb</th><th>vb</th></tr></thead><tbody><tr><td>likes</td><td>5</td><td>likes</td><td>10</td></tr><tr><td></td><td></td><td>comments</td><td>3</td></tr><tr><td>shares</td><td>1</td><td></td><td></td></tr><tr><td>impressions</td><td>65</td><td>impressions</td><td>130</td></tr></tbody></table><p>Table 1: An example of a FULL JOIN with two temporary tables produced by <code>jsonb_each()</code></p><p>It is this table from which we select the input to <code>jsonb_object_agg()</code>.
 As we iterate through the rows of this joined temporary table, we need to determine
 which key (<code>ka</code> or <code>kb</code>) and value (<code>va</code> or <code>vb</code>) we want to place in the resultant
-JSON object.</p>
-<h3 id=selecting-the-key>Selecting the Key</h3>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>coalesce</span>(ka, kb)
-</code></pre></div><p><code>coalesce</code> is a built in postgresql function that returns the first non null value it is given.
+JSON object.</p><h3 id=selecting-the-key>Selecting the Key</h3><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span><span style=color:#080;font-weight:700>coalesce</span>(ka, kb)
+</span></span></code></pre></div><p><code>coalesce</code> is a built in postgresql function that returns the first non null value it is given.
 In this case it will choose <code>ka</code> if <code>kb</code> is null or <code>kb</code> if <code>ka</code> is null. Since we performed
 our <code>FULL JOIN</code> on columns <code>ka = kb</code>, we are guaranteed to have a non-null value for either <code>ka</code>
-or <code>kb</code>. When both <code>ka</code> and <code>kb</code> are non-null, they will be the same value.</p>
-<h3 id=selecting-the-value>Selecting the Value</h3>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql> <span style=color:#080;font-weight:700>CASE</span> 
-    <span style=color:#080;font-weight:700>WHEN</span> va <span style=color:#080;font-weight:700>isnull</span> <span style=color:#080;font-weight:700>THEN</span> vb 
-    <span style=color:#080;font-weight:700>WHEN</span> vb <span style=color:#080;font-weight:700>isnull</span> <span style=color:#080;font-weight:700>THEN</span> va 
-    <span style=color:#080;font-weight:700>WHEN</span> jsonb_typeof(va) <span style=color:#333>&lt;&gt;</span> <span style=background-color:#fff0f0>&#39;object&#39;</span> <span style=color:#080;font-weight:700>OR</span> jsonb_typeof(vb) <span style=color:#333>&lt;&gt;</span> <span style=background-color:#fff0f0>&#39;object&#39;</span> <span style=color:#080;font-weight:700>THEN</span> vb 
-    <span style=color:#080;font-weight:700>ELSE</span> jsonb_recursive_merge(va, vb) <span style=color:#080;font-weight:700>END</span> 
-</code></pre></div><p>To select the value, we have a switch statement. The first two cases chooses the
+or <code>kb</code>. When both <code>ka</code> and <code>kb</code> are non-null, they will be the same value.</p><h3 id=selecting-the-value>Selecting the Value</h3><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span> <span style=color:#080;font-weight:700>CASE</span> 
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>WHEN</span> va <span style=color:#080;font-weight:700>isnull</span> <span style=color:#080;font-weight:700>THEN</span> vb 
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>WHEN</span> vb <span style=color:#080;font-weight:700>isnull</span> <span style=color:#080;font-weight:700>THEN</span> va 
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>WHEN</span> jsonb_typeof(va) <span style=color:#333>&lt;&gt;</span> <span style=background-color:#fff0f0>&#39;object&#39;</span> <span style=color:#080;font-weight:700>OR</span> jsonb_typeof(vb) <span style=color:#333>&lt;&gt;</span> <span style=background-color:#fff0f0>&#39;object&#39;</span> <span style=color:#080;font-weight:700>THEN</span> vb 
+</span></span><span style=display:flex><span>    <span style=color:#080;font-weight:700>ELSE</span> jsonb_recursive_merge(va, vb) <span style=color:#080;font-weight:700>END</span> 
+</span></span></code></pre></div><p>To select the value, we have a switch statement. The first two cases chooses the
 non-null value when one of the values is null. The third case is when both <code>va</code> and <code>vb</code>
 are defined and <strong>not both</strong> JSON objects themselves. In this case we choose <code>vb</code> over <code>va</code> (remember we are merging <code>B</code> into <code>A</code>).
 The final case (<code>else</code>) handles the situation where <code>va</code> and <code>vb</code> are both JSON objects. In that
-situation we recursively call the <code>jsonb_recursive_merge</code> on <code>va</code> and <code>vb</code>.</p>
-<h3 id=using-the-function>Using the function</h3>
-<p>One common use for this function is to upsert a row. In an upsert, when the row exists,
+situation we recursively call the <code>jsonb_recursive_merge</code> on <code>va</code> and <code>vb</code>.</p><h3 id=using-the-function>Using the function</h3><p>One common use for this function is to upsert a row. In an upsert, when the row exists,
 you want to update it and when it doesn&rsquo;t, you want to insert a new one.
 To do this, you would use an <code>INSERT</code> statement with the <code>ON CONFLICT (col1,..., colN) DO UPDATE SET</code> clause.
 The columns in the clause specify the columns of a unique index. Following the clause is a list of
-<code>column_name = &lt;expression></code> statements that decide just how each column is to be updated.</p>
-<p>Below is an example of updating a table of tweet metrics:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>INSERT</span> <span style=color:#080;font-weight:700>INTO</span> tweets (id, metrics)
-<span style=color:#080;font-weight:700>VALUES</span> (<span style=color:#60e;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#39;{&#34;likes&#34;: 22, &#34;comments&#34;: 12}&#39;</span>)
-<span style=color:#080;font-weight:700>ON</span> CONFLICT (id) <span style=color:#080;font-weight:700>DO</span> <span style=color:#080;font-weight:700>UPDATE</span>
-<span style=color:#080;font-weight:700>SET</span> metrics <span style=color:#333>=</span> jsonb_recursive_merge(tweets<span style=color:#60e;font-weight:700>.</span>metrics, excluded<span style=color:#60e;font-weight:700>.</span>metrics);
-</code></pre></div><p>In the statement above, if a row with the same ID exists, it will call the <code>jsonb_recursive_merge</code> function on
+<code>column_name = &lt;expression></code> statements that decide just how each column is to be updated.</p><p>Below is an example of updating a table of tweet metrics:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span><span style=color:#080;font-weight:700>INSERT</span> <span style=color:#080;font-weight:700>INTO</span> tweets (id, metrics)
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>VALUES</span> (<span style=color:#60e;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#39;{&#34;likes&#34;: 22, &#34;comments&#34;: 12}&#39;</span>)
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>ON</span> CONFLICT (id) <span style=color:#080;font-weight:700>DO</span> <span style=color:#080;font-weight:700>UPDATE</span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>SET</span> metrics <span style=color:#333>=</span> jsonb_recursive_merge(tweets<span style=color:#60e;font-weight:700>.</span>metrics, excluded<span style=color:#60e;font-weight:700>.</span>metrics);
+</span></span></code></pre></div><p>In the statement above, if a row with the same ID exists, it will call the <code>jsonb_recursive_merge</code> function on
 the current value, <code>tweets.metrics</code>, and the inserted value, <code>excluded.metrics</code> (the <code>excluded</code> table is the
-name of the special table representing rows proposed for insertion[2]).</p>
-<h3 id=limitations>Limitations</h3>
-<p>When we designed our <code>jsonb_recursive_merge</code> function we had to decide what &ldquo;merge&rdquo; meant to us. We decided
+name of the special table representing rows proposed for insertion[2]).</p><h3 id=limitations>Limitations</h3><p>When we designed our <code>jsonb_recursive_merge</code> function we had to decide what &ldquo;merge&rdquo; meant to us. We decided
 that an overwrite of a value constitutes a &ldquo;merge&rdquo;. But what about values that are arrays? One
 could argue that merging two arrays <code>[1, 2, 3]</code> and <code>[4, 5, 6]</code> should result in <code>[1,2,3,4,5,6]</code>. It really
-all depends on the context of what you are trying to do.</p>
-<p>If you want to also merge the values of arrays you can add an extra <code>case</code> statement that appends the values when
-both <code>va</code> and <code>vb</code> are arrays:</p>
-<div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=color:#080;font-weight:700>WHEN</span> jsonb_typeof(va) <span style=color:#333>=</span> <span style=background-color:#fff0f0>&#39;array&#39;</span> <span style=color:#080;font-weight:700>AND</span> jsonb_typeof(vb) <span style=color:#333>=</span> <span style=background-color:#fff0f0>&#39;array&#39;</span> <span style=color:#080;font-weight:700>THEN</span> va <span style=color:#333>||</span> vb
-</code></pre></div><p>However, be aware that this will apply to <strong>all</strong> arrays encountered in the JSON objects.</p>
-<p>And there you have it, a custom PostgreSQL function that merges two JSON objects, preserving and
+all depends on the context of what you are trying to do.</p><p>If you want to also merge the values of arrays you can add an extra <code>case</code> statement that appends the values when
+both <code>va</code> and <code>vb</code> are arrays:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-postgresql data-lang=postgresql><span style=display:flex><span><span style=color:#080;font-weight:700>WHEN</span> jsonb_typeof(va) <span style=color:#333>=</span> <span style=background-color:#fff0f0>&#39;array&#39;</span> <span style=color:#080;font-weight:700>AND</span> jsonb_typeof(vb) <span style=color:#333>=</span> <span style=background-color:#fff0f0>&#39;array&#39;</span> <span style=color:#080;font-weight:700>THEN</span> va <span style=color:#333>||</span> vb
+</span></span></code></pre></div><p>However, be aware that this will apply to <strong>all</strong> arrays encountered in the JSON objects.</p><p>And there you have it, a custom PostgreSQL function that merges two JSON objects, preserving and
 merging any nested objects. I&rsquo;d like to thank and give credit to <code>klin</code> and his
 very helpful <a href=https://stackoverflow.com/a/42954907>StackOverflow</a> answer which brought
-me to a solution to this problem.</p>
-<h2 id=further-reading>Further Reading</h2>
-<p>[1] <a href=https://www.postgresql.org/docs/12/functions-json.html>JSON Functions and Operators</a></p>
-<p>[2] <a href=https://www.postgresql.org/docs/12/sql-insert.html>PostgresSQL Insert Documentation</a></p>
-</div>
-<footer>
-<div class=stats>
-<ul class=categories>
-<li><a class=article-terms-link href=/categories/databases/>Databases</a></li>
-</ul>
-<ul class=tags>
-<li>None</li>
-</ul>
-</div>
-</footer>
-</div>
-</article>
-<div class=pagination>
-<a href=/posts/dev_environment/ class="button left"><span>Building a Comfortable Dev Environment</span></a>
-</div>
-</main>
-<section id=site-sidebar>
-<section id=recent-posts>
-<header>
-<h1>Recent Posts</h1>
-</header>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2>
-<time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2>
-<time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2>
-<time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time>
-</header>
-</article>
-<article class=mini-post>
-<header>
-<h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2>
-<time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time>
-</header>
-</article>
-</section>
-<section id=categories>
-<header>
-<h1><a href=/categories>Categories</a></h1>
-</header>
-<ul>
-<li>
-<a href=/categories/databases/>databases<span class=count>2</span></a>
-<li>
-<a href=/categories/architecture/>architecture<span class=count>1</span></a>
-<li>
-<a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a>
-</li>
-</ul>
-</section>
-<section id=mini-bio>
-<header>
-<h1>About</h1>
-</header>
-<p>Backend software developer</p>
-<footer>
-<a href=/about class=button>Learn More</a>
-</footer>
-</section>
-</section>
-<footer id=site-footer>
-<ul class=socnet-icons>
-<li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li>
-<li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li>
-<li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li>
-</ul>
-<p class=copyright>
-© 2021 Lobocv Blog
-<br>
-Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.92.2 target=_blank rel=noopener>Hugo</a>
-</p>
-</footer>
-<a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
+me to a solution to this problem.</p><h2 id=further-reading>Further Reading</h2><p>[1] <a href=https://www.postgresql.org/docs/12/functions-json.html>JSON Functions and Operators</a></p><p>[2] <a href=https://www.postgresql.org/docs/12/sql-insert.html>PostgresSQL Insert Documentation</a></p></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/databases/>Databases</a></li></ul><ul class=tags><li>None</li></ul></div></footer></div></article><div class=pagination><a href=/posts/dev_environment/ class="button left"><span>Building a Comfortable Dev Environment</span></a></div></main><section id=site-sidebar><section id=recent-posts><header><h1>Recent Posts</h1></header><article class=mini-post><header><h2><a href=/posts/richer_golang_errors/>Advanced Go Error Handling Made Simple</a></h2><time class=published datetime="2022-03-22 00:00:00 +0000 UTC">March 22, 2022</time></header></article><article class=mini-post><header><h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2><time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2><time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2><time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/recursive_jsonb_merge/>Recursively Merging JSONB in PostgreSQL</a></h2><time class=published datetime="2021-05-01 00:00:00 +0000 UTC">May 1, 2021</time></header></article><footer><a href=/blog/ class=button>See More</a></footer></section><section id=categories><header><h1><a href=/categories>Categories</a></h1></header><ul><li><a href=/categories/databases/>databases<span class=count>2</span></a><li><a href=/categories/architecture/>architecture<span class=count>1</span></a><li><a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a><li><a href=/categories/golang/>golang<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>About</h1></header><p>Backend software developer</p><footer><a href=/about class=button>Learn More</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2022 Lobocv Blog<br>Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.95.0 target=_blank rel=noopener>Hugo</a></p></footer><a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
 <script src=/js/highlight.js></script>
-<script>hljs.highlightAll()</script><script src=/js/bundle.min.c71e1ad682a1b9030ea4c63475579f1d8d13af96a92f718403ba99cf722ec3e2.js integrity="sha256-xx4a1oKhuQMOpMY0dVefHY0Tr5apL3GEA7qZz3Iuw+I="></script>
+<script>hljs.highlightAll()</script><script src=/js/bundle.min.5da94043802b6a43c982ca808d666f3d978d12542580d57d55b4fb5be7dbbcfd.js integrity="sha256-XalAQ4ArakPJgsqAjWZvPZeNElQlgNV9VbT7W+fbvP0="></script>
 <script src=/js/add-on.js></script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-196196121-1','auto'),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-</div>
-</body>
-</html>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-196196121-1","auto"),ga("send","pageview"))</script><script async src=https://www.google-analytics.com/analytics.js></script></div></body></html>
