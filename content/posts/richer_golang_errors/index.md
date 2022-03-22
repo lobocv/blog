@@ -203,7 +203,7 @@ func (s *Server) CreateUser(resp http.ResponseWriter, req *http.Request) {
 		
 		// If the error was from a duplicate key, change the status code to BadRequest
 		var duplicateKeyErr storage.DuplicateKeyError
-	    if errors.As(err, &duplicateKeyErr);
+	    if errors.As(err, &duplicateKeyErr) {
 	        statusCode = http.StatusBadRequest
 	    }
 
