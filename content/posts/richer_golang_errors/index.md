@@ -159,14 +159,13 @@ from MongoDB without breaking changing any other software layers.
 ```go
 
 // Define an error in the persistence layer package that we can return instead of the mongo.WriteException
-type DuplicateKeyError struct {
-    Field string
-    Value string
+type UserAlreadyExistsError struct {
+    email string
 }
 
 // Error implements the error interface
-type (e *DuplicateKeyError) Error() string {
-    return fmt.Sprintf("duplicate key error, '%s' already exists with value '%s'", e.Field, e.Value)   
+type (e *UserAlreadyExistsError) Error() string {
+    return fmt.Sprintf("user already exists with email '%s'", e.email)   
 }
 
 // Create a user by it's email. The email is the unique key for looking up users.
@@ -174,9 +173,9 @@ func (s *Database) CreateUser(ctx context.Context, email string) (string, error)
     user := User{email: email}
     result, err := s.mongodb.InsertOne(ctx, user)
     
-    // Check if the error was from mongo.WriteException and return DuplicateKeyError instead
+    // Check if the error was from mongo.WriteException and return UserAlreadyExistsError instead
     if IsDuplicateKeyError(err) {
-        return &DuplicateKeyError{Field: "email", Value: email}
+        return &UserAlreadyExistsError{email: email}
     }
     if err != nil {
         return "", fmt.Errorf("failed to create user: %w", err)
@@ -201,9 +200,9 @@ func (s *Server) CreateUser(resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 	    statusCode := http.StatusInternalServerError
 		
-		// If the error was from a duplicate key, change the status code to BadRequest
-		var duplicateKeyErr storage.DuplicateKeyError
-	    if errors.As(err, &duplicateKeyErr) {
+		// If the error was from an UserAlreadyExistsError, change the status code to BadRequest
+		var alreadyExistsErr storage.UserAlreadyExistsError
+	    if errors.As(err, &alreadyExistsErr) {
 	        statusCode = http.StatusBadRequest
 	    }
 
@@ -220,7 +219,7 @@ able to capture the essence of what this error signifies and fit it into a categ
 HTTP specifications.
 
 
-> **Problem 3: Abstracting errors from third party dependencies is manually intensive.**
+> **Problem 3: Abstracting and propagating errors from third party dependencies is manually intensive.**
 
 
 ### Not all errors are bad
@@ -359,23 +358,16 @@ func ErrorHandlingMiddleware(....) (...) {
 }
 ```
 
-##### Problem 3: Abstracting errors from third party dependencies is manually intensive.
+##### Problem 3: Abstracting and propagating errors from third party dependencies is manually intensive.
 
 By using error codes rather than sentinel errors or custom error types, we can greatly simplify how we abstract errors
-from third parties. We can either detect and convert errors, as we would traditionally, or simplify the flow further by
-using the [`Convert()`](https://pkg.go.dev/github.com/lobocv/simplerr#Convert) function.
+from third parties. We can detect and convert errors, as we would traditionally do, but instead of defining a custom error,
+we return a `SimpleError`.
 
-`Convert()` works by running the error through a list of registered error conversion functions in order to convert
-it to a `SimpleError`. The first conversion function that returns a `SimpleError` will be used. If no
-conversions are found, the error is converted to a `SimpleError` with error code `CodeUnknown`.
-
-Earlier in the article, we showed an example of detecting a mongodb duplicate key error. Instead of doing this for
-every package that uses mongodb, we can create and register an error conversion function that now is globally checked 
-against whenever `Convert()` is used. 
 
 ```go
 // IsDuplicateKeyError checks that the error is a mongo duplicate key error
-func IsDuplicateKeyError(err error) *simplerr.SimpleError {
+func IsDuplicateKeyError(err error) error {
 	const mongoDuplicateKeyErrorCode = 11000
 	
 	if mongoErr, ok := err.(mongo.WriteException); ok {
@@ -387,15 +379,51 @@ func IsDuplicateKeyError(err error) *simplerr.SimpleError {
 	}
 	return nil
 }
+```
 
-func main() {
-    r := GetRegistry()
-    r.RegisterErrorConversions(IsDuplicateKeyError)
+The previous example of creating a user then looks like this, allowing us to use the 
+[`ecosystem/http`]((https://github.com/lobocv/simplerr/tree/master/ecosystem/http)) package to convert
+errors directly to status codes on the `*http.Response` object.
+
+```go
+// Create a user by it's email. The email is the unique key for looking up users.
+func (s *Database) CreateUser(ctx context.Context, email string) (string, error) {
+    user := User{email: email}
+    result, err := s.mongodb.InsertOne(ctx, user)
     
-    // start up application ...
+    // Check if the error was from mongo.WriteException and return the SimpleError with an attached message
+    if serr := IsDuplicateKeyError(err); serr != nil {
+        return fmt.Errorf("user already exists with email '%s': %w", e.email, err))
+    }
+    if err != nil {
+        return "", fmt.Errorf("failed to create user: %w", err)
+    }
+    
+    return result.Hex(), nil
 }
 ```
 
+```go
+func (s *Server) CreateUser(resp http.ResponseWriter, req *http.Request) {
+	
+    // extract email from request...
+	
+    err := s.db.CreateUser(email)
+	if err != nil {
+		// SetStatus will attempt to translate the SimpleError to a status code on the *http.Response, if 
+		// it cannot find a translation, it defaults to 500 (InternalServerError)
+        simplehttp.SetStatus(resp, err)
+	    return
+    }
+
+    resp.WriteHeader(http.StatusOK)
+}
+```
+
+An analogous approach can be done for gRPC servers with the 
+[`ecosystem/grpc`]((https://github.com/lobocv/simplerr/tree/master/ecosystem/grpcc)) package. 
+This time it is even easier to convert SimpleErrors to response codes through an interceptor (middleware).
+In both http and gRPC, the error translation mapping can be customized.
 
 ##### Problem 4: Handling of benign errors on the server side cannot be done from within middleware.
 
