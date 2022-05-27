@@ -126,7 +126,9 @@ This leads to bloated error handling logic which distracts from the intent of th
 
 If we were able to attach key-value information to the error, we may be able to automate the logging of errors in a middleware
 layer. Unfortunately, the standard library `http` package does not have an `error` return argument to HTTP handlers, which
-makes writing error logging middleware difficult. The gRPC framework, on the other hand, does return an error and makes this possible.
+makes writing error logging middleware difficult. Fortunately [simplerr provides an alternative `Handler` interface and adapters](https://github.com/lobocv/simplerr#http-status-codes)
+in order to return errors. The gRPC framework, on the other hand, does return an error and makes this straight forward
+with the use of an interceptor.
 
 ### Decoupling errors from different layers is tedious
 
@@ -152,7 +154,7 @@ func IsDuplicateKeyError(err error) bool {
 
 While this function is fine to be used inside the persistence layer, we should not use it inside the application layer 
 with which it interfaces due to the direct reference to the `mongo` package. One method of abstracting the `mongo` package
-is to have the persistence layer define it's own `DuplicateKeyError` that is raised instead whenever the `mongo` library returns an 
+is to have the persistence layer define it's own `AlreadyExistsError` that is raised instead whenever the `mongo` library returns an 
 error from writing to a duplicate key. This allows us to change the storage library used in the persistence layer away
 from MongoDB without breaking changing any other software layers.
 
@@ -215,11 +217,11 @@ func (s *Server) CreateUser(resp http.ResponseWriter, req *http.Request) {
 ```
 
 If we take a deeper look into the duplicate key error, we may be 
-able to capture the essence of what this error signifies and fit it into a category much like the ones used by gRPC and
+able to capture the essence of what this error signals and fit it into a category much like the ones used by gRPC and
 HTTP specifications.
 
 
-> **Problem 3: Abstracting and propagating errors from third party dependencies is manually intensive.**
+> **Problem 3: Abstracting and propagating errors from third party dependencies is verbose and manually intensive.**
 
 
 ### Not all errors are bad
@@ -278,7 +280,7 @@ err := simplerr.New("user %d does not exist in company %d", userID, companyID).
 ```
 
 
-These error codes can also be translated directly to HTTP / gRPC specifications 
+These error codes can also be translated automatically to HTTP / gRPC specifications 
 (see [ecosystem/http](https://github.com/lobocv/simplerr/ecosystem/http) and 
 [ecosystem/grpc](https://github.com/lobocv/simplerr/ecosystem/grpc) packages). In the case of gRPC, an interceptor (middleware)
 allows us to handle this translation automatically via an interceptor.
@@ -358,7 +360,7 @@ func ErrorHandlingMiddleware(....) (...) {
 }
 ```
 
-##### Problem 3: Abstracting and propagating errors from third party dependencies is manually intensive.
+##### Problem 3: Abstracting and propagating errors from third party dependencies is verbose and manually intensive.
 
 By using error codes rather than sentinel errors or custom error types, we can greatly simplify how we abstract errors
 from third parties. We can detect and convert errors, as we would traditionally do, but instead of defining a custom error,
@@ -373,6 +375,7 @@ func IsDuplicateKeyError(err error) error {
 	if mongoErr, ok := err.(mongo.WriteException); ok {
 		for _, writeErr := range mongoErr.WriteErrors {
 			if writeErr.Code == mongoDuplicateKeyErrorCode {
+			    // Return a simpleerr.SimpleError here
 				return simplerr.Wrap(err).Code(simplerr.CodeConstraintViolated)
 			}
 		}
@@ -419,6 +422,10 @@ func (s *Server) CreateUser(resp http.ResponseWriter, req *http.Request) {
     resp.WriteHeader(http.StatusOK)
 }
 ```
+
+Using the alternative `Handler` interface defined in [simplerr/ecosystem/http](https://github.com/lobocv/simplerr#http-status-codes)
+when writing HTTP handlers makes it even easier by not having to handle the error at all. The handlers will automatically 
+write the response status depending on the returned error.
 
 An analogous approach can be done for gRPC servers with the 
 [`ecosystem/grpc`]((https://github.com/lobocv/simplerr/tree/master/ecosystem/grpcc)) package. 
