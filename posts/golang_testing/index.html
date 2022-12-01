@@ -1,0 +1,236 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><title>Unit testing complex workflows in Go - Lobocv Blog</title><meta name=description content="Software Development Blog"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=twitter:card content="summary_large_image"><meta property="og:site_name" content="Lobocv Blog"><meta property="og:title" content="Unit testing complex workflows in Go"><meta property="og:description" content="Software Development Blog"><meta property="og:type" content="article"><meta property="og:url" content="http://blog.lobocv.com/posts/golang_testing/"><meta property="og:image" content="http://blog.lobocv.com/img/logo.jpg"><link rel="shortcut icon" href="/favicon.ico?v=1"><meta name=generator content="Hugo 0.107.0"><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/colorful.min.css><link rel=stylesheet href=/css/bundle.min.3b1b5f2e683d24b1ea3b5a08c8254622e40aa935e0ead75ba6d45c0f14c2f965.css integrity="sha256-OxtfLmg9JLHqO1oIyCVGIuQKqTXg6tdbptRcDxTC+WU="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>lobocv</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class='fa fa-home'></i> Home</a>
+<a href=/categories/ class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+<a href=/about/ class="nav link"><i class='far fa-id-card'></i> About</a>
+<a href=#share-menu class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
+<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu>
+<a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+<a href=#share-menu class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
+<a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a></nav><menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu><menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=Unit%20testing%20complex%20workflows%20in%20Go&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f&title=Unit%20testing%20complex%20workflows%20in%20Go" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f&title=Unit%20testing%20complex%20workflows%20in%20Go" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=/img/logo.jpg class=triangle width=200px alt></a><header><h1>Calvin Lobo</h1></header><main><p>software design, architecture and philosophy</p></main><footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/posts/golang_testing/>Unit testing complex workflows in Go</a></h2></div><div class=meta><time datetime="2022-10-01 00:00:00 +0000 UTC">October 1, 2022</time><p>10-Minute Read</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=Unit%20testing%20complex%20workflows%20in%20Go&url=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f&title=Unit%20testing%20complex%20workflows%20in%20Go" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f&title=Unit%20testing%20complex%20workflows%20in%20Go" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="mailto:?subject=Check%20out%20this%20post%20by %7b%20%20%20%20%20%20%20%20map%5b%5d%7d&body=http%3a%2f%2fblog.lobocv.com%2fposts%2fgolang_testing%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><p>The standard library <code>testing</code> package in Go does many things well. It is simple to use and
+executes fast and efficiently, even running tests in parallel and the caching results. However, many including myself,
+have turned to supplemental packages to address some blind spots when writing tests:</p><ul><li>Test setup, teardown and grouping</li><li>Assertions and output validation</li><li>Mocking</li></ul><p>I have found that these blind spots become particularly cumbersome when you have workflows that involve sophisticated fixture setup,
+multiple edge cases, error handling, mocks, and complex outputs. In this article, I&rsquo;m going to go through
+a style of testing that helped me with many of these issues.</p><h2 id=testify>Testify</h2><p>One of the most popular third party testing packages is <a href=https://github.com/stretchr/testify>stretchr/testify</a>,
+and for good reason. It boasts solutions to the major blind spots I&rsquo;ve listed above by providing easy assertions,
+mocking and test suite interfaces and functions. In particular, I find myself using <code>testify/suite</code> for complex
+workflows because it provides better test setup, teardown and organization capabilities. If you aren&rsquo;t already familiar
+with <code>testify/suite</code>, I would recommend you take a quick detour of the <a href=https://github.com/stretchr/testify#suite-package>docs</a>
+and <a href=https://github.com/stretchr/testify/blob/master/suite/suite_test.go>examples</a> before reading on.</p><h2 id=case-study-linkedin-organizational-post-scraping>Case study: LinkedIn organizational post scraping</h2><p>For this article I am going to go through an example of testing a stream processing application which calls the LinkedIn
+APIs to get organization posts and their lifetime metrics. I am going to attempt to show you the tests without the
+application code, because I do not believe showing the code brings much value. Just know that the code we are testing does
+the following:</p><ol><li>Calls the LinkedIn ListUGC endpoint to get a list of user generated content (posts) from the organization.</li><li>Calls the EntityShareStatistics endpoint to request the lifetime metrics for each post less than a week old.</li><li>Returns a list of the posts, with metrics (if they are retrievable).</li></ol><h2 id=the-test-setup>The test setup</h2><p>I begin all my tests with the same layout: The <code>testify/suite</code> structs and methods, mocks and fixture setup.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Constants to improve readability 
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>const</span> (
+</span></span><span style=display:flex><span>    Fail    = <span style=color:#080;font-weight:700>false</span>
+</span></span><span style=display:flex><span>    Succeed = <span style=color:#080;font-weight:700>true</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Mocks is a collection of all the mocks used in the tests
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> Mocks <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    LinkedinClient   mocks.LinkedinClient
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Fixtures is a grouping of entities interacted with in the tests
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> Fixtures <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    input           <span style=color:#333>*</span>Input
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Expectations are a grouping of the results or expectations of the tests
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> Expectations <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    Output <span style=color:#333>*</span>Output
+</span></span><span style=display:flex><span>    Error     <span style=color:#339;font-weight:700>error</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// LinkedinCollectorTestSuite will test the collection of the LinkedIn post and metric collector
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> LinkedinCollectorTestSuite <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    suite.Suite
+</span></span><span style=display:flex><span>    mocks      Mocks
+</span></span><span style=display:flex><span>    fix        Fixtures
+</span></span><span style=display:flex><span>    expect     Expectations
+</span></span><span style=display:flex><span>    collector  <span style=color:#333>*</span>Collector
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Before every test, setup new mocks, fixtures and expectations
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>SetupTest</span>() {
+</span></span><span style=display:flex><span>    s.mocks = Mocks{}
+</span></span><span style=display:flex><span>    s.fix = Fixtures{}
+</span></span><span style=display:flex><span>    s.expect = Expectations{}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>TearDownTest</span>() {
+</span></span><span style=display:flex><span>    t <span style=color:#333>:=</span> s.<span style=color:#06b;font-weight:700>T</span>()
+</span></span><span style=display:flex><span>    s.mocks.LinkedinClient.<span style=color:#06b;font-weight:700>AssertExpectations</span>(t)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>There are a few things I want to highlight:</p><ol><li>The <code>Mocks{}</code> structure is created with values, not pointers. This makes initializing all the mocks very easy because
+the <code>testify/mocks</code> do not need a constructor, their zero values are ready to use.</li><li>I keep mocks, fixtures and expectations in their own respective structures. This helps readability and also allows you
+to define methods on them for further customization.</li><li>I define a few constants such as <code>Succeed</code> and <code>Fail</code> for readability. This will become more clear later as we start to
+write the tests.</li><li>Mock, fixture and expectation setup are done in the <code>SetupTest()</code> so that they are run before each test, providing fresh
+values and no artifacts from previous runs.</li><li>The <code>TearDownTest()</code> method is used to assert the mock calls after each test.</li></ol><p>Once we have our initial skeleton setup, we can start writing tests for our code flows. I always start off testing the
+happy-path: the code flow where there are no errors and everything works as expected. The reason for this is two-fold:</p><ol><li>It gives us a good context from which subsequent test cases can be built from. (Most test cases are just varying degrees
+in which the happy path becomes sad)</li><li>The happy path allows us to validate that the business logic is correct when things are working as expected.</li></ol><p>To do this, we build all our fixtures and expectations based on this happy path in the <code>SetupTest()</code> method:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>type</span> Input <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>    linkedinPageID <span style=color:#339;font-weight:700>string</span>	
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>type</span> Output <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Posts []<span style=color:#333>*</span>Post
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// This would be a model defined by the application, but I am redefining it here for 
+</span></span></span><span style=display:flex><span><span style=color:#888>// clarity of reading the tests
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> Post <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	ID           <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	Type         <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	CreatedDate  time.Time
+</span></span><span style=display:flex><span>	Metrics      <span style=color:#080;font-weight:700>map</span>[<span style=color:#339;font-weight:700>string</span>]<span style=color:#339;font-weight:700>float64</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Fixtures is a grouping of entities interacted with in the tests
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>type</span> Fixtures <span style=color:#080;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	linkedinPageID    <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	linkedinAuthToken <span style=color:#339;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	textPost          <span style=color:#333>*</span>Post
+</span></span><span style=display:flex><span>	videoPost         <span style=color:#333>*</span>Post
+</span></span><span style=display:flex><span>    input             <span style=color:#333>*</span>Input
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888>// Before every test, setup new mocks, fixtures and expectations
+</span></span></span><span style=display:flex><span><span style=color:#888></span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>SetupTest</span>() {
+</span></span><span style=display:flex><span>	s.mocks = Mocks{}
+</span></span><span style=display:flex><span>	s.fix = Fixtures{
+</span></span><span style=display:flex><span>		linkedinPageID: <span style=background-color:#fff0f0>&#34;test_page_id&#34;</span>,
+</span></span><span style=display:flex><span>		linkedinAuthToken: <span style=background-color:#fff0f0>&#34;mock_token&#34;</span>,
+</span></span><span style=display:flex><span>		input: <span style=color:#333>&amp;</span>Input{linkedinPageID: <span style=background-color:#fff0f0>&#34;test_page_id&#34;</span>},
+</span></span><span style=display:flex><span>	    textPost: <span style=color:#333>&amp;</span>Post{
+</span></span><span style=display:flex><span>                        ID: <span style=background-color:#fff0f0>&#34;1&#34;</span>,
+</span></span><span style=display:flex><span>                        Type: <span style=background-color:#fff0f0>&#34;TEXT&#34;</span>,
+</span></span><span style=display:flex><span>                        CreatedDate: time.<span style=color:#06b;font-weight:700>Now</span>().<span style=color:#06b;font-weight:700>AddDate</span>(<span style=color:#00d;font-weight:700>0</span>, <span style=color:#00d;font-weight:700>0</span>, <span style=color:#333>-</span><span style=color:#00d;font-weight:700>1</span>), <span style=color:#888>// 1 day old
+</span></span></span><span style=display:flex><span><span style=color:#888></span>		                Metrics: <span style=color:#080;font-weight:700>map</span>[<span style=color:#339;font-weight:700>string</span>]<span style=color:#339;font-weight:700>float64</span>{<span style=background-color:#fff0f0>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>1</span>, <span style=background-color:#fff0f0>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>1</span>}}
+</span></span><span style=display:flex><span>	    videoPost: <span style=color:#333>&amp;</span>Post{
+</span></span><span style=display:flex><span>		                ID: <span style=background-color:#fff0f0>&#34;2&#34;</span>,
+</span></span><span style=display:flex><span>						Type: <span style=background-color:#fff0f0>&#34;VIDEO&#34;</span>,
+</span></span><span style=display:flex><span>						CreatedDate: time.<span style=color:#06b;font-weight:700>Now</span>().<span style=color:#06b;font-weight:700>AddDate</span>(<span style=color:#00d;font-weight:700>0</span>, <span style=color:#00d;font-weight:700>0</span>, <span style=color:#333>-</span><span style=color:#00d;font-weight:700>3</span>), <span style=color:#888>// 3 days old
+</span></span></span><span style=display:flex><span><span style=color:#888></span>                        Metrics: <span style=color:#080;font-weight:700>map</span>[<span style=color:#339;font-weight:700>string</span>]<span style=color:#339;font-weight:700>float64</span>{<span style=background-color:#fff0f0>&#34;likes&#34;</span>: <span style=color:#00d;font-weight:700>2</span>, <span style=background-color:#fff0f0>&#34;shares&#34;</span>: <span style=color:#00d;font-weight:700>2</span>}}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>	s.expect = Expectations{
+</span></span><span style=display:flex><span>                        Output: <span style=color:#333>&amp;</span>Output{Posts: []<span style=color:#333>*</span>Post{s.fix.textPost, s.fix.videoPost}}
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>We also add a test case for the happy path:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>HappyPath</span>() {
+</span></span><span style=display:flex><span>    got, err <span style=color:#333>:=</span> s.collector.<span style=color:#06b;font-weight:700>Collect</span>(s.fix.input)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>NoError</span>(err)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>Equal</span>(t.expect.Output, got)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=mock-parameterization>Mock Parameterization</h2><p>Now our tests will not pass until we setup our mock calls. In the past, I have seen developers setup their mock calls
+in each test, often applying the same copy-paste code for a majority of the mocks, and tweaking just one. <strong>Do not do this</strong>.
+This leads to huge test files that are hard to refactor and tests that drown out the important aspects with irrelevant
+boilerplate. Instead, I strongly suggest having mock setup functions that can be parameterized to meet all the different
+demands of your individual tests. Here is one such example:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>setupListUGCCall</span>(succeed <span style=color:#339;font-weight:700>bool</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#888>// mock.Anything is for the context.Context argument
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	call <span style=color:#333>:=</span> s.mocks.LinkedinClient.<span style=color:#06b;font-weight:700>On</span>(<span style=background-color:#fff0f0>&#34;ListUGC&#34;</span>, mock.Anything, s.fix.linkedinPageID, s.fix.linkedinAuthToken)
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>if</span> succeed {
+</span></span><span style=display:flex><span>		resp <span style=color:#333>:=</span> <span style=color:#333>&amp;</span>ListUGCResponse{
+</span></span><span style=display:flex><span>            Posts: []<span style=color:#333>*</span>Post{s.fix.textPost, s.fix.videoPost}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>		call.<span style=color:#06b;font-weight:700>Return</span>(resp, <span style=color:#080;font-weight:700>nil</span>)
+</span></span><span style=display:flex><span>		<span style=color:#080;font-weight:700>return</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>	<span style=color:#888>// Otherwise fail with an error and adjust expectations
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	s.expect.Output = <span style=color:#080;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>	s.expect.Error = fmt.<span style=color:#06b;font-weight:700>Error</span>(<span style=background-color:#fff0f0>&#34;failed to call ListUGC endpoint&#34;</span>)
+</span></span><span style=display:flex><span>	call.<span style=color:#06b;font-weight:700>Return</span>(<span style=color:#080;font-weight:700>nil</span>, s.expect.Error)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>In the example above, we have added a single parameter, <code>succeed</code>, to alter the direction of the code flow. If <code>succeed</code>
+is false, then the mock is setup to make the LinkedIn API call fail, and we adjust our expectations accordingly.
+This is perhaps the simplest mock parameterization you can do, but it gives you an idea the power of parameterization.
+Testing the happy path and the code flow where the ListUGC endpoint fails becomes easy to implement and read:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>HappyPath</span>() {
+</span></span><span style=display:flex><span>	s.<span style=color:#06b;font-weight:700>setupListUGCCall</span>(Succeed)
+</span></span><span style=display:flex><span>    got, err <span style=color:#333>:=</span> s.collector.<span style=color:#06b;font-weight:700>Collect</span>(s.fix.input)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>NoError</span>(err)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>Equal</span>(t.expect.Output, got)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>ListUGCFails</span>() {
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>setupListUGCCall</span>(Fail)
+</span></span><span style=display:flex><span>    got, err <span style=color:#333>:=</span> s.collector.<span style=color:#06b;font-weight:700>Collect</span>(s.fix.input)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>EqualError</span>(err, <span style=background-color:#fff0f0>&#34;failed to call ListUGC endpoint&#34;</span>)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>Nil</span>(got)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>In situations where the error is immediately returned up the stack, testing this code path is only really beneficial for improving
+code coverage. Often times, you have more complicated error handling that you specifically want to test. This is where
+mock parameterization really shines.</p><p>The next mock call is for the EntityShareStatistics endpoint, which is called for each post and returns the post&rsquo;s
+lifetime metrics. If the call to gather metrics fails, we want to carry on publishing the post without the metrics.
+This is how the mock setup method looks:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>setupEntityShareStatisticsCall</span>(succeed <span style=color:#339;font-weight:700>bool</span>, mockPost <span style=color:#333>*</span>Post) {
+</span></span><span style=display:flex><span>    <span style=color:#888>// mock.Anything is for the context.Context argument
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	call <span style=color:#333>:=</span> s.mocks.LinkedinClient.<span style=color:#06b;font-weight:700>On</span>(<span style=background-color:#fff0f0>&#34;EntityShareStatistics&#34;</span>, mock.Anything, mockPost.ID, s.fix.linkedinAuthToken)
+</span></span><span style=display:flex><span>	<span style=color:#080;font-weight:700>if</span> succeed {
+</span></span><span style=display:flex><span>		resp <span style=color:#333>:=</span> <span style=color:#333>&amp;</span>EntityShareStatisticsResponse{
+</span></span><span style=display:flex><span>			PostID: mockPost.ID,
+</span></span><span style=display:flex><span>            Metrics: mockPost.Metrics,
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>		call.<span style=color:#06b;font-weight:700>Return</span>(resp, <span style=color:#080;font-weight:700>nil</span>)
+</span></span><span style=display:flex><span>		<span style=color:#080;font-weight:700>return</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>	<span style=color:#888>// mockPost is referenced in the expectations, so modifying it here adjust the expectations
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	<span style=color:#888>// If we used a value instead of a pointer, we would need to modify the expectations directly.
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	mockPost.Metrics = <span style=color:#080;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>	call.<span style=color:#06b;font-weight:700>Return</span>(<span style=color:#080;font-weight:700>nil</span>, s.expect.Error)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>and now our happy path becomes:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>HappyPath</span>() {
+</span></span><span style=display:flex><span>	s.<span style=color:#06b;font-weight:700>setupListUGCCall</span>(Succeed)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>setupEntityShareStatisticsCall</span>(Succeed, s.fix.textPost)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>setupEntityShareStatisticsCall</span>(Succeed, s.fix.videoPost)
+</span></span><span style=display:flex><span>    got, err <span style=color:#333>:=</span> s.collector.<span style=color:#06b;font-weight:700>Collect</span>(s.fix.input)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>NoError</span>(err)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>Equal</span>(t.expect.Output, got)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>The failure path is nearly the same, but instead we pass <code>Fail</code> to one of the <code>setupEntityShareStatisticsCall</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>EntityShareStatisticsFailsForOnePost</span>() {
+</span></span><span style=display:flex><span>   s.<span style=color:#06b;font-weight:700>setupListUGCCall</span>(Succeed)
+</span></span><span style=display:flex><span>   s.<span style=color:#06b;font-weight:700>setupEntityShareStatisticsCall</span>(Fail, s.fix.textPost)
+</span></span><span style=display:flex><span>   s.<span style=color:#06b;font-weight:700>setupEntityShareStatisticsCall</span>(Succeed, s.fix.videoPost)
+</span></span><span style=display:flex><span>   got, err <span style=color:#333>:=</span> s.collector.<span style=color:#06b;font-weight:700>Collect</span>(s.fix.input)
+</span></span><span style=display:flex><span>   s.<span style=color:#06b;font-weight:700>NoError</span>(err)
+</span></span><span style=display:flex><span>   s.<span style=color:#06b;font-weight:700>Equal</span>(t.expect.Output, got)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=testing-edge-cases>Testing Edge Cases</h2><p>We have an edge case in the <code>EntityShareStatistics</code> endpoint. The endpoint only lets you gather metrics for posts that are less
+than a certain age (for simplicity, let&rsquo;s say 1 week). Calling the endpoint on a post older than a week would return an
+error and consume rate limits. To avoid issues, we want to skip these posts with a simple post age check.
+This is what a test for this edge case would look like:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#080;font-weight:700>func</span> (s <span style=color:#333>*</span>LinkedinCollectorTestSuite) <span style=color:#06b;font-weight:700>SkipTooOldPost</span>() {
+</span></span><span style=display:flex><span>    <span style=color:#888>// older than one week --&gt; No call to EntityShareStatistics endpoint
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	s.fix.textPost.CreatedDate = time.<span style=color:#06b;font-weight:700>Now</span>().<span style=color:#06b;font-weight:700>AddDate</span>(<span style=color:#00d;font-weight:700>0</span>, <span style=color:#00d;font-weight:700>0</span>, <span style=color:#333>-</span><span style=color:#00d;font-weight:700>8</span>)
+</span></span><span style=display:flex><span>	<span style=color:#888>// Since we do not call the EntityShareStatistics endpoint for this post, it will have no metrics
+</span></span></span><span style=display:flex><span><span style=color:#888></span>	s.fix.textPost.Metrics = <span style=color:#080;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>	
+</span></span><span style=display:flex><span>	s.<span style=color:#06b;font-weight:700>setupListUGCCall</span>(Succeed)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>setupEntityShareStatisticsCall</span>(Succeed, s.fix.videoPost)
+</span></span><span style=display:flex><span>    got, err <span style=color:#333>:=</span> s.collector.<span style=color:#06b;font-weight:700>Collect</span>(s.fix.input)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>NoError</span>(err)
+</span></span><span style=display:flex><span>    s.<span style=color:#06b;font-weight:700>Equal</span>(t.expect.Output, got)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>As you can see, we simply mutate the fixtures before the test runs and adjust the mock calls accordingly. For the mocks,
+all we needed to do was remove the <code>EntityShareStatistics</code> call for the <code>textPost</code>, which we made older than one week.
+Since the expectations uses a pointer to the post fixture, we just need to modify the fixture itself. If we chose to use
+a value instead of a pointer, then we would also need to update the expectations directly.</p><p>Further flexibility of the mock parameterization can be attained by using
+<a href=https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis>functional options</a>. Functional options
+becomes more useful when your mock setup calls start having too many parameters and thus start having mulitple code paths.
+<strong>It is important to keep the mock setup calls simple and easy to read</strong>.</p><h2 id=alternatives>Alternatives</h2><h3 id=table-tests>Table tests</h3><p>One testing paradigm that became popular in the Go community are <a href=https://dave.cheney.net/2019/05/07/prefer-table-driven-tests>table tests</a>.
+Table tests are great for very simple, low complexity code, however they come with the tradeoff of reduced readability.
+Table tests excel in situations where there is no setup code, state or mocks/integrations and for when there are
+lots of edge cases based solely on varying inputs. In my opinion, they are not great for testing complex workflows.</p><h3 id=behavior-driven-testing-ddd>Behavior Driven Testing (DDD)</h3><p><a href=https://en.wikipedia.org/wiki/Behavior-driven_development>Behavior Driven Testing</a> is an evolution of
+<a href=https://en.wikipedia.org/wiki/Test-driven_development>Test Driven Development (TDD)</a> where test cases and expectations
+are written in a natural language, such as English. It allows for business people
+to write test cases and developers implement them. I am a huge fan of Behavior Driven Testing as it leads to higher
+quality tests, coverage and a better understanding between both development and business teams.</p><p><a href=https://github.com/smartystreets/goconvey>Go Convey</a> and <a href=https://onsi.github.io/ginkgo/#top>Ginkgo</a> are two popular
+BDD style frameworks for the Go language. However, they do have a steeper learning curve than <code>testify</code>.
+These two libraries have a unique test execution strategy where the tests and sub-tests are executed by traversing
+the test tree in depth-first approach. Understanding this becomes even more important when you have tests that communicate
+with external dependencies like databases. Each iteration runs from the root of the tree down to a leaf, creating its
+own scope that is independent to other iterations. This execution strategy is very powerful because it eliminates a
+lot of fixture generation boilerplate, allowing you to test all edge cases efficiently and effectively.</p><h2 id=conclusion>Conclusion</h2><p>There are many different styles and testing frameworks available in Go. In this article I&rsquo;ve talked about my own style
+that has serviced me well for testing complex workflows. If you decide to try it, I would love to hear your feedback.</p></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/golang/>Golang</a></li></ul><ul class=tags><li>None</li></ul></div></footer></div></article><div class=pagination><a href=/posts/richer_golang_errors/ class="button right"><span>Advanced Go Error Handling Made Simple</span></a></div></main><section id=site-sidebar><section id=recent-posts><header><h1>Recent Posts</h1></header><article class=mini-post><header><h2><a href=/posts/golang_testing/>Unit testing complex workflows in Go</a></h2><time class=published datetime="2022-10-01 00:00:00 +0000 UTC">October 1, 2022</time></header></article><article class=mini-post><header><h2><a href=/posts/richer_golang_errors/>Advanced Go Error Handling Made Simple</a></h2><time class=published datetime="2022-03-22 00:00:00 +0000 UTC">March 22, 2022</time></header></article><article class=mini-post><header><h2><a href=/posts/elasticsearch_slots/>Defusing an ElasticSearch Mapping Explosion with Slots</a></h2><time class=published datetime="2021-12-12 00:00:00 +0000 UTC">December 12, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/event_folding/>Reducing System Load With Event Folding</a></h2><time class=published datetime="2021-08-01 00:00:00 +0000 UTC">August 1, 2021</time></header></article><article class=mini-post><header><h2><a href=/posts/dev_environment/>Building a Comfortable Dev Environment</a></h2><time class=published datetime="2021-07-06 00:00:00 +0000 UTC">July 6, 2021</time></header></article><footer><a href=/blog/ class=button>See More</a></footer></section><section id=categories><header><h1><a href=/categories>Categories</a></h1></header><ul><li><a href=/categories/databases/>databases<span class=count>2</span></a><li><a href=/categories/golang/>golang<span class=count>2</span></a><li><a href=/categories/architecture/>architecture<span class=count>1</span></a><li><a href=/categories/developer-efficiency/>developer-efficiency<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>About</h1></header><p>Backend software developer</p><footer><a href=/about class=button>Learn More</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/lobocv target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.linkedin.com/in/lobocv target=_blank rel=noopener title=LinkedIn class="fab fa-linkedin"></a></li><li><a href=mailto:calvinvlobo@gmail.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2022 Lobocv Blog<br>Theme: <a href=https://github.com/pacollins/hugo-future-imperfect-slim target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>A <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP port</a> | Powered by <a href=https://gohugo.io/ title=0.107.0 target=_blank rel=noopener>Hugo</a></p></footer><a id=back-to-top href=# class="fas fa-arrow-up fa-2x"></a>
+<script src=/js/highlight.js></script>
+<script>hljs.highlightAll()</script><script src=/js/bundle.min.290cc21bbcfa40fea4cc1a498d03cc9cec0e2291c9f5cbb65e6ff4f9a0599874.js integrity="sha256-KQzCG7z6QP6kzBpJjQPMnOwOIpHJ9cu2Xm/0+aBZmHQ="></script>
+<script src=/js/add-on.js></script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-196196121-1","auto"),ga("send","pageview"))</script><script async src=https://www.google-analytics.com/analytics.js></script></div></body></html>
