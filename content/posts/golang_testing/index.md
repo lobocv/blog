@@ -27,7 +27,7 @@ with `testify/suite`, I would recommend you take a quick detour of the [docs](ht
 and [examples](https://github.com/stretchr/testify/blob/master/suite/suite_test.go) before reading on.
 
 
-## Case study: LinkedIn organizational post scraping
+## Case study: LinkedIn post scraping
 For this article I am going to go through an example of testing a stream processing application which calls the LinkedIn
 APIs to get organization posts and their lifetime metrics. I am going to attempt to show you the tests without the
 application code, because I do not believe showing the code brings much value. Just know that the code we are testing does
