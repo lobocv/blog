@@ -211,7 +211,6 @@
       el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
         <path d="${grassBack}" fill="var(--grass1)"/>
         <path d="${soil}" fill="var(--soil)"/><path d="${dark}" fill="var(--soil-2)"/><path d="${light}" fill="var(--soil-3)"/>
-        <path d="M0,${f(soilTop(0))}${Array.from({ length: 161 }, (_, i) => `L${i * 10},${f(soilTop(i * 10))}`).join('')}" fill="none" stroke="var(--rim)" stroke-width="1.2" opacity=".55"/>
         <path d="${tones[0]}" fill="var(--fol1)"/><path d="${tones[1]}" fill="var(--fol1b)"/><path d="${tones[2]}" fill="var(--fol2)"/><path d="${tones[3]}" fill="var(--fol3)"/>
         <path d="${grassFront}" fill="var(--grass2)"/></svg>`;
     },

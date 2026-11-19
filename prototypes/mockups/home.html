@@ -225,7 +225,8 @@
     // wolf
     '#0a101e': '#3b342c', '#060a13': '#29231d', '#22345e': '#6d5f4d', '#2e4274': '#887760', '#2b3e6e': '#917f65', '#1b2a4e': '#5a4c3d',
     '#1c2b50': '#4a3e32', '#6d83c0': '#dcc7a2', '#172441': '#5b4f41', '#2c3e6c': '#9c8b70', '#121c34': '#463c31', '#1d2d54': '#6b5c4a',
-    '#1a2747': '#605344', '#1f2d52': '#6c5d4b', '#141f3a': '#4c4134', '#c9d6fa': '#fff2d2', '#93a7dc': '#e8d4ac'
+    '#1a2747': '#605344',
+    '#101a30': '#3f6534', '#18253f': '#5a8645', '#0b1222': '#2c4529', '#111b30': '#365232', '#18243f': '#46693d', '#22325a': '#64894b', '#0f1729': '#4b5a3b', '#03050a': '#1c1916', '#1f2d52': '#6c5d4b', '#141f3a': '#4c4134', '#c9d6fa': '#fff2d2', '#93a7dc': '#e8d4ac'
   };
   const K = c => (DAY && DAY_PALETTE[c]) || c;
   const recolor = str => DAY ? str.replace(/#[0-9a-f]{6}\b/g, K) : str;
@@ -538,7 +539,49 @@
     <path d="M300,570 L302,612 L299,624 L299,678 L294,692 L293,746 L288,758 L282,812 L275,826 L266,866 L254,884 L242,916 L226,934 L212,948" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".55"/>
     <path d="${sideRim}" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".5"/>
   </g>`;
-  layer(1.15, `<path d="${rock}" fill="#070b14"/>${facets}<path d="${rockRim}" fill="none" stroke="#5a6ea6" stroke-width="1.2" opacity=".55"/><path d="${fgPines}" fill="#04070d"/>${wolf}`);
+  // --- Ground detail: the cliff top is a surface running toward the viewer ---
+  const TOP = [[-300,740],[-40,736],[40,724],[120,752],[210,734],[300,766],[390,750],[470,770],[540,758],[580,744],[610,718],[740,708],[800,712],[835,728],[850,770],[866,806],[866,870],[930,935],[1010,985],[1120,1010],[1300,1000],[1500,960],[1700,930],[1900,930]];
+  const topY = x => { for (let i = 0; i < TOP.length - 1; i++) if (x <= TOP[i + 1][0]) { const [x0, y0] = TOP[i], [x1, y1] = TOP[i + 1]; return y0 + (y1 - y0) * (x - x0) / (x1 - x0); } return 930; };
+  const leafP = (x, y, len, ang, wid = .46) => { const c = Math.cos(ang), sn = Math.sin(ang), tx = x + c * len, ty = y + sn * len, mx = x + c * len * .45, my = y + sn * len * .45, w = len * wid;
+    return `M${f(x)},${f(y)}Q${f(mx - sn * w)},${f(my + c * w)} ${f(tx)},${f(ty)}Q${f(mx + sn * w)},${f(my - c * w)} ${f(x)},${f(y)}Z`; };
+  const blade = (x, y, h, lean, w) => `M${f(x - w)},${f(y)}Q${f(x + lean * .3)},${f(y - h * .6)} ${f(x + lean)},${f(y - h)}Q${f(x + lean * .3 + w * .4)},${f(y - h * .55)} ${f(x + w)},${f(y)}Z`;
+  // tones are authored in night colors and mapped for day by the palette
+  const G = { gb: '', gf: '', b0: '', b1: '', b2: '', b3: '' };
+  const tuft = (x, y, s, out) => { const n = 3 + Math.floor(rng() * 4); for (let k = 0; k < n; k++) { const h = (8 + Math.pow(rng(), 1.4) * 18) * s; out[rng() < .45 ? 'gb' : 'gf'] += blade(x + (rng() - .5) * 8 * s, y, h, (rng() - .5) * h * .8, (1 + rng()) * s * .7); } };
+  const bush = (cx, cy, r, out) => {
+    out.b0 += `M${f(cx - r)},${f(cy)}A${f(r)},${f(r * .78)} 0 0 1 ${f(cx + r)},${f(cy)}Z`;
+    for (let i = 0; i < r * 1.7; i++) {
+      const t = -Math.PI * (1.04 * rng() - .02), rr = r * (.3 + .7 * Math.sqrt(rng())), x = cx + Math.cos(t) * rr, y = cy + Math.sin(t) * rr * .78;
+      const ang = t + (rng() - .5) * .9, len = (6 + rng() * 9) * Math.max(.7, r / 30), k = rng() < .3 ? 'b1' : rng() < .8 ? 'b2' : 'b3';
+      out[k] += leafP(x - Math.cos(ang) * len * .3, y - Math.sin(ang) * len * .3, len, ang);
+    }
+  };
+  const back = { ...G }, front = { ...G };
+  // tufts along the cliff's edge, sparse right where the wolf stands
+  for (let x = -60; x < 1700; x += 6 + rng() * 10) { if (x > 640 && x < 790 && rng() < .85) continue; tuft(x, topY(x) + 2, .7 + rng() * .3, back); }
+  // tufts and bushes scattered across the cliff top, larger and denser closer to the viewer
+  const scatter = [];
+  for (let i = 0; i < 1100; i++) {
+    const x = -100 + rng() * 1800, y0 = topY(x), y = y0 + 8 + Math.pow(rng(), .55) * (1480 - y0);
+    if (x > 600 && x < 800 && y < 800) continue;
+    scatter.push([x, y, rng() < .06 ? 'bush' : 'tuft']);
+  }
+  scatter.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, kind] of scatter) {
+    const s = .75 + Math.pow(Math.max(0, y - 720) / 260, 1.15), out = y > 800 ? front : back;
+    if (kind === 'bush') bush(x, y, (12 + rng() * 12) * s, out); else tuft(x, y, s, out);
+  }
+  const paint = o => `<path d="${o.gb}" fill="#101a30"/><path d="${o.b0}" fill="#0b1222"/><path d="${o.b1}" fill="#111b30"/><path d="${o.b2}" fill="#18243f"/><path d="${o.b3}" fill="#22325a"/><path d="${o.gf}" fill="#18253f"/>`;
+  layer(1.15, `<path d="${rock}" fill="#070b14"/>${facets}<path d="${rockRim}" fill="none" stroke="#5a6ea6" stroke-width="1.2" opacity=".55"/>${paint(back)}<path d="${fgPines}" fill="#04070d"/>${wolf}${paint(front)}`);
+
+  // --- Nearer foliage in the bottom corners that rises faster than the cliff, so we seem to walk toward the edge ---
+  const near = { ...G };
+  const corner = (x0, x1) => {
+    for (let i = 0; i < 9; i++) { const x = x0 + rng() * (x1 - x0), y = 940 + rng() * 260; bush(x, y, 40 + rng() * 46, near); }
+    for (let i = 0; i < 140; i++) { const x = x0 - 40 + rng() * (x1 - x0 + 80), y = 930 + Math.pow(rng(), .7) * 360; tuft(x, y, 2 + rng() * 1.2, near); }
+  };
+  corner(-320, 330); corner(1270, 1920);
+  layer(1.45, paint(near));
 
   // One SVG per layer, so each is drawn once and then just moved
   const tag = DAY ? 'd-' : 'n-';
