@@ -24,21 +24,30 @@
   /* Hero */
   .hero { height: 170vh; position: relative; }
   .scene { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+  .scene { background: #0d1430; }
+  :root[data-time="day"] .scene { background: #6ea6dc; }
   #scene, .layer, .theme { position: absolute; inset: 0; }
+  #scene { isolation: isolate; --u: 1px; }
+  /* No colour transitions on the page itself: animating them redraws the whole sheet every frame and starves the scene */
+  html, body, .sheet { transition: none; }
+  /* Each layer holds pre-drawn bitmaps. Everything that moves is its own bitmap, animated with transform or opacity only,
+     so the browser never has to redraw the artwork. --u is the size of one scene unit in px. */
   .layer { will-change: transform; pointer-events: none; }
-  .theme { opacity: 0; transition: opacity 1s ease; pointer-events: none; }
+  .layer > * { position: absolute; display: block; }
+  .grain { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
+  .theme { z-index: 0; opacity: 0; pointer-events: none; }
+  .theme.ready { opacity: 1; transition: opacity .6s ease; }
+  .theme.ready.out { z-index: 2; opacity: 0; transition: opacity 1.1s ease; }
+  .theme.on { z-index: 1; }
   .orbit { transition: transform 1.2s cubic-bezier(.55,0,.35,1); }
-  .orbit.below { transform: translate(90px, 470px); }
+  .orbit.below { transform: translate(calc(90 * var(--u)), calc(470 * var(--u))); }
   .orbit.instant { transition: none; }
   .meteor { opacity: 0; animation: meteor 11s linear infinite 3s; }
-  @keyframes meteor { 0% { opacity: 0; transform: translate(380px, 40px); } 1% { opacity: 1; } 6% { opacity: 0; transform: translate(640px, 137px); } 100% { opacity: 0; transform: translate(640px, 137px); } }
+  @keyframes meteor { 0% { opacity: 0; transform: translate(calc(380 * var(--u)), calc(40 * var(--u))); } 1% { opacity: 1; } 6%, 100% { opacity: 0; transform: translate(calc(640 * var(--u)), calc(137 * var(--u))); } }
   .cloud { animation: cloud var(--dur, 180s) linear infinite; animation-delay: var(--dl, 0s); }
-  @keyframes cloud { from { transform: translateX(-260px); } to { transform: translateX(260px); } }
-  .flock { animation: fly 38s linear infinite 2s; transform: translate(-120px, 300px); }
-  @keyframes fly { 0% { transform: translate(-120px, 330px); } 50% { transform: translate(800px, 290px); } 100% { transform: translate(1760px, 315px); } }
-  .theme.on { opacity: 1; }
-  .theme.on .orb { pointer-events: auto; cursor: pointer; }
-  .layer svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+  @keyframes cloud { from { transform: translateX(calc(-260 * var(--u))); } to { transform: translateX(calc(260 * var(--u))); } }
+  .flock { overflow: visible; animation: fly 38s linear infinite 2s; transform: translate(calc(-120 * var(--u)), calc(300 * var(--u))); }
+  @keyframes fly { 0% { transform: translate(calc(-120 * var(--u)), calc(330 * var(--u))); } 50% { transform: translate(calc(800 * var(--u)), calc(290 * var(--u))); } 100% { transform: translate(calc(1760 * var(--u)), calc(315 * var(--u))); } }
   .copy { position: absolute; left: clamp(16px, 7vw, 120px); right: 16px; top: clamp(92px, 16vh, 180px); max-width: 560px; will-change: transform, opacity; }
   .kicker { line-height: 1.6; font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
   h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(44px, 7vw, 88px); line-height: .98; letter-spacing: -.02em; }
@@ -51,12 +60,11 @@
   .scroll-hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .2em; color: var(--ink-dim); text-transform: uppercase; }
 
   /* Twinkle + mist */
-  .star { animation: twinkle var(--d, 4s) ease-in-out infinite; animation-delay: var(--dl, 0s); }
-  @keyframes twinkle { 0%,100% { opacity: var(--o, .8); } 50% { opacity: .15; } }
-  .glint { animation: twinkle 3s ease-in-out infinite; animation-delay: var(--dl, 0s); }
+  .tw { animation: tw var(--d, 4s) ease-in-out infinite; animation-delay: var(--dl, 0s); }
+  @keyframes tw { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
   .mist { animation: drift 40s ease-in-out infinite alternate; }
   .mist.b { animation-duration: 55s; animation-direction: alternate-reverse; }
-  @keyframes drift { from { transform: translateX(-60px); } to { transform: translateX(60px); } }
+  @keyframes drift { from { transform: translateX(calc(-60 * var(--u))); } to { transform: translateX(calc(60 * var(--u))); } }
 
 
   .nav:not(.solid) { background: rgba(7,11,20,.35); color: var(--ink); }
@@ -66,12 +74,12 @@
   .hero .btn { color: var(--ink); } .hero .btn.primary { color: #0a0f1c; }
 
   /* Sheet that slides up over the scene */
-  .sheet { position: relative; z-index: 2; margin-top: -24vh; background: var(--sheet); padding-top: 120px; }
+  .sheet { position: relative; z-index: 2; margin-top: calc(170px - 24vh); background: var(--sheet); padding-top: 32px; }
   .sheet > .wrap, .sheet > .footer { position: relative; z-index: 2; }
-  .foliage-band { position: absolute; left: 0; right: 0; top: -140px; height: 230px; z-index: 1; pointer-events: none;
-    -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 100%); mask-image: linear-gradient(to bottom, #000 76%, transparent 100%); }
-  .foliage-band svg { width: 100%; height: 100%; display: block; }
-  .foliage-band path, .foliage-band rect { transition: fill .8s ease; }
+  .foliage-band { position: absolute; left: 0; right: 0; top: -340px; height: 340px; z-index: 1; pointer-events: none; }
+  .foliage-band svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .foliage-band path, .foliage-band ellipse { transition: fill .8s ease; }
+  .foliage-band stop { transition: stop-color .8s ease; }
   .side-foliage { position: absolute; left: 0; right: 0; top: 140px; bottom: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .side-foliage .side { position: absolute; top: 0; fill: var(--side-fol); opacity: var(--side-op); transition: fill .8s ease; }
   .side-foliage .left { left: 0; } .side-foliage .right { right: 0; transform: scaleX(-1); }
@@ -96,7 +104,7 @@
   @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .star, .glint, .mist, .meteor, .cloud, .flock { animation: none; }
+    .tw, .mist, .meteor, .cloud, .flock { animation: none; }
     .meteor { display: none; }
   }
 </style>
@@ -186,7 +194,7 @@
   document.getElementById('topics').innerHTML = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(c => `<a class="chip" href="posts.html">${c}<span class="n">${counts[c]}</span></a>`).join('');
   // Nav switches to the page style once it's over the sheet
   const nav = document.querySelector('.nav'), sheet = document.querySelector('.sheet');
-  const solid = () => nav.classList.toggle('solid', sheet.getBoundingClientRect().top < 52);
+  const solid = () => nav.classList.toggle('solid', sheet.getBoundingClientRect().top < 222);
   addEventListener('scroll', solid, { passive: true }); solid();
 </script>
 
@@ -194,14 +202,15 @@
 (() => {
   const W = 1600, BOTTOM = 1500;
   const scene = document.getElementById('scene');
-  let vb = '0 0 1600 900';
   const f = n => Math.round(n * 10) / 10;
 
   // Builds the whole scene for one time of day into its own container
   function buildScene(DAY) {
   const host = document.createElement('div'); host.className = 'theme';
   const LAYERS = [];
-  const layer = (speed, content) => LAYERS.push({ speed, content });
+  // A part of the scene. Plain parts are static artwork; a part with a class (cls) is a sprite that CSS animates as a whole.
+  // Neighbouring static parts moving at the same speed are drawn together.
+  const layer = (speed, content, o = {}) => { if (!content) return; const last = LAYERS[LAYERS.length - 1]; if (last && last.speed === speed && !o.cls && !last.cls) last.content += content; else LAYERS.push({ speed, content, ...o }); };
 
   // Seeded RNG so the scene is identical on every load
   let seed = 7;
@@ -226,7 +235,16 @@
     '#0a101e': '#3b342c', '#060a13': '#29231d', '#22345e': '#6d5f4d', '#2e4274': '#887760', '#2b3e6e': '#917f65', '#1b2a4e': '#5a4c3d',
     '#1c2b50': '#4a3e32', '#6d83c0': '#dcc7a2', '#172441': '#5b4f41', '#2c3e6c': '#9c8b70', '#121c34': '#463c31', '#1d2d54': '#6b5c4a',
     '#1a2747': '#605344',
-    '#101a30': '#3f6534', '#18253f': '#5a8645', '#0b1222': '#2c4529', '#111b30': '#365232', '#18243f': '#46693d', '#22325a': '#64894b', '#0f1729': '#4b5a3b', '#03050a': '#1c1916', '#1f2d52': '#6c5d4b', '#141f3a': '#4c4134', '#c9d6fa': '#fff2d2', '#93a7dc': '#e8d4ac'
+    '#101a30': '#3f6534', '#18253f': '#5a8645', '#0b1222': '#2c4529', '#111b30': '#365232', '#18243f': '#46693d', '#22325a': '#64894b', '#0f1729': '#4b5a3b', '#03050a': '#1c1916', '#1f2d52': '#6c5d4b', '#141f3a': '#4c4134', '#c9d6fa': '#fff2d2', '#93a7dc': '#e8d4ac',
+    // ground: soil, path, turf bands (far to near), stones, plants
+    '#0c0f18': '#5a4632', '#090c13': '#4a3828', '#1a2136': '#c2ad85', '#222a42': '#d6c6a2', '#151b2c': '#ab966f',
+    '#14203a': '#5c8742', '#111c33': '#507a3b', '#0f182c': '#466f35', '#0c1424': '#3d6430', '#0a111f': '#36592b',
+    '#1b2338': '#8f877a', '#121829': '#6b645a', '#283250': '#b3ab9b', '#1c2c4a': '#6f9a50', '#0b1220': '#467034', '#2a3d6c': '#7fa35a', '#172543': '#628d45',
+    '#131829': '#93795a', '#1e263c': '#dccfb0', '#0e121c': '#735a40', '#191f31': '#bfae8b', '#121727': '#9a8462',
+    // the wolf's rock
+    '#131d33': '#665e53', '#162138': '#70675a', '#0f172a': '#554e45', '#0d1425': '#3d3730', '#080d18': '#2c2823', '#101829': '#4a433b', '#0a1120': '#38332d', '#0b111f': '#463f37',
+    // framing pines
+    '#070c18': '#27402a', '#0c1626': '#3a5a34', '#0a0d14': '#33281e', '#10141d': '#4d3d2c'
   };
   const K = c => (DAY && DAY_PALETTE[c]) || c;
   const recolor = str => DAY ? str.replace(/#[0-9a-f]{6}\b/g, K) : str;
@@ -302,11 +320,12 @@
   </defs>`;
 
   // Sky + stars
-  let stars = '';
+  const starG = ['', '', ''];   // one still group and two that twinkle as a whole
   for (let i = 0; i < 260; i++) {
     const x = rng() * W, y = Math.pow(rng(), 1.4) * 460, r = rng() < .06 ? 1.6 : .5 + rng() * .8;
     const o = (.35 + rng() * .65) * (1 - y / 560);
-    stars += `<circle class="star" cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#e8eeff" style="--o:${o.toFixed(2)};--d:${(2 + rng() * 5).toFixed(1)}s;--dl:${(rng() * 6).toFixed(1)}s"/>`;
+    starG[i % 3] += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#e8eeff" opacity="${o.toFixed(2)}"/>`;
+    rng(); rng();   // keeps the random sequence, and so the rest of the scene, unchanged
   }
   layer(0.05, `<rect x="-200" y="-200" width="2000" height="1100" fill="url(#sky)"/>`);
   // Milky Way: a soft tilted band with a dense dusting of faint stars (static, night only)
@@ -323,7 +342,12 @@
     }
   }
   layer(0.05, milky);
-  layer(0.05, DAY ? '' : stars + `<g class="meteor"><line x1="0" y1="0" x2="-70" y2="-26" stroke="#eef2ff" stroke-width="1.4" stroke-linecap="round"/><circle r="1.6" fill="#ffffff"/></g>`);
+  if (!DAY) {
+    layer(0.05, starG[0]);
+    layer(0.05, starG[1], { cls: 'tw', style: '--d:5.5s' });
+    layer(0.05, starG[2], { cls: 'tw', style: '--d:7s;--dl:-3s' });
+    layer(0.05, `<line x1="0" y1="0" x2="-70" y2="-26" stroke="#eef2ff" stroke-width="1.4" stroke-linecap="round"/><circle r="1.6" fill="#ffffff"/>`, { cls: 'meteor' });
+  }
   // Stylized flat clouds, drifting slowly (day only)
   const cloud = (x, y, s, dur, delay) => {
     // Flat base, a few arcs of different sizes across the top
@@ -333,22 +357,19 @@
       for (const [cx, cy, r] of tops) d += `L${(cx - r * .9) * s * k},${(cy * .4 + dy / s) * s}A${r * s * k},${r * s * k} 0 0 1 ${(cx + r * .9) * s * k},${(cy * .4 + dy / s) * s}`;
       return d + `L${84 * s * k},${dy}Q${88 * s * k},${dy + 4 * s} ${80 * s * k},${dy + 6 * s}L${-76 * s * k},${dy + 6 * s}Q${-86 * s * k},${dy + 4 * s} ${-80 * s * k},${dy}Z`;
     };
-    return `<g class="cloud" style="--dur:${dur}s;--dl:-${delay}s"><g transform="translate(${x},${y})" opacity=".9">
-      <path d="${shape(0, 1)}" fill="#dfeaf4"/><path d="${shape(-3 * s, .97)}" fill="#ffffff"/></g></g>`;
+    layer(0.07, `<g transform="translate(${x},${y})" opacity=".9"><path d="${shape(0, 1)}" fill="#dfeaf4"/><path d="${shape(-3 * s, .97)}" fill="#ffffff"/></g>`, { cls: 'cloud', style: `--dur:${dur}s;--dl:-${delay}s` });
   };
-  if (DAY) layer(0.07, cloud(860, 120, 1, 170, 20) + cloud(1420, 270, .85, 210, 90) + cloud(1050, 300, .55, 240, 150) + cloud(700, 70, .6, 200, 60));
+  if (DAY) { cloud(860, 120, 1, 170, 20); cloud(1420, 270, .85, 210, 90); cloud(1050, 300, .55, 240, 150); cloud(700, 70, .6, 200, 60); }
   // A small flock of birds crossing the far distance (day only)
   const bird = (x, y, s, beat, dl) => `<path transform="translate(${x},${y}) scale(${s})" fill="none" stroke="#2c3e52" stroke-width="1.3" stroke-linecap="round" d="M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2">
     <animate attributeName="d" dur="${beat}s" begin="${dl}s" repeatCount="indefinite" values="M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2;M-6,2.5 Q-3,0.5 0,0 Q3,0.5 6,2.5;M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2"/></path>`;
-  if (DAY) layer(0.1, `<g class="flock">${bird(0, 0, 1.3, .55, 0) + bird(-26, 10, 1.1, .6, .2) + bird(-46, -7, 1.05, .5, .35) + bird(-70, 16, .9, .58, .1) + bird(20, 14, 1, .62, .3)}</g>`);
-  if (DAY) layer(0.08, `<g filter="url(#blur)" opacity=".75">
-    <ellipse class="mist" cx="300" cy="120" rx="220" ry="26" fill="#ffffff" opacity=".55"/>
-    <ellipse class="mist b" cx="720" cy="210" rx="300" ry="22" fill="#ffffff" opacity=".45"/>
-    <ellipse class="mist" cx="1420" cy="300" rx="260" ry="20" fill="#ffffff" opacity=".4"/>
-    <ellipse class="mist b" cx="980" cy="90" rx="180" ry="16" fill="#ffffff" opacity=".35"/></g>`);
+  if (DAY) layer(0.1, bird(0, 0, 1.3, .55, 0) + bird(-26, 10, 1.1, .6, .2) + bird(-46, -7, 1.05, .5, .35) + bird(-70, 16, .9, .58, .1) + bird(20, 14, 1, .62, .3), { cls: 'flock', live: true });
+  const haze = (speed, op, a, b) => { layer(speed, `<g filter="url(#blur)" opacity="${op}">${a}</g>`, { cls: 'mist' }); layer(speed, `<g filter="url(#blur)" opacity="${op}">${b}</g>`, { cls: 'mist b' }); };
+  if (DAY) haze(0.08, .75, `<ellipse cx="300" cy="120" rx="220" ry="26" fill="#ffffff" opacity=".55"/><ellipse cx="1420" cy="300" rx="260" ry="20" fill="#ffffff" opacity=".4"/>`,
+    `<ellipse cx="720" cy="210" rx="300" ry="22" fill="#ffffff" opacity=".45"/><ellipse cx="980" cy="90" rx="180" ry="16" fill="#ffffff" opacity=".35"/>`);
 
   // Moon
-  layer(0.12, `<g class="orbit"><circle cx="1220" cy="170" r="240" fill="url(#moonGlow)"/>${DAY ? '<circle cx="1220" cy="170" r="380" fill="url(#sunGlow)"/>' : ''}<circle cx="1220" cy="170" r="44" fill="#f2f5ff"/><circle class="orb" cx="1220" cy="170" r="70" fill="transparent"/>${DAY ? '' : '<circle cx="1206" cy="160" r="9" fill="#dfe6f8"/><circle cx="1232" cy="184" r="6" fill="#e4eaf9"/><circle cx="1228" cy="152" r="4" fill="#e1e8f8"/>'}</g>`);
+  layer(0.12, `<circle cx="1220" cy="170" r="240" fill="url(#moonGlow)"/>${DAY ? '<circle cx="1220" cy="170" r="380" fill="url(#sunGlow)"/>' : ''}<circle cx="1220" cy="170" r="44" fill="#f2f5ff"/>${DAY ? '' : '<circle cx="1206" cy="160" r="9" fill="#dfe6f8"/><circle cx="1232" cy="184" r="6" fill="#e4eaf9"/><circle cx="1228" cy="152" r="4" fill="#e1e8f8"/>'}`, { cls: 'orbit' });
 
   // Far ridges (atmospheric, lighter)
   const r1 = ridgePath(398, 48, .55, x => -34 * Math.sin(x / 520 + 1));
@@ -377,7 +398,7 @@
   let midTrees = '';
   for (let x = -20; x < W + 20; x += 3 + rng() * 4) { const y = yAt(mid.pts, Math.max(0, Math.min(W - 1, x))); const h = 8 + rng() * 9; if (Math.abs(x - 905) < 26) continue; midTrees += pine(x, y + 3, h)[0]; }
   layer(0.3, `<path d="${mid.d}" fill="#18214a"/><path d="${midTrees}" fill="#18214a"/>`);
-  layer(0.3, `<g filter="url(#blur)" opacity=".55"><ellipse class="mist" cx="450" cy="468" rx="540" ry="26" fill="#8a9dd0" opacity=".35"/><ellipse class="mist b" cx="1200" cy="476" rx="560" ry="24" fill="#8a9dd0" opacity=".3"/></g>`);
+  haze(0.3, .55, `<ellipse cx="450" cy="468" rx="540" ry="26" fill="#8a9dd0" opacity=".35"/>`, `<ellipse cx="1200" cy="476" rx="560" ry="24" fill="#8a9dd0" opacity=".3"/>`);
 
   // Valley terrain: rows drawn far to near. Each row is a hill profile; nearer rows hide what is behind them.
   const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -474,26 +495,40 @@
     }
     return false;
   };
+  const glG = ['', '']; let gi = 0;   // river glints, twinkling as two groups
   for (const g of glintList) {
     if (covered(g.x1, g.y, g.r) || covered(g.x2, g.y, g.r) || covered((g.x1 + g.x2) / 2, g.y, g.r)) continue;
-    fx += `<line class="glint" x1="${f(g.x1)}" y1="${f(g.y)}" x2="${f(g.x2)}" y2="${f(g.y)}" stroke="#e6edff" stroke-width="${f(g.w)}" style="--o:${(.4 + rng() * .4).toFixed(2)};--dl:${(rng() * 3).toFixed(1)}s"/>`;
+    glG[gi++ % 2] += `<line x1="${f(g.x1)}" y1="${f(g.y)}" x2="${f(g.x2)}" y2="${f(g.y)}" stroke="#e6edff" stroke-width="${f(g.w)}" opacity="${(.4 + rng() * .4).toFixed(2)}"/>`;
+    rng();
   }
-  fx += `<g filter="url(#blur)" opacity=".35"><ellipse class="mist" cx="${f(riverX(.2))}" cy="${f(yb(.2))}" rx="320" ry="16" fill="#9fb2e0"/><ellipse class="mist b" cx="${f(riverX(.42))}" cy="${f(yb(.42))}" rx="380" ry="20" fill="#9fb2e0"/></g>`;
   valley = grads.length ? valley.replace('<rect', `<defs>${grads}</defs><rect`) : valley;
   layer(0.5, valley);
   layer(0.5, fx);
+  layer(0.5, glG[0], { cls: 'tw', style: '--d:3s' });
+  layer(0.5, glG[1], { cls: 'tw', style: '--d:3.7s;--dl:-1.5s' });
+  haze(0.5, .35, `<ellipse cx="${f(riverX(.2))}" cy="${f(yb(.2))}" rx="320" ry="16" fill="#9fb2e0"/>`, `<ellipse cx="${f(riverX(.42))}" cy="${f(yb(.42))}" rx="380" ry="20" fill="#9fb2e0"/>`);
 
   // Foreground escarpment + wolf
   const rock = 'M-300,' + BOTTOM + ' L-300,740 L-40,736 L40,724 L120,752 L210,734 L300,766 L390,750 L470,770 L540,758 L580,744 L610,718 L740,708 L800,712 L835,728 L850,770 L866,806 L866,870 L930,935 L1010,985 L1120,1010 L1300,1000 L1500,960 L1700,930 L1900,930 L1900,' + BOTTOM + ' Z';
   const rockRim = 'M-40,736 L40,724 L120,752 L210,734 L300,766 L390,750 L470,770 L540,758 L580,744 L610,718 L740,708 L800,712 L835,728 L850,770 L866,806 L866,870 L930,935';
-  const facets = `
-    <path d="M580,744 L610,718 L740,708 L800,712 L835,728 L828,800 L592,806 Z" fill="#111a2e"/>
-    <path d="M835,728 L850,770 L866,806 L880,870 L930,935 L820,960 L828,800 Z" fill="#0c1323"/>
-    <path d="M592,806 L828,800 L820,960 L620,900 Z" fill="#0a101d"/>
-    <path d="M210,734 L300,766 L270,860 L150,840 Z" fill="#0a101d"/>`;
-  // Framing pines on the escarpment
-  let fgPines = '';
-  [[-30, 760, 430], [70, 748, 330], [1560, 990, 520], [1460, 1000, 380]].forEach(([x, y, h]) => fgPines += pine(x, y, h)[0]);
+  // The wolf's rock: a lit top, a sunward right face and a shaded front, each broken into a few planes
+  const fc = (pts, c) => `<path d="M${pts} Z" fill="${c}"/>`;
+  const facets = [
+    // top, with a broken front lip and the right-front corner cut away
+    fc('580,744 610,718 680,713 660,760 600,772 586,775', '#131d33'), fc('680,713 740,708 800,712 770,752 660,760', '#111a2e'),
+    fc('800,712 835,728 842,764 822,792 770,752', '#162138'), fc('586,775 600,772 660,760 690,808 655,814 592,806', '#0f172a'), fc('660,760 770,752 822,792 790,812 730,800 690,808', '#111a2e'),
+    // front
+    fc('592,806 655,814 648,872 620,900', '#0a101d'), fc('655,814 690,808 730,800 742,890 700,924 620,900 648,872', '#0d1425'),
+    fc('730,800 790,812 796,880 742,890', '#0a101d'), fc('742,890 796,880 786,948 760,942 700,924', '#080d18'),
+    // the angled plane between front and right, then the right side
+    fc('790,812 822,792 848,826 842,892 820,960 786,948 796,880', '#0b111f'),
+    fc('835,728 850,770 866,806 848,826 822,792 842,764', '#101829'), fc('866,806 880,870 842,892 848,826', '#0c1323'), fc('880,870 930,935 820,960 842,892', '#0a1120'),
+    // moss low on the shaded side, cracks, and a lip that catches the light
+    fc('600,842 618,834 632,856 628,886 616,893 606,868', '#111b30'), fc('606,868 616,893 628,886 624,870', '#0b1222'),
+    `<path d="M690,808 L698,842 L688,872 L696,905 L700,924" fill="none" stroke="#080d18" stroke-width="1.6" stroke-linejoin="round"/>`,
+    `<path d="M770,752 L778,778 L790,812" fill="none" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round"/>`,
+    `<path d="M592,806 L655,814 L690,808 L730,800 L790,812 L822,792" fill="none" stroke="#5a6ea6" stroke-width="1.2" stroke-linejoin="round" opacity=".2"/>`
+  ].join('');
   // Wolf from behind, body angled away, head turned right to look over the valley.
   // Points are in a ~800 x 980 drawing space, scaled into the scene.
   const P = pts => 'M' + pts.map(([x, y]) => x + ',' + y).join('L') + 'Z';
@@ -539,76 +574,158 @@
     <path d="M300,570 L302,612 L299,624 L299,678 L294,692 L293,746 L288,758 L282,812 L275,826 L266,866 L254,884 L242,916 L226,934 L212,948" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".55"/>
     <path d="${sideRim}" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".5"/>
   </g>`;
-  // --- Ground detail: the cliff top is a surface running toward the viewer ---
+  // --- Ground: the cliff top is a meadow running toward the viewer, with a worn path up to the wolf's rock ---
   const TOP = [[-300,740],[-40,736],[40,724],[120,752],[210,734],[300,766],[390,750],[470,770],[540,758],[580,744],[610,718],[740,708],[800,712],[835,728],[850,770],[866,806],[866,870],[930,935],[1010,985],[1120,1010],[1300,1000],[1500,960],[1700,930],[1900,930]];
-  const topY = x => { for (let i = 0; i < TOP.length - 1; i++) if (x <= TOP[i + 1][0]) { const [x0, y0] = TOP[i], [x1, y1] = TOP[i + 1]; return y0 + (y1 - y0) * (x - x0) / (x1 - x0); } return 930; };
-  const leafP = (x, y, len, ang, wid = .46) => { const c = Math.cos(ang), sn = Math.sin(ang), tx = x + c * len, ty = y + sn * len, mx = x + c * len * .45, my = y + sn * len * .45, w = len * wid;
-    return `M${f(x)},${f(y)}Q${f(mx - sn * w)},${f(my + c * w)} ${f(tx)},${f(ty)}Q${f(mx + sn * w)},${f(my - c * w)} ${f(x)},${f(y)}Z`; };
-  const blade = (x, y, h, lean, w) => `M${f(x - w)},${f(y)}Q${f(x + lean * .3)},${f(y - h * .6)} ${f(x + lean)},${f(y - h)}Q${f(x + lean * .3 + w * .4)},${f(y - h * .55)} ${f(x + w)},${f(y)}Z`;
+  const at = (K, v) => { for (let i = 0; i < K.length - 1; i++) if (v <= K[i + 1][0]) { const t = Math.max(0, (v - K[i][0]) / ((K[i + 1][0] - K[i][0]) || 1)); return K[i].map((a, j) => a + (K[i + 1][j] - a) * t); } return K[K.length - 1]; };
+  const topY = x => at(TOP, x)[1];
+  const FL = Site.flora(rng);
   // tones are authored in night colors and mapped for day by the palette
-  const G = { gb: '', gf: '', b0: '', b1: '', b2: '', b3: '' };
-  const tuft = (x, y, s, out) => { const n = 3 + Math.floor(rng() * 4); for (let k = 0; k < n; k++) { const h = (8 + Math.pow(rng(), 1.4) * 18) * s; out[rng() < .45 ? 'gb' : 'gf'] += blade(x + (rng() - .5) * 8 * s, y, h, (rng() - .5) * h * .8, (1 + rng()) * s * .7); } };
-  const bush = (cx, cy, r, out) => {
-    out.b0 += `M${f(cx - r)},${f(cy)}A${f(r)},${f(r * .78)} 0 0 1 ${f(cx + r)},${f(cy)}Z`;
-    for (let i = 0; i < r * 1.7; i++) {
-      const t = -Math.PI * (1.04 * rng() - .02), rr = r * (.3 + .7 * Math.sqrt(rng())), x = cx + Math.cos(t) * rr, y = cy + Math.sin(t) * rr * .78;
-      const ang = t + (rng() - .5) * .9, len = (6 + rng() * 9) * Math.max(.7, r / 30), k = rng() < .3 ? 'b1' : rng() < .8 ? 'b2' : 'b3';
-      out[k] += leafP(x - Math.cos(ang) * len * .3, y - Math.sin(ang) * len * .3, len, ang);
+  const C = { g1: '#101a30', g2: '#1c2c4a', sh: '#0b1220', b0: '#0b1222', b1: '#111b30', b2: '#18243f', b3: '#22325a', b4: '#2a3d6c', s0: '#1b2338', s1: '#121829', s2: '#283250' };
+  const poly = pts => 'M' + pts.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
+  const fill = (d, c) => `<path d="${d}" fill="${c}"/>`;
+  const dot = (x, y, r) => `M${f(x - r)},${f(y)}a${f(r)},${f(r * .6)} 0 1 0 ${f(r * 2)},0a${f(r)},${f(r * .6)} 0 1 0 ${f(-r * 2)},0Z`;
+  const sc = y => .6 + Math.pow(Math.max(0, y - 720) / 300, 1.1);   // things get bigger toward the viewer
+  // the path: [y, centre x, half width]. It ends wide and centred so the sheet's path can take over.
+  const PATH = [[752,596,7],[790,578,10],[840,574,14],[890,590,20],[930,625,27],[965,668,36],[1000,712,48],[1040,756,70],[1080,786,108],[1120,800,156],[1160,802,192],[1200,800,216],[1260,800,244],[1500,800,320]];
+  const pathPoly = (grow, pad, jit) => { const L = [], R = []; for (let y = 752; y <= BOTTOM; y += 17) { const [, cx, hw] = at(PATH, y), w = hw * grow + pad; L.push([cx - w + (rng() - .5) * jit, y]); R.push([cx + w + (rng() - .5) * jit, y]); } return poly(L.concat(R.reverse())); };
+  const onPath = (x, y, pad = 0) => { const [, cx, hw] = at(PATH, y); return y > 745 && Math.abs(x - cx) < hw * 1.22 + 10 + pad; };
+  const onApron = (x, y) => x > 540 && x < 950 && y > 700 && y < 1010;
+  // bare earth along the cliff's lip, then turf in bands that darken toward the viewer
+  const lip = x => 11 + Math.max(0, topY(x) - 720) * .07 + 5 * Math.sin(x / 47) + 3 * Math.sin(x / 19 + 2);
+  const turfTop = x => topY(x) + lip(x);
+  const yA = x => Math.max(1040 + 22 * Math.sin(x / 210 + 1) + 10 * Math.sin(x / 83), turfTop(x) + 46);
+  const yB = x => 1215 + 26 * Math.sin(x / 260 + 2) + 12 * Math.sin(x / 97);
+  const edge = (yf, step, teeth) => { const pts = []; for (let x = -300; x < 1900; x += step * (.6 + rng() * .8)) { const y = yf(x); pts.push([x, y + (rng() - .5) * 3]); if (teeth) pts.push([x + step * .3, y - teeth * (.5 + rng())]); } pts.push([1900, yf(1900)], [1900, BOTTOM], [-300, BOTTOM]); return poly(pts); };
+  let ground = fill(rock, '#0c0f18') + fill(edge(turfTop, 16, 0), '#14203a') + fill(edge(yA, 9, 6), '#111c33') + fill(edge(yB, 11, 10), '#0f182c');
+  // broad sunlit facets so the turf reads as ground with some form, like the rock
+  { let lit = ''; for (let i = 0; i < 30; i++) { const x = -200 + rng() * 2000, y = 820 + rng() * 640, k = sc(y), w = (50 + rng() * 60) * k, h = (10 + rng() * 12) * k;
+      if (y - h < Math.max(turfTop(x - w), turfTop(x), turfTop(x + w)) + 8) continue;
+      lit += poly([[x - w, y], [x - w * .2, y - h], [x + w, y - h * .3], [x + w * .3, y + h * .6]]); }
+    ground += fill(lit, '#172543'); }
+  // earth around the rock, and the path with its shoulders
+  ground += fill(poly([[548,764],[562,820],[560,872],[584,922],[640,958],[705,988],[775,1004],[845,1004],[905,988],[938,962],[922,948],[884,906],[860,880],[700,800],[600,770]]), '#0c0f18');
+  ground += fill(poly([[570,880],[600,930],[668,965],[640,930],[600,890]]) + poly([[800,985],[870,996],[915,972],[880,962]]), '#090c13');
+  ground += `<defs><linearGradient id="pathG" gradientUnits="userSpaceOnUse" x1="0" y1="770" x2="0" y2="1300"><stop offset="0" stop-color="#131829"/><stop offset=".55" stop-color="#1a2136"/><stop offset="1" stop-color="#1e263c"/></linearGradient>
+    <linearGradient id="shoulderG" gradientUnits="userSpaceOnUse" x1="0" y1="770" x2="0" y2="1300"><stop offset="0" stop-color="#0e121c"/><stop offset=".55" stop-color="#151b2c"/><stop offset="1" stop-color="#191f31"/></linearGradient></defs>`;
+  ground += fill(pathPoly(1.1, 6, 4), 'url(#shoulderG)') + fill(pathPoly(1, 0, 3), 'url(#pathG)');
+  let pebD = '', pebL = '';
+  for (let i = 0; i < 46; i++) { const y = 800 + Math.pow(rng(), .8) * 660, [, cx, hw] = at(PATH, y), d = dot(cx + (rng() * 2 - 1) * hw * .9, y, (.8 + rng() * 1.8) * sc(y) * .55); if (rng() < .6) pebD += d; else pebL += d; }
+  for (let i = 0; i < 26; i++) { const d = dot(596 + rng() * 310, 925 + rng() * 68, 1 + rng() * 2.2); if (rng() < .5) pebD += d; else pebL += d; }
+  for (let i = 0; i < 60; i++) { const x = -100 + rng() * 1800; if (x > 575 && x < 872) continue; const d = dot(x, topY(x) + 3 + rng() * (lip(x) - 5), .8 + rng() * 1.4); if (rng() < .5) pebD += d; else pebL += d; }
+  ground += fill(pebD, '#121727') + fill(pebL, '#283250');
+
+  // plants and stones, each drawn whole and sorted so nearer ones overlap farther ones
+  const items = [], put = (y, svg) => items.push([y, svg]);
+  const bushes = [[150,800,24],[335,840,28],[455,902,32],[55,932,44],[250,1012,50],[478,1064,46],[-90,1050,60],[606,1014,34],[952,1066,34],[1046,1094,38],[1236,1078,44],[1424,1042,48],[1606,1012,52],[1184,1186,56],[1385,1172,60],[380,1200,58],[110,1190,64]];
+  for (const [x, y, r] of bushes) { put(y, FL.bush(x, y, r, C)); for (const k of [-1.25, 1.3]) put(y + 2, FL.clump(x + k * r, y + 2, r / 30, C)); }
+  const stones = [[546,900,12],[686,930,9],[836,972,11],[742,974,15],[872,986,21],[905,1004,12],[1032,1132,22],[598,1088,20],[520,792,7],[300,786,6],[1180,1034,9]];
+  for (const [x, y, r] of stones) { put(y, FL.stone(x, y, r, C)); put(y + 1, FL.clump(x - r * 1.2, y + 1, r / 16, C)); }
+  for (const [x, y, k] of [[650,914,.8],[735,940,.7],[792,954,.95],[900,952,.8]]) put(y, FL.clump(x, y, k, C));
+  for (let y = 962, side = 1; y < 1480; y += 26 * sc(y) * (.7 + rng() * .6), side = -side) { const [, cx, hw] = at(PATH, y); put(y, FL.clump(cx + side * (hw * 1.22 + 12 + rng() * 14 * sc(y)), y, sc(y) * (.7 + rng() * .4), C)); }
+  for (const yf of [yA, yB]) for (let x = -80 + rng() * 60; x < 1700; x += 70 + rng() * 80) { const y = yf(x) + 3; if (!onPath(x, y, 24) && !onApron(x, y)) put(y, FL.clump(x, y, sc(y) * .8, C)); }
+  // small sprigs spaced evenly through the turf for texture
+  let sprA = '', sprB = '';
+  for (let gy = 800; gy < 1480; gy += 46 * sc(gy)) for (let gx = -80 + rng() * 60; gx < 1700; gx += 76 * sc(gy)) {
+    if (rng() < .4) continue;
+    const x = gx + (rng() - .5) * 40 * sc(gy), y = gy + (rng() - .5) * 20 * sc(gy);
+    if (y < turfTop(x) + 14 || onPath(x, y, 20) || onApron(x, y)) continue;
+    const [a, b] = FL.clumpD(x, y, sc(y) * .42); sprA += a; sprB += b;
+  }
+  // Framing pines: a trunk rooted in the ground and tiers of drooping boughs, lit from the sun side
+  const bigPine = (x, y, h) => {
+    const n = Math.round(6 + h / 110), w = h * .3, tw = h * .026, span = h * .86, y0 = y - h;
+    let s = fill(poly([[x - tw * 2.2, y + 3], [x - tw * 1.1, y - h * .05], [x - tw * .7, y - h * .5], [x + tw * .7, y - h * .5], [x + tw * 1.1, y - h * .05], [x + tw * 2.4, y + 3], [x + tw * .5, y + 1], [x, y + 4]]), '#0a0d14');
+    s += fill(poly([[x + tw * .2, y - h * .5], [x + tw * .7, y - h * .5], [x + tw * 1.1, y - h * .05], [x + tw * 2.4, y + 3], [x + tw * .5, y + 1], [x + tw * .3, y - h * .05]]), '#10141d');
+    for (let k = n - 1; k >= 0; k--) {
+      const yT = y0 + span * k / n - (k ? span / n * .55 : 0), yB = y0 + span * (k + 1) / n, wk = w * Math.pow((k + 1) / n, .8) * (.92 + rng() * .16), wt = wk * .08, drop = span / n * .24;
+      const m = 3 + Math.round(wk / 24), B = [];
+      for (let j = 0; j <= 2 * m; j++) B.push([x + wk - 2 * wk * j / (2 * m) + (rng() - .5) * wk / m * .3, j % 2 ? yB - drop * (.7 + rng() * .5) : yB + drop * (.3 + rng() * .9) - (j === 0 || j === 2 * m ? drop * .5 : 0)]);
+      const L = q => q.map(v => 'L' + f(v[0]) + ',' + f(v[1])).join(''), mid = yT + (yB - yT) * .6;
+      s += fill(`M${f(x - wt)},${f(yT)}L${f(x + wt)},${f(yT)}Q${f(x + wk * .42)},${f(mid)} ${f(B[0][0])},${f(B[0][1])}${L(B.slice(1))}Q${f(x - wk * .42)},${f(mid)} ${f(x - wt)},${f(yT)}Z`, '#070c18');
+      const c = Math.round(m * .75), e = Math.round(m * 1.35);
+      s += fill(`M${f(x + wt)},${f(yT)}Q${f(x + wk * .42)},${f(mid)} ${f(B[0][0])},${f(B[0][1])}${L(B.slice(1, c + 1))}L${f(x + wk * .16)},${f(yT + (yB - yT) * .42)}Z`, '#0c1626');
+      s += fill(`M${f(x - wt)},${f(yT)}Q${f(x - wk * .42)},${f(mid)} ${f(B[2 * m][0])},${f(B[2 * m][1])}${L(B.slice(e, 2 * m).reverse())}L${f(x - wk * .1)},${f(yT + (yB - yT) * .5)}Z`, '#04070d');
     }
+    return s + FL.clump(x - tw * 3.4, y + 4, h / 260, C) + FL.clump(x + tw * 3.8, y + 5, h / 300, C);
   };
-  const back = { ...G }, front = { ...G };
-  // tufts along the cliff's edge, sparse right where the wolf stands
-  for (let x = -60; x < 1700; x += 6 + rng() * 10) { if (x > 640 && x < 790 && rng() < .85) continue; tuft(x, topY(x) + 2, .7 + rng() * .3, back); }
-  // tufts and bushes scattered across the cliff top, larger and denser closer to the viewer
-  const scatter = [];
-  for (let i = 0; i < 1100; i++) {
-    const x = -100 + rng() * 1800, y0 = topY(x), y = y0 + 8 + Math.pow(rng(), .55) * (1480 - y0);
-    if (x > 600 && x < 800 && y < 800) continue;
-    scatter.push([x, y, rng() < .06 ? 'bush' : 'tuft']);
-  }
-  scatter.sort((a, b) => a[1] - b[1]);
-  for (const [x, y, kind] of scatter) {
-    const s = .75 + Math.pow(Math.max(0, y - 720) / 260, 1.15), out = y > 800 ? front : back;
-    if (kind === 'bush') bush(x, y, (12 + rng() * 12) * s, out); else tuft(x, y, s, out);
-  }
-  const paint = o => `<path d="${o.gb}" fill="#101a30"/><path d="${o.b0}" fill="#0b1222"/><path d="${o.b1}" fill="#111b30"/><path d="${o.b2}" fill="#18243f"/><path d="${o.b3}" fill="#22325a"/><path d="${o.gf}" fill="#18253f"/>`;
-  layer(1.15, `<path d="${rock}" fill="#070b14"/>${facets}<path d="${rockRim}" fill="none" stroke="#5a6ea6" stroke-width="1.2" opacity=".55"/>${paint(back)}<path d="${fgPines}" fill="#04070d"/>${wolf}${paint(front)}`);
+  const fgPines = [[-24, 774, 470], [100, 784, 380], [1560, 992, 520], [1456, 1002, 380]].map(t => bigPine(...t)).join('');
+  items.sort((a, b) => a[0] - b[0]);
+  const draw = test => items.filter(i => test(i[0])).map(i => i[1]).join('');
+  layer(1.15, `${ground}${facets}<path d="${rockRim}" fill="none" stroke="#5a6ea6" stroke-width="1.2" opacity=".55"/>${fill(sprA, '#101a30')}${fill(sprB, '#1c2c4a')}${draw(y => y <= 830)}${fgPines}${wolf}${draw(y => y > 830)}`);
 
-  // --- Nearer foliage in the bottom corners that rises faster than the cliff, so we seem to walk toward the edge ---
-  const near = { ...G };
-  const corner = (x0, x1) => {
-    for (let i = 0; i < 9; i++) { const x = x0 + rng() * (x1 - x0), y = 940 + rng() * 260; bush(x, y, 40 + rng() * 46, near); }
-    for (let i = 0; i < 140; i++) { const x = x0 - 40 + rng() * (x1 - x0 + 80), y = 930 + Math.pow(rng(), .7) * 360; tuft(x, y, 2 + rng() * 1.2, near); }
-  };
-  corner(-320, 330); corner(1270, 1920);
-  layer(1.45, paint(near));
+  // --- A nearer rise on each side, leaving an opening the path runs through ---
+  {
+    const ML = [[-300,1000],[0,1035],[250,1085],[440,1150],[570,1250],[640,1400],[660,1500]], MR = [[950,1500],[965,1400],[1030,1240],[1160,1140],[1360,1080],[1620,1020],[1900,985]];
+    const mid = [], mound = (K, x0, x1, dy) => { const pts = []; for (let x = x0; x <= x1; x += 18) pts.push([x, at(K, x)[1] + dy + (dy ? 16 * Math.sin(x / 90) : (rng() - .5) * 5)]); return poly([[x0, BOTTOM], ...pts, [x1, BOTTOM]]); };
+    let s = fill(mound(ML, -300, 660, 0) + mound(MR, 950, 1900, 0), '#0c1424') + fill(mound(ML, -300, 560, 80) + mound(MR, 1050, 1900, 80), '#0a111f');
+    for (const [x, r] of [[-150,86],[62,70],[268,60],[418,48],[1752,90],[1528,72],[1312,60],[1136,48]]) { const y = at(x < 800 ? ML : MR, x)[1] + r * .5; mid.push([y, FL.bush(x, y, r, C)]); for (const k of [-1.25, 1.3]) mid.push([y + 2, FL.clump(x + k * r, y + 2, r / 30, C)]); }
+    for (let x = -280; x < 1900; x += 60 + rng() * 70) { if (x > 540 && x < 1070) continue; const y = at(x < 800 ? ML : MR, x)[1] + 5; mid.push([y, FL.clump(x, y, 1.9 + rng() * .7, C)]); }
+    for (const [x, y, r] of [[588,1300,34],[1012,1290,30],[520,1236,16]]) mid.push([y, FL.stone(x, y, r, C)]);
+    mid.sort((a, b) => a[0] - b[0]);
+    layer(1.3, s + mid.map(i => i[1]).join(''));
+  }
 
-  // One SVG per layer, so each is drawn once and then just moved
+  // --- Nearest foliage in the bottom corners, rising fastest, so we seem to walk toward the edge ---
+  {
+    const near = [], N = { ...C, sh: '' };
+    const corner = (x0, x1) => {
+      for (let i = 0; i < 4; i++) { const x = x0 + (i + .2 + rng() * .6) / 4 * (x1 - x0), y = 1090 + rng() * 200; near.push([y, FL.bush(x, y, 88 + rng() * 40, N)]); }
+      for (let i = 0; i < 12; i++) { const y = 1130 + rng() * 220; near.push([y, FL.clump(x0 - 40 + rng() * (x1 - x0 + 80), y, 3 + rng() * 1.2, N)]); }
+    };
+    corner(-320, 300); corner(1300, 1920);
+    near.sort((a, b) => a[0] - b[0]);
+    layer(1.45, near.map(i => i[1]).join(''));
+  }
+
+  // One element per part, grouped into a moving layer per speed. Static parts and sprites become canvases, drawn once in bake().
   const tag = DAY ? 'd-' : 'n-';
   const scoped = str => str.replace(/id="/g, `id="${tag}`).replace(/url\(#/g, `url(#${tag}`);
-  const els = LAYERS.map(({ speed, content }, i) => {
-    const d = document.createElement('div'); d.className = 'layer';
-    d.innerHTML = scoped(recolor(`<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice">${i === 0 ? DEFS : ''}${content}</svg>`));
-    host.appendChild(d);
-    return { el: d, svg: d.firstChild, s: speed };
-  });
-  const grain = document.createElement('div'); grain.className = 'layer';
-  grain.innerHTML = scoped(`<svg viewBox="0 0 1600 900" preserveAspectRatio="none"><rect width="1600" height="900" filter="url(#grain)" opacity=".9"/></svg>`);
-  host.appendChild(grain);
-  return { host, els, orbit: host.querySelector('.orbit') };
+  const defs = scoped(recolor(DEFS)), layers = [], parts = [];
+  for (const L of LAYERS) {
+    let grp = layers[layers.length - 1];
+    if (!grp || grp.s !== L.speed) { const el = document.createElement('div'); el.className = 'layer'; host.appendChild(el); layers.push(grp = { el, s: L.speed }); }
+    const body = scoped(recolor(L.content));
+    const el = L.live ? document.createElementNS('http://www.w3.org/2000/svg', 'svg') : document.createElement('canvas');
+    if (L.live) el.innerHTML = body;
+    if (L.cls) el.setAttribute('class', L.cls);
+    if (L.style) el.style.cssText = L.style;
+    grp.el.appendChild(el);
+    parts.push({ el, body, s: L.speed, sprite: !!L.cls, live: !!L.live, defs: body.includes('url(#') ? defs : '' });
+  }
+  return { host, layers, parts, orbit: host.querySelector('.orbit') };
   }
 
-  // Frame wolf + river on narrow screens; work out how many pixels one scene unit is
+  // Frame wolf + river on narrow screens; work out which part of the scene is on screen (V) and how many px one scene unit is
   const scenes = {};
-  let unit = 1;
+  let unit = 1, V = { x0: 0, y0: 0, rw: W, rh: 900 };
   function frame() {
     const w = scene.clientWidth, h = scene.clientHeight, vw = 900 * w / h;
-    let vbw = 1600;
-    if (vw < W) { const cx = Math.max(vw / 2, Math.min(W - vw / 2, 770)); vb = `${f(cx - vw / 2)} 0 ${f(vw)} 900`; vbw = vw; }
-    else vb = '0 0 1600 900';
-    for (const sc of Object.values(scenes)) for (const l of sc.els) l.svg.setAttribute('viewBox', vb);
-    unit = Math.max(w / vbw, h / 900);
+    if (vw < W) { const cx = Math.max(vw / 2, Math.min(W - vw / 2, 770)); unit = h / 900; V = { x0: cx - vw / 2, y0: 0, rw: vw, rh: 900 }; }
+    else { unit = Math.max(w / W, h / 900); V = { x0: W / 2 - w / unit / 2, y0: 450 - h / unit / 2, rw: w / unit, rh: h / unit }; }
+    scene.style.setProperty('--u', unit + 'px');
   }
+  // Draw one part into its canvas. Static parts only cover what can ever scroll into view; sprites cover their own extent.
+  const meas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  meas.setAttribute('style', 'position:absolute;left:-9999px;top:0;width:10px;height:10px;visibility:hidden');
+  const extent = p => { if (!p.box) { meas.innerHTML = `<g>${p.body}</g>`; document.body.appendChild(meas); const b = meas.firstChild.getBBox(); p.box = [b.x, b.y, b.x + b.width, b.y + b.height]; meas.innerHTML = ''; meas.remove(); } return p.box; };
+  async function bake(p) {
+    const soft = p.body.includes('filter='), pad = soft ? 80 : 4;
+    let [x, y, x2, y2] = extent(p); x -= pad; y -= pad; x2 += pad; y2 += pad;
+    if (!p.sprite) { x = Math.max(x, V.x0); x2 = Math.min(x2, V.x0 + V.rw); y = Math.max(y, V.y0); y2 = Math.min(y2, V.y0 + V.rh + p.s * RANGE + 2); }
+    const w = x2 - x, h = y2 - y, st = p.el.style;
+    if (w <= 0 || h <= 0) { st.display = 'none'; return; }
+    st.display = ''; st.left = (x - V.x0) * unit + 'px'; st.top = (y - V.y0) * unit + 'px'; st.width = w * unit + 'px'; st.height = h * unit + 'px';
+    if (p.live) { p.el.setAttribute('viewBox', `${x} ${y} ${w} ${h}`); return; }
+    // retina-sharp up to 2x; blurred sprites need only half that; cap very large canvases
+    const k = Math.min(unit * Math.min(devicePixelRatio || 1, 2) * (soft && p.sprite ? .5 : 1), Math.sqrt(12e6 / (w * h)));
+    const pw = Math.max(1, Math.round(w * k)), ph = Math.max(1, Math.round(h * k)), job = p.job = (p.job || 0) + 1;
+    const url = URL.createObjectURL(new Blob([`<svg xmlns="http://www.w3.org/2000/svg" width="${pw}" height="${ph}" viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="none">${p.defs}${p.body}</svg>`], { type: 'image/svg+xml' }));
+    const img = new Image();
+    try { await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; }); } finally { URL.revokeObjectURL(url); }
+    if (p.job !== job) return;
+    p.el.width = pw; p.el.height = ph; p.el.getContext('2d').drawImage(img, 0, 0, pw, ph);
+  }
+  const bakeScene = sc => sc.ready = Promise.all(sc.parts.map(bake)).catch(e => console.error('scene bake failed', e)).then(() => sc.host.classList.add('ready'));
   // Scroll-driven parallax
   const copy = document.getElementById('copy'), hint = document.getElementById('hint'), hero = document.querySelector('.hero');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -618,14 +735,21 @@
     ticking = false;
     const max = hero.offsetHeight - innerHeight;
     const p = Math.min(1, Math.max(0, scrollY / max));
-    for (const sc of Object.values(scenes)) for (const { el, s } of sc.els) el.style.transform = `translate3d(0, ${(-p * s * RANGE * unit).toFixed(1)}px, 0)`;
+    for (const sc of Object.values(scenes)) for (const { el, s } of sc.layers) el.style.transform = `translate3d(0, ${(-p * s * RANGE * unit).toFixed(1)}px, 0)`;
     copy.style.transform = `translateY(${-p * 120}px)`;
     copy.style.opacity = Math.max(0, 1 - p * 1.8);
     hint.style.opacity = Math.max(0, 1 - p * 5);
   }
+  // Redraw the canvases when the scene's size really changes (not on every mobile toolbar show/hide)
+  let baked = '', rz;
+  new ResizeObserver(() => {
+    const size = scene.clientWidth + 'x' + scene.clientHeight;
+    if (size === baked) return;
+    baked = size; frame(); update();
+    clearTimeout(rz); rz = setTimeout(() => Object.values(scenes).forEach(bakeScene), 180);
+  }).observe(scene);
   if (!reduce) {
     addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
-    addEventListener('resize', () => { frame(); update(); });
   }
 
   // Day / night: build each scene on first use, crossfade between them
@@ -634,10 +758,15 @@
   let isDay = document.documentElement.dataset.time === 'day';
   const toggle = document.getElementById('toggle');
   let current = null, busy = false;
-  const ensure = key => { if (!scenes[key]) { scenes[key] = buildScene(key === 'day'); scene.appendChild(scenes[key].host); frame(); update(); } return scenes[key]; };
-  function show(key) {
+  const ensure = key => { if (!scenes[key]) { scenes[key] = buildScene(key === 'day'); scene.appendChild(scenes[key].host); frame(); baked = scene.clientWidth + 'x' + scene.clientHeight; bakeScene(scenes[key]); update(); } return scenes[key]; };
+  // Swapping themes: the outgoing scene sits on top and fades out over the incoming one. Page colours switch at once.
+  function show(key, fade) {
     document.documentElement.dataset.time = key;
-    for (const k in scenes) scenes[k].host.classList.toggle('on', k === key);
+    for (const k in scenes) {
+      const h = scenes[k].host, was = h.classList.contains('on');
+      h.classList.toggle('on', k === key);
+      if (was && k !== key && fade) { h.classList.add('out'); setTimeout(() => h.classList.remove('out'), 1200); }
+    }
   }
   function setTheme(day, animate) {
     const key = day ? 'day' : 'night', prev = current;
@@ -649,14 +778,23 @@
     if (!animate || !out || reduce) { show(key); return; }
     // The current sun/moon sinks below the ridges, the sky crossfades, then the other rises
     busy = true;
-    inn.orbit.classList.add('instant', 'below'); inn.orbit.getBoundingClientRect(); inn.orbit.classList.remove('instant');
-    out.orbit.classList.add('below');
-    setTimeout(() => show(key), 550);
-    setTimeout(() => inn.orbit.classList.remove('below'), 1100);
-    setTimeout(() => { out.orbit.classList.remove('below'); busy = false; }, 2300);
+    inn.ready.then(() => {
+      inn.orbit.classList.add('instant', 'below'); inn.orbit.getBoundingClientRect(); inn.orbit.classList.remove('instant');
+      out.orbit.classList.add('below');
+      setTimeout(() => show(key, true), 550);
+      setTimeout(() => inn.orbit.classList.remove('below'), 1100);
+      setTimeout(() => { out.orbit.classList.remove('below'); busy = false; }, 2300);
+    });
   }
   toggle.addEventListener('click', () => setTheme(!isDay, true));
-  scene.addEventListener('click', e => { if (e.target.closest('.orb')) setTheme(!isDay, true); });
+  // The sun or moon is a bitmap now, so test clicks against its disc
+  const onOrb = e => { const o = scenes[current] && scenes[current].orbit; if (!o) return false; const r = o.getBoundingClientRect(); return Math.hypot(e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2) < 70 * unit; };
+  scene.addEventListener('click', e => { if (onOrb(e)) setTheme(!isDay, true); });
+  scene.addEventListener('mousemove', e => { scene.style.cursor = onOrb(e) ? 'pointer' : ''; });
+  // Film grain: one shared bitmap over both scenes
+  { const g = document.createElement('canvas'); g.className = 'grain'; g.width = Math.min(scene.clientWidth, 1920); g.height = Math.min(scene.clientHeight, 1200); scene.appendChild(g);
+    const img = new Image(); img.onload = () => g.getContext('2d').drawImage(img, 0, 0);
+    img.src = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${g.width}" height="${g.height}"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .06 0"/></filter><rect width="100%" height="100%" filter="url(#g)" opacity=".9"/></svg>`); }
   setTheme(isDay, false);
   // Build the other scene while the browser is idle so the first switch is instant
   (window.requestIdleCallback || (fn => setTimeout(fn, 1200)))(() => ensure(isDay ? 'night' : 'day'));

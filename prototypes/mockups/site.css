@@ -16,8 +16,8 @@
   /* inner-page horizon band */
   --sky-1: #05070f; --sky-2: #1f2b55; --r1: #2b3866; --r2: #212c55; --r3: #18214a; --r4: var(--page); --orb: #f2f5ff;
   --glow: #cfdcff; --crater: #dfe6f8; --star: #e8eeff; --mist: #8a9dd0; --tree: #111a33; --tree-lit: #26355f; --tree-edge: #070b16;
-  --soil: #070b14; --soil-2: #05080f; --soil-3: #0a101d; --rim: #5a6ea6; --grass1: #121c33; --grass2: #1a2846;
-  --fol1: #070c17; --fol1b: #0c1424; --fol2: #0d1527; --fol3: #16223d; --side-fol: #9fb6ff; --side-op: .07; --topo: rgba(159, 182, 255, .05);
+  --soil: #0c0f18; --soil-2: #090c13; --path: #1a2136; --path-edge: #191f31; --path-near: #1c2439; --path-lt: #2a3350; --turf-n: #0a111f; --turf-n2: #080e1a; --stone: #1b2338; --stone-d: #121829; --stone-l: #283250; --grass1: #101a30; --grass2: #1c2c4a;
+  --fol-sh: #070c16; --fol1: #0b1222; --fol1b: #111b30; --fol2: #18243f; --fol3: #22325a; --fol4: #2a3d6c; --side-fol: #9fb6ff; --side-op: .07; --topo: rgba(159, 182, 255, .05);
   color-scheme: dark;
 }
 :root[data-time="day"] {
@@ -36,8 +36,8 @@
   --tok-kw: #8a3fb8; --tok-str: #2f7a3a; --tok-fn: #1f62a8; --tok-type: #a35a12; --tok-com: #8a8f86; --tok-num: #b2386a;
   --sky-1: #3f7fc6; --sky-2: #cfe3ef; --r1: #a3bccb; --r2: #86a3b0; --r3: #5f8574; --r4: var(--page); --orb: #fffaf0;
   --glow: #fff3cf; --crater: transparent; --star: transparent; --mist: #ffffff; --tree: #3f5f3e; --tree-lit: #6c8a4f; --tree-edge: #22351f;
-  --soil: #2a2724; --soil-2: #25221f; --soil-3: #322d29; --rim: #d2c19c; --grass1: #46703a; --grass2: #5f8c47;
-  --fol1: #2c4529; --fol1b: #365232; --fol2: #3e5e37; --fol3: #5d8248; --side-fol: #2d6a4c; --side-op: .10; --topo: rgba(45, 106, 76, .06);
+  --soil: #5a4632; --soil-2: #4a3828; --path: #c2ad85; --path-edge: #bfae8b; --path-near: #cfbd9a; --path-lt: #e6dcc3; --turf-n: #3d6430; --turf-n2: #36592b; --stone: #8f877a; --stone-d: #6b645a; --stone-l: #b3ab9b; --grass1: #3f6534; --grass2: #6f9a50;
+  --fol-sh: #2f4f27; --fol1: #2c4529; --fol1b: #365232; --fol2: #46693d; --fol3: #64894b; --fol4: #7fa35a; --side-fol: #2d6a4c; --side-op: .10; --topo: rgba(45, 106, 76, .06);
   color-scheme: light;
 }
 
