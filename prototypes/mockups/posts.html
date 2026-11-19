@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing · lobocv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<script src="site.js"></script>
+<style>
+  .intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
+  .intro h1 { font-size: clamp(44px, 6vw, 72px); line-height: 1; color: #f2f4fa; }
+  .intro p { margin-top: 12px; max-width: 520px; color: rgba(242,244,250,.82); line-height: 1.55; }
+  :root[data-time="day"] .intro p { text-shadow: 0 1px 10px rgba(20,55,100,.3); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 36px 0 8px; }
+  .year { margin-top: 48px; }
+  .year h2 { font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: .14em; color: var(--ink-3); font-weight: 400; margin-bottom: 4px; }
+  .year[hidden] { display: none; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="home.html"><svg viewBox="-30 -40 60 60" aria-hidden="true"><path d="M-18,10 L-20,-6 L-17,-30 L-8,-14 L0,-16 L8,-14 L17,-30 L20,-6 L18,10 L0,18 Z"/></svg>lobocv</a>
+  <div class="links"><a href="posts.html" aria-current="page">Writing</a><a href="#">Projects</a><a href="#">About</a></div>
+</nav>
+
+<header class="horizon" id="horizon">
+  <div class="title wrap">
+    <div class="intro">
+      <div>
+        <div class="eyebrow" style="color: rgba(242,244,250,.75)">Writing</div>
+        <h1 style="margin-top:14px">Field notes</h1>
+        <p>Longer pieces on software architecture, Go, databases and the habits that make engineering teams faster.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="filters" id="filters"></div>
+  <div id="years"></div>
+  <section style="margin-top: 96px">
+    <div class="subscribe">
+      <div><h2>Get new posts by email</h2><p>One email when something new is published. No spam, unsubscribe any time.</p></div>
+      <div><form onsubmit="return false"><input type="email" placeholder="you@example.com" aria-label="Email address"><button class="btn primary">Subscribe</button></form>
+      <p class="rss">Prefer a feed reader? <a href="#">Subscribe via RSS</a></p></div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="wrap"><span>© 2026 Calvin Lobo</span><nav><a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">RSS</a></nav></div></footer>
+
+<button class="toggle" id="toggle" type="button" aria-label="Switch to day">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+</button>
+
+<script>
+  Site.initTheme();
+  Site.horizon(document.getElementById('horizon'));
+  const { POSTS, row } = Site;
+  // Group by year
+  const years = {};
+  for (const p of POSTS) (years[p.date.slice(0, 4)] ||= []).push(p);
+  document.getElementById('years').innerHTML = Object.keys(years).sort().reverse().map(y =>
+    `<section class="year" data-year="${y}"><h2>${y}</h2><div class="rows">${years[y].map(row).join('')}</div></section>`).join('');
+  // Category filter
+  const counts = {}; POSTS.forEach(p => p.cats.forEach(c => counts[c] = (counts[c] || 0) + 1));
+  const cats = ['All', ...Object.keys(counts).sort((a, b) => counts[b] - counts[a])];
+  const filters = document.getElementById('filters');
+  filters.innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === 'All'}" data-cat="${c}">${c}<span class="n">${c === 'All' ? POSTS.length : counts[c]}</span></button>`).join('');
+  filters.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    filters.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b));
+    const c = b.dataset.cat;
+    document.querySelectorAll('.year').forEach(sec => {
+      let any = false;
+      sec.querySelectorAll('.row').forEach(r => { const show = c === 'All' || r.dataset.cats.split('|').includes(c); r.hidden = !show; r.style.display = show ? '' : 'none'; any ||= show; });
+      sec.hidden = !any;
+    });
+  });
+</script>
+</body>
+</html>
