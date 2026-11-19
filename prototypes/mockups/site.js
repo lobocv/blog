@@ -166,33 +166,48 @@
         <path d="M0,${H} L0,290 Q400,280 800,290 T1600,286 L1600,${H} Z" fill="var(--r4)"/></svg>`);
     },
 
-    // A row of leafy bushes sitting across the edge between the hero and the content
+    // A strip of soil with grass along its top and a few bushes, fading into the content
     foliageBand(el) {
       const g = gen(23), { rng, f, leaf } = g, W = 1600, H = 230, EDGE = 140;
-      const tones = ['', '', '', ''];  // base, back leaves, mid leaves, front highlights
-      const clump = (cx, cy, r, back) => {
-        tones[0] += `M${f(cx - r * .95)},${f(cy)}A${f(r * .95)},${f(r * .72)} 0 1 1 ${f(cx + r * .95)},${f(cy)}A${f(r * .95)},${f(r * .72)} 0 1 1 ${f(cx - r * .95)},${f(cy)}Z`;
-        const n = Math.round(r * 1.6);
-        for (let i = 0; i < n; i++) {
-          const t = -Math.PI * (1.1 * rng() - .05), rr = r * (.35 + .65 * Math.sqrt(rng()));   // mostly the upper part, denser near the rim
-          const x = cx + Math.cos(t) * rr, y = cy + Math.sin(t) * rr * .76;
-          const ang = t + (rng() - .5) * .9, len = 8 + rng() * 12;
-          const k = back ? 1 : (rng() < .75 ? 2 : 3);
+      const soilTop = x => EDGE - 22 + Math.sin(x / 170) * 5 + Math.sin(x / 53 + 1) * 2.5;
+      // soil with a little texture: pebbles and specks
+      let soil = `M0,${H}`; for (let x = 0; x <= W; x += 10) soil += `L${x},${f(soilTop(x))}`; soil += `L${W},${H}Z`;
+      let dark = '', light = '';
+      for (let i = 0; i < 260; i++) {
+        const x = rng() * W, y = soilTop(x) + 6 + rng() * 70, rx = .8 + rng() * 3.2, ry = rx * (.5 + rng() * .4);
+        const pb = `M${f(x - rx)},${f(y)}A${f(rx)},${f(ry)} 0 1 1 ${f(x + rx)},${f(y)}A${f(rx)},${f(ry)} 0 1 1 ${f(x - rx)},${f(y)}Z`;
+        if (rng() < .55) dark += pb; else light += pb;
+      }
+      // grass: tufts of curved blades along the soil line, with small gaps
+      let grassBack = '', grassFront = '';
+      for (let x = -10; x < W + 10; x += 3 + rng() * 5) {
+        if (Math.sin(x / 37) + Math.sin(x / 91) < -1.3) continue;   // occasional bare patches
+        const blades = 2 + Math.floor(rng() * 4);
+        for (let k = 0; k < blades; k++) {
+          const bx = x + (rng() - .5) * 6, by = soilTop(bx) + 3, h = 6 + Math.pow(rng(), 1.6) * 22, lean = (rng() - .5) * h * .8, w = 1.2 + rng() * 1.3;
+          const d = `M${f(bx - w)},${f(by)}Q${f(bx + lean * .3)},${f(by - h * .6)} ${f(bx + lean)},${f(by - h)}Q${f(bx + lean * .3 + w * .4)},${f(by - h * .55)} ${f(bx + w)},${f(by)}Z`;
+          if (rng() < .45) grassBack += d; else grassFront += d;
+        }
+      }
+      // a few bushes resting on the soil
+      const tones = ['', '', '', ''];
+      const bush = (cx, r) => {
+        const cy = soilTop(cx) - r * .42;
+        tones[0] += `M${f(cx - r)},${f(cy + r * .42)}A${f(r)},${f(r * .78)} 0 0 1 ${f(cx + r)},${f(cy + r * .42)}Z`;
+        for (let i = 0; i < r * 1.8; i++) {
+          const t = -Math.PI * (1.04 * rng() - .02), rr = r * (.3 + .7 * Math.sqrt(rng())), x = cx + Math.cos(t) * rr, y = cy + Math.sin(t) * rr * .78 + r * .1;
+          if (y > soilTop(x) + 2) continue;
+          const ang = t + (rng() - .5) * .9, len = 8 + rng() * 11, k = rng() < .3 ? 1 : rng() < .8 ? 2 : 3;
           tones[k] += leaf(x - Math.cos(ang) * len * .3, y - Math.sin(ang) * len * .3, len, ang, .46);
         }
-        // uneven skirt of leaves hanging below the bush
-        for (let i = 0; i < r * .45; i++) {
-          const u = (rng() - .5) * 1.7, x = cx + u * r, y = cy + r * .7 * Math.sqrt(Math.max(0, 1 - u * u / 1.0)) - 4, ang = Math.PI / 2 + (rng() - .5) * 1.3;
-          tones[back ? 1 : 2] += leaf(x, y, 6 + rng() * 16, ang, .46);
-        }
       };
-      // thin continuous base so the content's straight edge never shows between bushes
-      tones[0] += `M0,${EDGE + 2}` + Array.from({ length: 81 }, (_, i) => `L${i * 20},${f(EDGE - 10 + Math.sin(i * 1.3) * 3)}`).join('') + `L${W},${EDGE + 2}` + Array.from({ length: 81 }, (_, i) => `L${W - i * 20},${f(EDGE + 6 + Math.sin(i * 2.1) * 3)}`).join('') + 'Z';
-      for (let x = -40; x < W + 80; x += 60 + rng() * 70) { const r = 38 + Math.pow(rng(), 1.5) * 62; clump(x, EDGE - r * .5, r, true); }
-      for (let x = -20; x < W + 60; x += 42 + rng() * 48) { const r = 24 + rng() * 30; clump(x, EDGE - r * .1, r, false); }
+      let x = 60 + rng() * 120;
+      while (x < W) { bush(x, 26 + rng() * 30); if (rng() < .45) bush(x + 34 + rng() * 20, 18 + rng() * 14); x += 200 + rng() * 260; }
       el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
-        <path d="${tones[0]}" fill="var(--fol1)"/><path d="${tones[1]}" fill="var(--fol1b)"/>
-        <path d="${tones[2]}" fill="var(--fol2)"/><path d="${tones[3]}" fill="var(--fol3)"/></svg>`;
+        <path d="${grassBack}" fill="var(--grass1)"/>
+        <path d="${soil}" fill="var(--soil)"/><path d="${dark}" fill="var(--soil-2)"/><path d="${light}" fill="var(--soil-3)"/>
+        <path d="${tones[0]}" fill="var(--fol1)"/><path d="${tones[1]}" fill="var(--fol1b)"/><path d="${tones[2]}" fill="var(--fol2)"/><path d="${tones[3]}" fill="var(--fol3)"/>
+        <path d="${grassFront}" fill="var(--grass2)"/></svg>`;
     },
 
     // Faint vines, branches and ferns running down both side margins
