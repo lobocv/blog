@@ -34,7 +34,7 @@
   .scene { position: sticky; top: 0; height: 100vh; overflow: hidden; }
   #scene, .layer, .theme { position: absolute; inset: 0; }
   .layer { will-change: transform; pointer-events: none; }
-  .theme { opacity: 0; transition: opacity 1s ease; }
+  .theme { opacity: 0; transition: opacity 1s ease; pointer-events: none; }
   .orbit { transition: transform 1.2s cubic-bezier(.55,0,.35,1); }
   .orbit.below { transform: translate(90px, 470px); }
   .orbit.instant { transition: none; }
@@ -156,6 +156,7 @@
     // terrain + trees
     '#26335f': '#6f8f74', '#2a3a68': '#86a585', '#080d19': '#2d4a2b', '#4a5d94': '#cdd07a', '#04070e': '#1b2b1b',
     '#1f2c55': '#5a7b5b', '#33467a': '#93a865', '#0f1830': '#3d5c30',
+    '#0b1226': '#25391f', '#020409': '#101b0f', '#3b4f6e': '#7f9d55', '#4a6194': '#bac873',
     // river
     '#b6c6ee': '#dcefF8'.toLowerCase(), '#22325c': '#3a77a8', '#e6edff': '#ffffff',
     // rock + framing pines
@@ -195,6 +196,25 @@
   const yAt = (pts, x) => { const i = Math.min(pts.length - 2, Math.floor(x / (W / (pts.length - 1)))); const t = (x - pts[i][0]) / (pts[i+1][0] - pts[i][0]); return lerp(pts[i][1], pts[i+1][1], t); };
 
   // Pine silhouette, tiered. Returns [darkPath, litPath(right side)]
+  function pineVar(x, y, h) {
+    const tiers = 2 + Math.floor(rng() * 3), w = h * (.28 + rng() * .14), lean = (rng() - .5) * .08;
+    const side = sgn => {
+      const pts = [];
+      for (let k = 1; k <= tiers; k++) {
+        const t = k / tiers, ty = -1 + t * .92 + (rng() - .5) * .04;
+        const out = w * Math.pow(t, .8) * (.85 + rng() * .3);
+        pts.push([sgn * out + lean * (1 + ty) * h, ty]);
+        if (k < tiers) pts.push([sgn * out * (.42 + rng() * .15) + lean * (1 + ty) * h, ty + .02]);
+      }
+      return pts;
+    };
+    const top = [lean * 0, -1], Lp = side(-1), Rp = side(1);
+    const P2 = ([px, py]) => f(x + px) + ',' + f(y + py * h);
+    const trunk = [[-w * .08, -.06], [-w * .08, 0], [w * .08, 0], [w * .08, -.06]];
+    const dark = 'M' + [top, ...Lp, trunk[0], trunk[1], trunk[2], trunk[3], ...Rp.slice().reverse()].map(P2).join('L') + 'Z';
+    const lit = 'M' + [top, ...Rp, [w * .1, -.06], [lean * .5 * h, -.5]].map(P2).join('L') + 'Z';
+    return [dark, lit];
+  }
   function pine(x, y, h) {
     const w = h * 0.36;
     const L = [[0,-1],[-.22,-.72],[-.12,-.72],[-.36,-.42],[-.22,-.42],[-.5,-.06],[-.06,-.06],[-.06,0]];
@@ -244,12 +264,15 @@
   layer(0.05, DAY ? '' : stars + `<g class="meteor"><line x1="0" y1="0" x2="-70" y2="-26" stroke="#eef2ff" stroke-width="1.4" stroke-linecap="round"/><circle r="1.6" fill="#ffffff"/></g>`);
   // Stylized flat clouds, drifting slowly (day only)
   const cloud = (x, y, s, dur, delay) => {
-    const puffs = [[-40,0,26],[-14,-14,30],[16,-8,26],[40,2,20],[0,4,24]];
-    const body = puffs.map(([px, py, r]) => `<circle cx="${px * s}" cy="${py * s}" r="${r * s}"/>`).join('');
-    const under = puffs.map(([px, py, r]) => `<circle cx="${px * s}" cy="${(py + 5) * s}" r="${r * s}"/>`).join('');
-    return `<g class="cloud" style="--dur:${dur}s;--dl:-${delay}s"><g transform="translate(${x},${y})" opacity=".85">
-      <g fill="#d6e4f1">${under}<rect x="${-58 * s}" y="${5 * s}" width="${116 * s}" height="${18 * s}" rx="${9 * s}"/></g>
-      <g fill="#ffffff">${body}<rect x="${-58 * s}" y="0" width="${116 * s}" height="${16 * s}" rx="${8 * s}"/></g></g></g>`;
+    // Flat base, a few arcs of different sizes across the top
+    const tops = [[-60,-14,22],[-28,-30,30],[10,-36,34],[46,-22,24],[70,-10,14]];
+    const shape = (dy, k) => {
+      let d = `M${-80 * s * k},${dy}`;
+      for (const [cx, cy, r] of tops) d += `L${(cx - r * .9) * s * k},${(cy * .4 + dy / s) * s}A${r * s * k},${r * s * k} 0 0 1 ${(cx + r * .9) * s * k},${(cy * .4 + dy / s) * s}`;
+      return d + `L${84 * s * k},${dy}Q${88 * s * k},${dy + 4 * s} ${80 * s * k},${dy + 6 * s}L${-76 * s * k},${dy + 6 * s}Q${-86 * s * k},${dy + 4 * s} ${-80 * s * k},${dy}Z`;
+    };
+    return `<g class="cloud" style="--dur:${dur}s;--dl:-${delay}s"><g transform="translate(${x},${y})" opacity=".9">
+      <path d="${shape(0, 1)}" fill="#dfeaf4"/><path d="${shape(-3 * s, .97)}" fill="#ffffff"/></g></g>`;
   };
   if (DAY) layer(0.07, cloud(860, 120, 1, 170, 20) + cloud(1420, 270, .85, 210, 90) + cloud(1050, 300, .55, 240, 150) + cloud(700, 70, .6, 200, 60));
   // A small flock of birds crossing the far distance (day only)
@@ -354,6 +377,8 @@
     const th = 5 + 105 * Math.pow(z, 1.35);
     const n = Math.min(200, Math.round(2200 / (th * .5)));
     let dk = '', lt = '';
+    const nearTrees = [];
+    const rowDark = mix('#1f2c55', '#04070e', base), rowLit = mix('#33467a', '#0f1830', base), rowEdge = mix('#0b1226', '#020409', base);
     for (let i = 0; i < n; i++) {
       const x = X0 + rng() * (X1 - X0), zz = lerp(z, z2, rng());
       const hgt = H(x, zz);
@@ -363,10 +388,19 @@
       const y = yb(zz) - hgt * kz(zz) + 1.5, h = th * (.7 + rng() * .6);
       treeList.push([x, y, h, r]);
       if (h < 9) { const w = h * .36; dk += `M${f(x)},${f(y - h)}L${f(x + w)},${f(y)}L${f(x - w)},${f(y)}Z`; }
-      else { const [pd, pl] = pine(x, y, h); dk += pd; if (h > 14) lt += pl; }
+      else if (h < 16) { const [pd, pl] = pineVar(x, y, h); dk += pd; if (h > 12) lt += pl; }
+      else nearTrees.push([x, y, h, rng()]);
     }
-    if (dk) valley += `<path d="${dk}" fill="${mix('#1f2c55', '#04070e', base)}"/>`;
-    if (lt) valley += `<path d="${lt}" fill="${mix('#33467a', '#0f1830', base)}"/>`;
+    if (dk) valley += `<path d="${dk}" fill="${rowDark}"/>`;
+    if (lt) valley += `<path d="${lt}" fill="${rowLit}"/>`;
+    // Larger trees: drawn one by one, back to front, each with its own outline and a slight color shift
+    nearTrees.sort((a, b) => a[1] - b[1]);
+    for (const [x, y, h, v] of nearTrees) {
+      const [pd, pl] = pineVar(x, y, h);
+      const fill = v < .33 ? mix(rowDark, '#04070e', .22) : v < .66 ? rowDark : mix(rowDark, '#3b4f6e', .16);
+      const lit = v < .33 ? mix(rowLit, '#0f1830', .2) : v < .66 ? rowLit : mix(rowLit, '#4a6194', .22);
+      valley += `<path d="${pd}" fill="${fill}" stroke="${rowEdge}" stroke-width="${f(.5 + h * .012)}" stroke-linejoin="round"/><path d="${pl}" fill="${lit}"/>`;
+    }
   }
   valley += riverSeg(ROWS - 2) + riverSeg(ROWS - 1);
   // A glint is hidden if any nearer hill or tree covers it
