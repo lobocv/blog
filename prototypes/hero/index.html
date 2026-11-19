@@ -34,7 +34,16 @@
   .scene { position: sticky; top: 0; height: 100vh; overflow: hidden; }
   #scene, .layer, .theme { position: absolute; inset: 0; }
   .layer { will-change: transform; pointer-events: none; }
-  .theme { opacity: 0; transition: opacity .8s ease; }
+  .theme { opacity: 0; transition: opacity 1s ease; }
+  .orbit { transition: transform 1.2s cubic-bezier(.55,0,.35,1); }
+  .orbit.below { transform: translate(90px, 470px); }
+  .orbit.instant { transition: none; }
+  .meteor { opacity: 0; animation: meteor 11s linear infinite 3s; }
+  @keyframes meteor { 0% { opacity: 0; transform: translate(380px, 40px); } 1% { opacity: 1; } 6% { opacity: 0; transform: translate(640px, 137px); } 100% { opacity: 0; transform: translate(640px, 137px); } }
+  .cloud { animation: cloud var(--dur, 180s) linear infinite; animation-delay: var(--dl, 0s); }
+  @keyframes cloud { from { transform: translateX(-260px); } to { transform: translateX(260px); } }
+  .flock { animation: fly 38s linear infinite 2s; transform: translate(-120px, 300px); }
+  @keyframes fly { 0% { transform: translate(-120px, 330px); } 50% { transform: translate(800px, 290px); } 100% { transform: translate(1760px, 315px); } }
   .theme.on { opacity: 1; }
   .theme.on .orb { pointer-events: auto; cursor: pointer; }
   .toggle { position: fixed; right: 20px; bottom: 20px; z-index: 60; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: rgba(7,11,20,.45); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: background .2s, transform .2s; }
@@ -78,7 +87,8 @@
   @media (max-width: 640px) { .post { grid-template-columns: 1fr; gap: 6px; } .links a:not(:last-child) { display: none; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .star, .glint, .mist { animation: none; }
+    .star, .glint, .mist, .meteor, .cloud, .flock { animation: none; }
+    .meteor { display: none; }
   }
 </style>
 </head>
@@ -124,6 +134,7 @@
   const W = 1600, BOTTOM = 1500;
   const scene = document.getElementById('scene');
   let vb = '0 0 1600 900';
+  const f = n => Math.round(n * 10) / 10;
 
   // Builds the whole scene for one time of day into its own container
   function buildScene(DAY) {
@@ -216,7 +227,35 @@
     stars += `<circle class="star" cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#e8eeff" style="--o:${o.toFixed(2)};--d:${(2 + rng() * 5).toFixed(1)}s;--dl:${(rng() * 6).toFixed(1)}s"/>`;
   }
   layer(0.05, `<rect x="-200" y="-200" width="2000" height="1100" fill="url(#sky)"/>`);
-  layer(0.05, DAY ? '' : stars);
+  // Milky Way: a soft tilted band with a dense dusting of faint stars (static, night only)
+  let milky = '';
+  if (!DAY) {
+    milky += `<g transform="rotate(-22 760 230)" filter="url(#blur)"><ellipse cx="760" cy="230" rx="980" ry="80" fill="#7f93d6" opacity=".10"/><ellipse cx="760" cy="226" rx="820" ry="30" fill="#b7c4f0" opacity=".08"/></g>`;
+    let s2 = 99; const rng2 = () => { s2 = (s2 * 16807) % 2147483647; return (s2 - 1) / 2147483646; };
+    const cos = Math.cos(-22 * Math.PI / 180), sin = Math.sin(-22 * Math.PI / 180);
+    for (let i = 0; i < 520; i++) {
+      const u = (rng2() - .5) * 1900, g = (rng2() + rng2() + rng2() - 1.5) * 70;
+      const x = 760 + u * cos - g * sin, y = 230 + u * sin + g * cos;
+      if (y > 430 || y < -20) continue;
+      milky += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(.25 + rng2() * .45)}" fill="#e8eeff" opacity="${(.15 + rng2() * .45).toFixed(2)}"/>`;
+    }
+  }
+  layer(0.05, milky);
+  layer(0.05, DAY ? '' : stars + `<g class="meteor"><line x1="0" y1="0" x2="-70" y2="-26" stroke="#eef2ff" stroke-width="1.4" stroke-linecap="round"/><circle r="1.6" fill="#ffffff"/></g>`);
+  // Stylized flat clouds, drifting slowly (day only)
+  const cloud = (x, y, s, dur, delay) => {
+    const puffs = [[-40,0,26],[-14,-14,30],[16,-8,26],[40,2,20],[0,4,24]];
+    const body = puffs.map(([px, py, r]) => `<circle cx="${px * s}" cy="${py * s}" r="${r * s}"/>`).join('');
+    const under = puffs.map(([px, py, r]) => `<circle cx="${px * s}" cy="${(py + 5) * s}" r="${r * s}"/>`).join('');
+    return `<g class="cloud" style="--dur:${dur}s;--dl:-${delay}s"><g transform="translate(${x},${y})" opacity=".85">
+      <g fill="#d6e4f1">${under}<rect x="${-58 * s}" y="${5 * s}" width="${116 * s}" height="${18 * s}" rx="${9 * s}"/></g>
+      <g fill="#ffffff">${body}<rect x="${-58 * s}" y="0" width="${116 * s}" height="${16 * s}" rx="${8 * s}"/></g></g></g>`;
+  };
+  if (DAY) layer(0.07, cloud(860, 120, 1, 170, 20) + cloud(1420, 270, .85, 210, 90) + cloud(1050, 300, .55, 240, 150) + cloud(700, 70, .6, 200, 60));
+  // A small flock of birds crossing the far distance (day only)
+  const bird = (x, y, s, beat, dl) => `<path transform="translate(${x},${y}) scale(${s})" fill="none" stroke="#2c3e52" stroke-width="1.3" stroke-linecap="round" d="M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2">
+    <animate attributeName="d" dur="${beat}s" begin="${dl}s" repeatCount="indefinite" values="M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2;M-6,2.5 Q-3,0.5 0,0 Q3,0.5 6,2.5;M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2"/></path>`;
+  if (DAY) layer(0.1, `<g class="flock">${bird(0, 0, 1.3, .55, 0) + bird(-26, 10, 1.1, .6, .2) + bird(-46, -7, 1.05, .5, .35) + bird(-70, 16, .9, .58, .1) + bird(20, 14, 1, .62, .3)}</g>`);
   if (DAY) layer(0.08, `<g filter="url(#blur)" opacity=".75">
     <ellipse class="mist" cx="300" cy="120" rx="220" ry="26" fill="#ffffff" opacity=".55"/>
     <ellipse class="mist b" cx="720" cy="210" rx="300" ry="22" fill="#ffffff" opacity=".45"/>
@@ -224,7 +263,7 @@
     <ellipse class="mist b" cx="980" cy="90" rx="180" ry="16" fill="#ffffff" opacity=".35"/></g>`);
 
   // Moon
-  layer(0.12, `<circle cx="1220" cy="170" r="240" fill="url(#moonGlow)"/>${DAY ? '<circle cx="1220" cy="170" r="380" fill="url(#sunGlow)"/>' : ''}<circle cx="1220" cy="170" r="44" fill="#f2f5ff"/><circle class="orb" cx="1220" cy="170" r="70" fill="transparent"/>${DAY ? '' : '<circle cx="1206" cy="160" r="9" fill="#dfe6f8"/><circle cx="1232" cy="184" r="6" fill="#e4eaf9"/><circle cx="1228" cy="152" r="4" fill="#e1e8f8"/>'}`);
+  layer(0.12, `<g class="orbit"><circle cx="1220" cy="170" r="240" fill="url(#moonGlow)"/>${DAY ? '<circle cx="1220" cy="170" r="380" fill="url(#sunGlow)"/>' : ''}<circle cx="1220" cy="170" r="44" fill="#f2f5ff"/><circle class="orb" cx="1220" cy="170" r="70" fill="transparent"/>${DAY ? '' : '<circle cx="1206" cy="160" r="9" fill="#dfe6f8"/><circle cx="1232" cy="184" r="6" fill="#e4eaf9"/><circle cx="1228" cy="152" r="4" fill="#e1e8f8"/>'}</g>`);
 
   // Far ridges (atmospheric, lighter)
   const r1 = ridgePath(398, 48, .55, x => -34 * Math.sin(x / 520 + 1));
@@ -282,7 +321,7 @@
   const ROWS = 110, X0 = -300, X1 = 1900, STEP = 10;
   let valley = `<rect x="-300" y="${V0}" width="2200" height="${BOTTOM}" fill="#26335f"/>`;
   let grads = '', fx = '';
-  const glints = [];
+  const glints = [], glintList = [], treeList = [];
   const riverSeg = r => {
     if (r < 0) return '';
     const z = Math.pow(r / ROWS, .85), z2 = Math.pow((r + 1) / ROWS, .85);
@@ -308,9 +347,9 @@
     grads += `<linearGradient id="g${r}" gradientUnits="userSpaceOnUse" x1="${X0}" y1="0" x2="${X1}" y2="0">${stops}</linearGradient>`;
     valley += `<path d="${d}" fill="url(#g${r})"/>`;
     // River: segment two rows back, so nearby banks don't cut it up
-    valley += riverSeg(r - 2) + (glints[r - 2] || '');
+    valley += riverSeg(r - 2);
     const ax = riverX(z), aw = rw(z), ay = yb(z);
-    if (rng() < .5) { const gx = ax + (rng() - .5) * aw, gl = 1 + aw * .35 * rng(); glints[r] = `<line x1="${f(gx - gl)}" y1="${f(ay + 1)}" x2="${f(gx + gl)}" y2="${f(ay + 1)}" stroke="#e6edff" stroke-width="${f(.5 + z)}" opacity="${(.3 + rng() * .4).toFixed(2)}"/>`; }
+    if (rng() < .6) { const gx = ax + (rng() - .5) * aw, gl = 1 + aw * .35 * rng(); glintList.push({ r, x1: gx - gl, x2: gx + gl, y: ay + 1, w: .5 + z }); }
     // Trees standing on this row
     const th = 5 + 105 * Math.pow(z, 1.35);
     const n = Math.min(200, Math.round(2200 / (th * .5)));
@@ -322,13 +361,27 @@
       if (hgt < .12 && meadow(x, zz)) continue;               // open meadows on the flats
       if (hgt < .03 && rng() < .5) continue;                  // sparser on the valley floor
       const y = yb(zz) - hgt * kz(zz) + 1.5, h = th * (.7 + rng() * .6);
+      treeList.push([x, y, h, r]);
       if (h < 9) { const w = h * .36; dk += `M${f(x)},${f(y - h)}L${f(x + w)},${f(y)}L${f(x - w)},${f(y)}Z`; }
       else { const [pd, pl] = pine(x, y, h); dk += pd; if (h > 14) lt += pl; }
     }
     if (dk) valley += `<path d="${dk}" fill="${mix('#1f2c55', '#04070e', base)}"/>`;
     if (lt) valley += `<path d="${lt}" fill="${mix('#33467a', '#0f1830', base)}"/>`;
   }
-  valley += riverSeg(ROWS - 2) + (glints[ROWS - 2] || '') + riverSeg(ROWS - 1) + (glints[ROWS - 1] || '');
+  valley += riverSeg(ROWS - 2) + riverSeg(ROWS - 1);
+  // A glint is hidden if any nearer hill or tree covers it
+  const covered = (x, y, r) => {
+    for (let q = r + 1; q < ROWS; q++) { const zq = Math.pow(q / ROWS, .85); if (yb(zq) - H(x, zq) * kz(zq) < y && yb(zq) > y - 400) return true; }
+    for (const [tx, ty, th, tr] of treeList) {
+      if (tr < r + 2 || y > ty || y < ty - th) continue;
+      if (Math.abs(x - tx) < th * .36 * (y - (ty - th)) / th) return true;
+    }
+    return false;
+  };
+  for (const g of glintList) {
+    if (covered(g.x1, g.y, g.r) || covered(g.x2, g.y, g.r) || covered((g.x1 + g.x2) / 2, g.y, g.r)) continue;
+    fx += `<line class="glint" x1="${f(g.x1)}" y1="${f(g.y)}" x2="${f(g.x2)}" y2="${f(g.y)}" stroke="#e6edff" stroke-width="${f(g.w)}" style="--o:${(.4 + rng() * .4).toFixed(2)};--dl:${(rng() * 3).toFixed(1)}s"/>`;
+  }
   fx += `<g filter="url(#blur)" opacity=".35"><ellipse class="mist" cx="${f(riverX(.2))}" cy="${f(yb(.2))}" rx="320" ry="16" fill="#9fb2e0"/><ellipse class="mist b" cx="${f(riverX(.42))}" cy="${f(yb(.42))}" rx="380" ry="20" fill="#9fb2e0"/></g>`;
   valley = grads.length ? valley.replace('<rect', `<defs>${grads}</defs><rect`) : valley;
   layer(0.5, valley);
@@ -391,16 +444,18 @@
   layer(1.15, `<path d="${rock}" fill="#070b14"/>${facets}<path d="${rockRim}" fill="none" stroke="#5a6ea6" stroke-width="1.2" opacity=".55"/><path d="${fgPines}" fill="#04070d"/>${wolf}`);
 
   // One SVG per layer, so each is drawn once and then just moved
+  const tag = DAY ? 'd-' : 'n-';
+  const scoped = str => str.replace(/id="/g, `id="${tag}`).replace(/url\(#/g, `url(#${tag}`);
   const els = LAYERS.map(({ speed, content }, i) => {
     const d = document.createElement('div'); d.className = 'layer';
-    d.innerHTML = recolor(`<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice">${i === 0 ? DEFS : ''}${content}</svg>`);
+    d.innerHTML = scoped(recolor(`<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice">${i === 0 ? DEFS : ''}${content}</svg>`));
     host.appendChild(d);
     return { el: d, svg: d.firstChild, s: speed };
   });
   const grain = document.createElement('div'); grain.className = 'layer';
-  grain.innerHTML = `<svg viewBox="0 0 1600 900" preserveAspectRatio="none"><rect width="1600" height="900" filter="url(#grain)" opacity=".9"/></svg>`;
+  grain.innerHTML = scoped(`<svg viewBox="0 0 1600 900" preserveAspectRatio="none"><rect width="1600" height="900" filter="url(#grain)" opacity=".9"/></svg>`);
   host.appendChild(grain);
-  return { host, els };
+  return { host, els, orbit: host.querySelector('.orbit') };
   }
 
   // Frame wolf + river on narrow screens; work out how many pixels one scene unit is
@@ -438,18 +493,32 @@
   const hour = new Date().getHours();
   let isDay = forced ? forced === 'day' : hour >= 7 && hour < 19;
   const toggle = document.getElementById('toggle');
-  function setTheme(day) {
-    isDay = day;
-    const key = day ? 'day' : 'night';
-    if (!scenes[key]) { scenes[key] = buildScene(day); scene.appendChild(scenes[key].host); }
+  let current = null, busy = false;
+  const ensure = key => { if (!scenes[key]) { scenes[key] = buildScene(key === 'day'); scene.appendChild(scenes[key].host); frame(); update(); } return scenes[key]; };
+  function show(key) {
     document.documentElement.dataset.time = key;
     for (const k in scenes) scenes[k].host.classList.toggle('on', k === key);
-    toggle.setAttribute('aria-label', day ? 'Switch to night' : 'Switch to day');
-    frame(); update();
   }
-  toggle.addEventListener('click', () => setTheme(!isDay));
-  scene.addEventListener('click', e => { if (e.target.closest('.orb')) setTheme(!isDay); });
-  setTheme(isDay);
+  function setTheme(day, animate) {
+    const key = day ? 'day' : 'night', prev = current;
+    if (key === prev || busy) return;
+    isDay = day; current = key;
+    const inn = ensure(key), out = prev && scenes[prev];
+    toggle.setAttribute('aria-label', day ? 'Switch to night' : 'Switch to day');
+    if (!animate || !out || reduce) { show(key); return; }
+    // The current sun/moon sinks below the ridges, the sky crossfades, then the other rises
+    busy = true;
+    inn.orbit.classList.add('instant', 'below'); inn.orbit.getBoundingClientRect(); inn.orbit.classList.remove('instant');
+    out.orbit.classList.add('below');
+    setTimeout(() => show(key), 550);
+    setTimeout(() => inn.orbit.classList.remove('below'), 1100);
+    setTimeout(() => { out.orbit.classList.remove('below'); busy = false; }, 2300);
+  }
+  toggle.addEventListener('click', () => setTheme(!isDay, true));
+  scene.addEventListener('click', e => { if (e.target.closest('.orb')) setTheme(!isDay, true); });
+  setTheme(isDay, false);
+  // Build the other scene while the browser is idle so the first switch is instant
+  (window.requestIdleCallback || (fn => setTimeout(fn, 1200)))(() => ensure(isDay ? 'night' : 'day'));
 })();
 </script>
 </body>
