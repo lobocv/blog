@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero Spike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter+Tight:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070b14;
+    --ink: #eef1f7;
+    --ink-dim: rgba(238,241,247,.62);
+    --accent: #9fb6ff;
+    --line: rgba(238,241,247,.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body { background: var(--bg); color: var(--ink); font-family: "Inter Tight", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Nav */
+  .nav { position: fixed; inset: 0 0 auto 0; height: 52px; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(16px, 4vw, 40px); background: rgba(7,11,20,.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: "JetBrains Mono", monospace; font-size: 14px; letter-spacing: .02em; }
+  .brand svg { width: 22px; height: 22px; }
+  .links { display: flex; gap: clamp(14px, 3vw, 28px); font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-dim); }
+  .links a:hover { color: var(--ink); }
+
+  /* Hero */
+  .hero { height: 170vh; position: relative; }
+  .scene { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+  #scene, .layer { position: absolute; inset: 0; }
+  .layer { will-change: transform; }
+  .layer svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+  .copy { position: absolute; left: clamp(16px, 7vw, 120px); right: 16px; top: clamp(92px, 16vh, 180px); max-width: 560px; will-change: transform, opacity; }
+  .kicker { line-height: 1.6; font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+  h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(44px, 7vw, 88px); line-height: .98; letter-spacing: -.02em; }
+  .sub { margin-top: 18px; font-size: clamp(16px, 1.5vw, 19px); line-height: 1.5; color: var(--ink-dim); max-width: 440px; }
+  .ctas { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { font-size: 14px; font-weight: 500; padding: 11px 18px; border-radius: 999px; border: 1px solid var(--line); background: rgba(7,11,20,.35); backdrop-filter: blur(6px); transition: background .2s, border-color .2s; }
+  .btn.primary { background: var(--ink); color: #0a0f1c; border-color: var(--ink); }
+  .btn:hover { border-color: rgba(238,241,247,.4); }
+  .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+  .scroll-hint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .2em; color: var(--ink-dim); text-transform: uppercase; }
+
+  /* Twinkle + mist */
+  .star { animation: twinkle var(--d, 4s) ease-in-out infinite; animation-delay: var(--dl, 0s); }
+  @keyframes twinkle { 0%,100% { opacity: var(--o, .8); } 50% { opacity: .15; } }
+  .glint { animation: twinkle 3s ease-in-out infinite; animation-delay: var(--dl, 0s); }
+  .mist { animation: drift 40s ease-in-out infinite alternate; }
+  .mist.b { animation-duration: 55s; animation-direction: alternate-reverse; }
+  @keyframes drift { from { transform: translateX(-60px); } to { transform: translateX(60px); } }
+
+  /* Content */
+  .content { position: relative; margin-top: -30vh; padding: 0 clamp(16px, 7vw, 120px) 120px; z-index: 2; }
+  .section-label { font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); padding-top: 24px; border-top: 1px solid var(--line); margin-bottom: 28px; display: flex; justify-content: space-between; }
+  .posts { display: grid; gap: 0; max-width: 1100px; }
+  .post { display: grid; grid-template-columns: 120px 1fr; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+  .post time { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-dim); padding-top: 6px; }
+  .post h3 { font-family: "Fraunces", serif; font-weight: 400; font-size: clamp(22px, 2.4vw, 30px); line-height: 1.2; transition: color .2s; }
+  .post p { margin-top: 8px; color: var(--ink-dim); line-height: 1.55; max-width: 640px; }
+  .post:hover h3 { color: var(--accent); }
+  .tag { display: inline-block; margin-top: 12px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--accent); }
+  @media (max-width: 640px) { .post { grid-template-columns: 1fr; gap: 6px; } .links a:not(:last-child) { display: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .star, .glint, .mist { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="#">
+    <svg viewBox="-30 -40 60 60" aria-hidden="true"><path fill="#eef1f7" d="M-18,10 L-20,-6 L-17,-30 L-8,-14 L0,-16 L8,-14 L17,-30 L20,-6 L18,10 L0,18 Z"/></svg>
+    lobocv
+  </a>
+  <div class="links"><a href="#">Writing</a><a href="#">Projects</a><a href="#">About</a></div>
+</nav>
+
+<header class="hero">
+  <div class="scene">
+    <div id="scene" aria-hidden="true"></div>
+    <div class="copy" id="copy">
+      <div class="kicker">Software architecture · Go · Distributed systems</div>
+      <h1>Calvin Lobo</h1>
+      <p class="sub">Backend engineer. I build systems that scale, and write about the decisions behind them.</p>
+      <div class="ctas"><a class="btn primary" href="#writing">Read the blog</a><a class="btn" href="#">See projects</a></div>
+    </div>
+    <div class="scroll-hint" id="hint">Scroll</div>
+  </div>
+</header>
+
+<main class="content" id="writing">
+  <div class="section-label"><span>Latest writing</span><span>All posts →</span></div>
+  <div class="posts">
+    <a class="post" href="#"><time>Oct 2022</time><div><h3>Testing complex workflows in Go</h3><p>A style of testing with testify/suite that tames sophisticated fixtures, mocks, edge cases and complex outputs.</p><span class="tag">#golang</span></div></a>
+    <a class="post" href="#"><time>2022</time><div><h3>Richer errors in Go</h3><p>Carrying context, codes and stack information through your error values without losing the simplicity of the error interface.</p><span class="tag">#golang</span></div></a>
+    <a class="post" href="#"><time>2021</time><div><h3>Event folding</h3><p>Collapsing streams of events into state, and the trade-offs that come with it.</p><span class="tag">#architecture</span></div></a>
+  </div>
+</main>
+
+<script>
+(() => {
+  const W = 1600, BOTTOM = 1500;
+  const scene = document.getElementById('scene');
+  const LAYERS = [];
+  const layer = (speed, content) => LAYERS.push({ speed, content });
+
+  // Seeded RNG so the scene is identical on every load
+  let seed = 7;
+  const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const mix = (c1, c2, t) => {
+    const p = c => [1,3,5].map(i => parseInt(c.slice(i, i+2), 16));
+    const a = p(c1), b = p(c2);
+    return '#' + a.map((v, i) => Math.round(lerp(v, b[i], t)).toString(16).padStart(2, '0')).join('');
+  };
+  const f = n => Math.round(n * 10) / 10;
+
+  // Midpoint displacement for natural ridgelines
+  function mpd(n, rough) {
+    const a = new Array(n + 1).fill(0);
+    a[0] = rng() * 2 - 1; a[n] = rng() * 2 - 1;
+    let step = n, scale = 1;
+    while (step > 1) {
+      const h = step / 2;
+      for (let i = h; i < n; i += step) a[i] = (a[i - h] + a[i + h]) / 2 + (rng() * 2 - 1) * scale;
+      scale *= rough; step = h;
+    }
+    const max = Math.max(...a.map(Math.abs));
+    return a.map(v => v / max);
+  }
+  function ridgePath(y0, amp, rough, shape = () => 0) {
+    const n = 128, a = mpd(n, rough);
+    const pts = a.map((v, i) => { const x = i * W / n; return [x, y0 + v * amp + shape(x)]; });
+    return { d: 'M0,' + BOTTOM + ' ' + pts.map(p => 'L' + f(p[0]) + ',' + f(p[1])).join(' ') + ' L' + W + ',' + BOTTOM + ' Z', pts };
+  }
+  const yAt = (pts, x) => { const i = Math.min(pts.length - 2, Math.floor(x / (W / (pts.length - 1)))); const t = (x - pts[i][0]) / (pts[i+1][0] - pts[i][0]); return lerp(pts[i][1], pts[i+1][1], t); };
+
+  // Pine silhouette, tiered. Returns [darkPath, litPath(right side)]
+  function pine(x, y, h) {
+    const w = h * 0.36;
+    const L = [[0,-1],[-.22,-.72],[-.12,-.72],[-.36,-.42],[-.22,-.42],[-.5,-.06],[-.06,-.06],[-.06,0]];
+    const pts = L.concat(L.slice().reverse().map(([px,py]) => [-px, py]));
+    const dark = 'M' + pts.map(([px,py]) => f(x + px * w * 2) + ',' + f(y + py * h)).join('L') + 'Z';
+    const R = [[0,-1],[.22,-.72],[.12,-.72],[.36,-.42],[.22,-.42],[.5,-.06],[.1,-.06]];
+    const lit = 'M' + R.map(([px,py]) => f(x + px * w * 2) + ',' + f(y + py * h)).join('L') + 'L' + f(x) + ',' + f(y - h * .5) + 'Z';
+    return [dark, lit];
+  }
+
+  const DEFS = `<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#05070f"/><stop offset=".45" stop-color="#0d1430"/><stop offset=".8" stop-color="#1f2b55"/><stop offset="1" stop-color="#2e3c6c"/>
+    </linearGradient>
+    <radialGradient id="moonGlow"><stop offset="0" stop-color="#cfdcff" stop-opacity=".35"/><stop offset=".35" stop-color="#9fb6ff" stop-opacity=".10"/><stop offset="1" stop-color="#9fb6ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="river" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8c8ef"/><stop offset=".35" stop-color="#6f86bd"/><stop offset="1" stop-color="#1d2b4f"/>
+    </linearGradient>
+    <linearGradient id="valley" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a2547"/><stop offset=".4" stop-color="#0c1328"/><stop offset="1" stop-color="#070b14"/></linearGradient>
+    <filter id="blur" x="-50%" y="-300%" width="200%" height="700%"><feGaussianBlur stdDeviation="22"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .06 0"/></filter>
+  </defs>`;
+
+  // Sky + stars
+  let stars = '';
+  for (let i = 0; i < 260; i++) {
+    const x = rng() * W, y = Math.pow(rng(), 1.4) * 460, r = rng() < .06 ? 1.6 : .5 + rng() * .8;
+    const o = (.35 + rng() * .65) * (1 - y / 560);
+    stars += `<circle class="star" cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#e8eeff" style="--o:${o.toFixed(2)};--d:${(2 + rng() * 5).toFixed(1)}s;--dl:${(rng() * 6).toFixed(1)}s"/>`;
+  }
+  layer(0.05, `<rect x="-200" y="-200" width="2000" height="1100" fill="url(#sky)"/>`);
+  layer(0.05, stars);
+
+  // Moon
+  layer(0.12, `<circle cx="1220" cy="170" r="240" fill="url(#moonGlow)"/><circle cx="1220" cy="170" r="44" fill="#f2f5ff"/><circle cx="1206" cy="160" r="9" fill="#dfe6f8"/><circle cx="1232" cy="184" r="6" fill="#e4eaf9"/><circle cx="1228" cy="152" r="4" fill="#e1e8f8"/>`);
+
+  // Far ridges (atmospheric, lighter)
+  const r1 = ridgePath(398, 48, .55, x => -34 * Math.sin(x / 520 + 1));
+  const r2 = ridgePath(440, 34, .52, x => 16 * Math.cos(x / 380));
+  layer(0.18, `<path d="${r1.d}" fill="#2b3866"/>`);
+  layer(0.26, `<path d="${r2.d}" fill="#212c55"/>`);
+
+  // Low-frequency noise for terrain tone variation
+  const nz = (x, y) => (Math.sin(x / 140 + Math.cos(y / 90)) + Math.sin(y / 60 + x / 310) + Math.cos((x + y) / 210)) / 3;
+
+  // River centreline: Catmull-Rom through hand-placed points (emerges from a notch, meanders, exits bottom right)
+  const RP = [[905,474],[930,500],[880,540],[930,590],[1060,640],[1100,700],[1040,770],[1120,850],[1290,940],[1380,1060],[1420,1500]];
+  function cr(t) {
+    const n = RP.length - 1, i = Math.min(n - 1, Math.floor(t * n)), u = t * n - i;
+    const p0 = RP[Math.max(0, i - 1)], p1 = RP[i], p2 = RP[i + 1], p3 = RP[Math.min(n, i + 2)];
+    const c = k => .5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * u + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * u * u + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * u * u * u);
+    return [c(0), c(1)];
+  }
+  const riverPts = []; for (let i = 0; i <= 400; i++) riverPts.push(cr(i / 400));
+  const V0 = 466, VH = BOTTOM - V0;
+  const hwAt = y => 1.5 + 120 * Math.pow(Math.max(0, (y - V0) / 700), 1.5);
+  const distToRiver = (x, y) => { let m = 1e9; for (let i = 0; i < riverPts.length; i += 2) { const dx = riverPts[i][0] - x, dy = (riverPts[i][1] - y) * 2.2; const d = dx * dx + dy * dy; if (d < m) m = d; } return Math.sqrt(m); };
+
+  // Forested mid ridge with a notch where the river comes out
+  const mid = ridgePath(470, 14, .6, x => -22 * Math.exp(-Math.pow((x - 905) / 70, 2)) * -1 + 10 * Math.sin(x / 300));
+  let midTrees = '';
+  for (let x = -20; x < W + 20; x += 3 + rng() * 4) { const y = yAt(mid.pts, Math.max(0, Math.min(W - 1, x))); const h = 8 + rng() * 9; if (Math.abs(x - 905) < 26) continue; midTrees += pine(x, y + 3, h)[0]; }
+  layer(0.3, `<path d="${mid.d}" fill="#18214a"/><path d="${midTrees}" fill="#18214a"/>`);
+  layer(0.3, `<g filter="url(#blur)" opacity=".55"><ellipse class="mist" cx="450" cy="468" rx="540" ry="26" fill="#8a9dd0" opacity=".35"/><ellipse class="mist b" cx="1200" cy="476" rx="560" ry="24" fill="#8a9dd0" opacity=".3"/></g>`);
+
+  // Valley terrain: rows drawn far to near. Each row is a hill profile; nearer rows hide what is behind them.
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const RZ = [[0,905],[.12,960],[.25,1010],[.38,880],[.5,840],[.62,990],[.75,1180],[.88,1360],[1,1480]];
+  const riverX = z => {
+    const n = RZ.length - 1; let i = 0; while (i < n - 1 && z > RZ[i + 1][0]) i++;
+    const u = (z - RZ[i][0]) / (RZ[i + 1][0] - RZ[i][0]);
+    const p0 = RZ[Math.max(0, i - 1)][1], p1 = RZ[i][1], p2 = RZ[i + 1][1], p3 = RZ[Math.min(n, i + 2)][1];
+    return .5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
+  };
+  const yb = z => V0 + 700 * Math.pow(z, 1.5);           // flat-ground screen y at depth z
+  const kz = z => 34 + 320 * Math.pow(z, 1.3);            // how tall a hill of height 1 looks at depth z
+  const rw = z => 1.5 + 95 * Math.pow(z, 1.4);            // river half-width
+  const H = (x, z) => {
+    const X = (x - 820) / (.3 + .7 * z);
+    const n = .55 * Math.sin(X / 170 + 1.7 * Math.sin(z * 5)) + .3 * Math.sin(X / 70 + z * 13 + 2) + .25 * Math.cos(X / 300 - z * 7);
+    const hills = Math.pow(Math.max(0, n + .05), 1.3) * .75;
+    const walls = Math.min(.55, Math.pow(Math.abs(X) / 1150, 2) * .75);
+    const d = Math.abs(x - riverX(z)), w = rw(z);
+    const corridor = smooth(w + 20 + 120 * z, w + 110 + 520 * z, d);   // flat valley floor along the river
+    const bank = smooth(w + 2, w + 50 + 320 * z, d);  // gentle sloped banks
+    return (hills * corridor + walls * corridor) * bank;
+  };
+  const meadow = (x, z) => Math.sin(x / 95 + z * 21) + Math.cos(x / 160 - z * 15) > .4;
+
+  const ROWS = 110, X0 = -300, X1 = 1900, STEP = 10;
+  let valley = `<rect x="-300" y="${V0}" width="2200" height="${BOTTOM}" fill="#26335f"/>`;
+  let grads = '', fx = '';
+  const riverSeg = r => {
+    if (r < 0) return '';
+    const z = Math.pow(r / ROWS, .85), z2 = Math.pow((r + 1) / ROWS, .85);
+    const ax = riverX(z), bx = riverX(z2), aw = rw(z), bw = rw(z2), ay = yb(z) - .8, by = yb(z2) + .8;
+    return `<path d="M${f(ax - aw)},${f(ay)}L${f(ax + aw)},${f(ay)}L${f(bx + bw)},${f(by)}L${f(bx - bw)},${f(by)}Z" fill="${mix('#b6c6ee', '#22325c', Math.pow(z, .6))}"/>`;
+  };
+  for (let r = 0; r < ROWS; r++) {
+    const z = Math.pow(r / ROWS, .85), z2 = Math.pow((r + 1) / ROWS, .85);
+    const base = Math.pow(z, .5);
+    // Hill profile + a gradient that lightens slopes facing the moon (upper right)
+    let d = `M${X0},${BOTTOM}`, stops = '';
+    for (let x = X0; x <= X1; x += STEP) {
+      const h = H(x, z), y = yb(z) - h * kz(z);
+      d += `L${x},${f(y)}`;
+      if ((x - X0) % 40 === 0) {
+        const slope = (H(x + 8, z) - H(x - 8, z)) / 16 * kz(z);
+        const light = Math.max(-.12, Math.min(.3, -slope * .9));
+        const c = mix(mix('#2a3a68', '#080d19', base), '#4a5d94', Math.max(0, light));
+        stops += `<stop offset="${((x - X0) / (X1 - X0)).toFixed(3)}" stop-color="${light < 0 ? mix(c, '#04070e', -light * 2) : c}"/>`;
+      }
+    }
+    d += `L${X1},${BOTTOM}Z`;
+    grads += `<linearGradient id="g${r}" gradientUnits="userSpaceOnUse" x1="${X0}" y1="0" x2="${X1}" y2="0">${stops}</linearGradient>`;
+    valley += `<path d="${d}" fill="url(#g${r})"/>`;
+    // River: segment two rows back, so nearby banks don't cut it up
+    valley += riverSeg(r - 2);
+    const ax = riverX(z), aw = rw(z), ay = yb(z);
+    if (rng() < .5) { const gx = ax + (rng() - .5) * aw, gl = 1 + aw * .35 * rng(); fx += `<line class="glint" x1="${f(gx - gl)}" y1="${f(ay + 1)}" x2="${f(gx + gl)}" y2="${f(ay + 1)}" stroke="#e6edff" stroke-width="${f(.5 + z)}" style="--o:.6;--dl:${(rng() * 3).toFixed(1)}s"/>`; }
+    // Trees standing on this row
+    const th = 5 + 105 * Math.pow(z, 1.35);
+    const n = Math.min(200, Math.round(2200 / (th * .5)));
+    let dk = '', lt = '';
+    for (let i = 0; i < n; i++) {
+      const x = X0 + rng() * (X1 - X0), zz = lerp(z, z2, rng());
+      const hgt = H(x, zz);
+      if (Math.abs(x - riverX(zz)) < rw(zz) + th * .25 + 4) continue;
+      if (hgt < .12 && meadow(x, zz)) continue;               // open meadows on the flats
+      if (hgt < .03 && rng() < .5) continue;                  // sparser on the valley floor
+      const y = yb(zz) - hgt * kz(zz) + 1.5, h = th * (.7 + rng() * .6);
+      if (h < 9) { const w = h * .36; dk += `M${f(x)},${f(y - h)}L${f(x + w)},${f(y)}L${f(x - w)},${f(y)}Z`; }
+      else { const [pd, pl] = pine(x, y, h); dk += pd; if (h > 14) lt += pl; }
+    }
+    if (dk) valley += `<path d="${dk}" fill="${mix('#1f2c55', '#04070e', base)}"/>`;
+    if (lt) valley += `<path d="${lt}" fill="${mix('#33467a', '#0f1830', base)}"/>`;
+  }
+  valley += riverSeg(ROWS - 2) + riverSeg(ROWS - 1);
+  fx += `<g filter="url(#blur)" opacity=".35"><ellipse class="mist" cx="${f(riverX(.2))}" cy="${f(yb(.2))}" rx="320" ry="16" fill="#9fb2e0"/><ellipse class="mist b" cx="${f(riverX(.42))}" cy="${f(yb(.42))}" rx="380" ry="20" fill="#9fb2e0"/></g>`;
+  valley = grads.length ? valley.replace('<rect', `<defs>${grads}</defs><rect`) : valley;
+  layer(0.5, valley);
+  layer(0.5, fx);
+
+  // Foreground escarpment + wolf
+  const rock = 'M-300,' + BOTTOM + ' L-300,740 L-40,736 L40,724 L120,752 L210,734 L300,766 L390,750 L470,770 L540,758 L580,744 L610,718 L740,708 L800,712 L835,728 L850,770 L866,806 L866,870 L930,935 L1010,985 L1120,1010 L1300,1000 L1500,960 L1700,930 L1900,930 L1900,' + BOTTOM + ' Z';
+  const rockRim = 'M-40,736 L40,724 L120,752 L210,734 L300,766 L390,750 L470,770 L540,758 L580,744 L610,718 L740,708 L800,712 L835,728 L850,770 L866,806 L866,870 L930,935';
+  const facets = `
+    <path d="M580,744 L610,718 L740,708 L800,712 L835,728 L828,800 L592,806 Z" fill="#111a2e"/>
+    <path d="M835,728 L850,770 L866,806 L880,870 L930,935 L820,960 L828,800 Z" fill="#0c1323"/>
+    <path d="M592,806 L828,800 L820,960 L620,900 Z" fill="#0a101d"/>
+    <path d="M210,734 L300,766 L270,860 L150,840 Z" fill="#0a101d"/>`;
+  // Framing pines on the escarpment
+  let fgPines = '';
+  [[-30, 760, 430], [70, 748, 330], [1560, 990, 520], [1460, 1000, 380]].forEach(([x, y, h]) => fgPines += pine(x, y, h)[0]);
+  // Wolf from behind, body angled away, head turned right to look over the valley.
+  // Points are in a ~800 x 980 drawing space, scaled into the scene.
+  const P = pts => 'M' + pts.map(([x, y]) => x + ',' + y).join('L') + 'Z';
+  const body = [
+    [205,930],[172,870],[160,770],[170,660],[192,560],[220,480],[250,435],[275,418],            // tail, left edge, rump
+    [305,385],[318,360],[312,350],[334,330],[330,318],[352,305],[380,288],[396,282],[412,268],[402,262],[418,250],[410,242],[426,232],[432,214],   // back, left mane
+    [440,212],[446,170],[468,200],[490,196],[512,198],[538,166],[544,208],                  // ears, back of head
+    [554,222],[566,228],[558,240],[572,252],[562,262],[574,280],[560,288],[566,304],[548,312], // right mane
+    [540,380],[530,432],[518,470],[502,520],[496,600],[500,690],[532,718],[482,732],[470,700],[466,600],[455,545], // chest, near front leg
+    [430,560],[412,600],[406,690],[416,706],[388,714],[384,650],[392,580],[405,540],            // far front leg
+    [408,600],[396,680],[372,760],[368,805],[392,832],[376,848],[330,842],[322,805],[332,730],[328,660],[318,610],[300,570], // near hind leg
+    [298,640],[286,740],[268,830],[246,900],[225,936]                                           // tail, right edge
+  ];
+  const farHind = [[205,520],[240,500],[250,600],[236,700],[232,770],[250,792],[214,796],[206,760],[212,680]];
+  const wolfFacets = [
+    [[396,282],[412,268],[402,262],[418,250],[410,242],[426,232],[432,214],[440,212],[452,204],[468,200],[490,240],[530,270],[548,312],[540,380],[480,360],[420,320],[380,288]], '#22345e',
+    [[468,200],[490,196],[512,198],[538,166],[544,208],[540,232],[530,270],[490,240]], '#2e4274',
+    [[544,208],[554,222],[566,228],[558,240],[572,252],[562,262],[574,280],[560,288],[566,304],[548,312],[530,270],[540,232]], '#2b3e6e',
+    [[426,232],[432,214],[440,212],[452,204],[468,200],[490,240],[462,236],[440,246]], '#1b2a4e',
+    [[446,170],[468,200],[452,204]], '#1c2b50',
+    [[538,166],[544,208],[530,200]], '#6d83c0',
+    [[305,385],[318,360],[352,305],[380,288],[410,262],[420,320],[480,360],[540,380],[530,432],[460,470],[395,405]], '#172441',
+    [[250,435],[275,418],[305,385],[395,405],[350,420],[290,432]], '#2c3e6c',
+    [[250,435],[290,432],[350,420],[395,405],[405,540],[408,600],[396,680],[372,760],[330,650],[300,570],[220,480]], '#121c34',
+    [[540,380],[530,432],[518,470],[502,520],[496,600],[470,520]], '#1d2d54',
+    [[220,480],[250,435],[300,570],[298,640],[286,740],[268,830],[246,900],[225,936],[205,930],[230,800],[240,640]], '#1a2747'
+  ];
+  let facetSvg = '';
+  for (let i = 0; i < wolfFacets.length; i += 2) facetSvg += `<path d="${P(wolfFacets[i])}" fill="${wolfFacets[i + 1]}"/>`;
+  const rim = 'M440,212 L446,170 L468,200 L490,196 L512,198 L538,166 L544,208 L554,222 L566,228 L558,240 L572,252 L562,262 L574,280 L560,288 L566,304 L548,312';
+  const maneRim = 'M380,288 L396,282 L412,268 L402,262 L418,250 L410,242 L426,232 L432,214 L440,212';
+  const rumpRim = 'M192,560 L220,480 L250,435 L275,418 L305,385 L318,360';
+  const sideRim = 'M548,312 L540,380 L530,432 L518,470 L502,520 L496,600 L500,690';
+  const wolf = `<g transform="translate(545,440) scale(.4)">
+    <path d="${P(farHind)}" fill="#060a13"/>
+    <path d="${P(body)}" fill="#0a101d"/>
+    ${facetSvg}
+    <path d="${rim}" fill="none" stroke="#c9d6fa" stroke-width="3.5" stroke-linejoin="round" opacity=".9"/>
+    <path d="${maneRim}" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".6"/>
+    <path d="${rumpRim}" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".55"/>
+    <path d="M300,570 L298,640 L286,740 L268,830 L246,900 L225,936" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".55"/>
+    <path d="${sideRim}" fill="none" stroke="#93a7dc" stroke-width="2.5" stroke-linejoin="round" opacity=".5"/>
+  </g>`;
+  layer(1.15, `<path d="${rock}" fill="#070b14"/>${facets}<path d="${rockRim}" fill="none" stroke="#5a6ea6" stroke-width="1.2" opacity=".55"/><path d="${fgPines}" fill="#04070d"/>${wolf}`);
+
+  // One SVG per layer, so each is drawn once and then just moved
+  let vb = '0 0 1600 900';
+  const els = LAYERS.map(({ speed, content }, i) => {
+    const d = document.createElement('div'); d.className = 'layer';
+    d.innerHTML = `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice">${i === 0 ? DEFS : ''}${content}</svg>`;
+    scene.appendChild(d);
+    return { el: d, svg: d.firstChild, s: speed };
+  });
+  const grain = document.createElement('div'); grain.className = 'layer';
+  grain.innerHTML = `<svg viewBox="0 0 1600 900" preserveAspectRatio="none"><rect width="1600" height="900" filter="url(#grain)" opacity=".9"/></svg>`;
+  scene.appendChild(grain);
+
+  // Frame wolf + river on narrow screens; work out how many pixels one scene unit is
+  let unit = 1;
+  function frame() {
+    const w = scene.clientWidth, h = scene.clientHeight, vw = 900 * w / h;
+    let vbw = 1600;
+    if (vw < W) { const cx = Math.max(vw / 2, Math.min(W - vw / 2, 770)); vb = `${f(cx - vw / 2)} 0 ${f(vw)} 900`; vbw = vw; }
+    else vb = '0 0 1600 900';
+    for (const l of els) l.svg.setAttribute('viewBox', vb);
+    unit = Math.max(w / vbw, h / 900);
+  }
+  frame();
+
+  // Scroll-driven parallax
+  const copy = document.getElementById('copy'), hint = document.getElementById('hint'), hero = document.querySelector('.hero');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RANGE = 420; // viewBox units of travel for speed 1.0
+  let ticking = false;
+  function update() {
+    ticking = false;
+    const max = hero.offsetHeight - innerHeight;
+    const p = Math.min(1, Math.max(0, scrollY / max));
+    for (const { el, s } of els) el.style.transform = `translate3d(0, ${(-p * s * RANGE * unit).toFixed(1)}px, 0)`;
+    copy.style.transform = `translateY(${-p * 120}px)`;
+    copy.style.opacity = Math.max(0, 1 - p * 1.8);
+    hint.style.opacity = Math.max(0, 1 - p * 5);
+  }
+  if (!reduce) {
+    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    addEventListener('resize', () => { frame(); update(); });
+    update();
+  }
+})();
+</script>
+</body>
+</html>
