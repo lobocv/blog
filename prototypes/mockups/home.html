@@ -66,7 +66,18 @@
   .hero .btn { color: var(--ink); } .hero .btn.primary { color: #0a0f1c; }
 
   /* Sheet that slides up over the scene */
-  .sheet { position: relative; z-index: 2; margin-top: -24vh; background: var(--sheet); border-radius: 28px 28px 0 0; padding-top: 64px; box-shadow: 0 -24px 60px rgba(0,0,0,.28); }
+  .sheet { position: relative; z-index: 2; margin-top: -24vh; background: var(--sheet); padding-top: 90px; }
+  .sheet > .wrap, .sheet > .footer { position: relative; z-index: 2; }
+  .foliage-band { position: absolute; left: 0; right: 0; top: -190px; height: 250px; z-index: 1; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent); mask-image: linear-gradient(to bottom, #000 80%, transparent); }
+  .foliage-band svg { width: 100%; height: 100%; display: block; }
+  .foliage-band path, .foliage-band rect { transition: fill .8s ease; }
+  .side-foliage { position: absolute; left: 0; right: 0; top: 140px; bottom: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .side-foliage .side { position: absolute; top: 0; fill: var(--side-fol); opacity: var(--side-op); transition: fill .8s ease; }
+  .side-foliage .left { left: 0; } .side-foliage .right { right: 0; transform: scaleX(-1); }
+  @media (max-width: 1240px) { .side-foliage { display: none; } }
+  .topo { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .topo svg { position: absolute; inset: 0; fill: none; stroke: var(--topo); stroke-width: 1; }
   .sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; }
   .sec-head h2 { font-size: clamp(28px, 3vw, 38px); }
   .sec-head a { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--accent); }
@@ -119,6 +130,9 @@
 </header>
 
 <main class="sheet" id="writing">
+  <div class="foliage-band" id="band"></div>
+  <div class="topo" id="topo"></div>
+  <div class="side-foliage" id="side"></div>
   <div class="wrap">
     <div class="sec-head"><h2>Latest writing</h2><a href="posts.html">All posts →</a></div>
     <a class="feature" href="post.html">
@@ -164,6 +178,10 @@
 
 <script>
   document.getElementById('recent').innerHTML = Site.POSTS.slice(1, 5).map(Site.row).join('');
+  Site.foliageBand(document.getElementById('band'));
+  const sh = document.querySelector('.sheet');
+  Site.sideFoliage(document.getElementById('side'), sh.offsetHeight);
+  Site.topo(document.getElementById('topo'), sh.offsetWidth, sh.offsetHeight);
   const counts = {}; Site.POSTS.forEach(p => p.cats.forEach(c => counts[c] = (counts[c] || 0) + 1));
   document.getElementById('topics').innerHTML = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(c => `<a class="chip" href="posts.html">${c}<span class="n">${counts[c]}</span></a>`).join('');
   // Nav switches to the page style once it's over the sheet

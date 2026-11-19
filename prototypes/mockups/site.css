@@ -14,7 +14,9 @@
   --code-line: rgba(232, 236, 244, .08);
   --tok-kw: #c3a6ff; --tok-str: #a5d6a7; --tok-fn: #8fc8ff; --tok-type: #ffcf8a; --tok-com: #6b7896; --tok-num: #f2a7c3;
   /* inner-page horizon band */
-  --sky-1: #070b18; --sky-2: #1c2852; --r1: #2b3866; --r2: #212c55; --r3: #141c3a; --r4: #0b111e; --orb: #f2f5ff;
+  --sky-1: #05070f; --sky-2: #1f2b55; --r1: #2b3866; --r2: #212c55; --r3: #18214a; --r4: var(--page); --orb: #f2f5ff;
+  --glow: #cfdcff; --crater: #dfe6f8; --star: #e8eeff; --mist: #8a9dd0; --tree: #111a33; --tree-lit: #26355f; --tree-edge: #070b16;
+  --fol1: #0d1528; --fol2: #0a111f; --fol3: #080d18; --side-fol: #9fb6ff; --side-op: .07; --topo: rgba(159, 182, 255, .05);
   color-scheme: dark;
 }
 :root[data-time="day"] {
@@ -31,7 +33,9 @@
   --code-bg: #efe9dc;
   --code-line: rgba(29, 35, 32, .08);
   --tok-kw: #8a3fb8; --tok-str: #2f7a3a; --tok-fn: #1f62a8; --tok-type: #a35a12; --tok-com: #8a8f86; --tok-num: #b2386a;
-  --sky-1: #3f7fc6; --sky-2: #b2d3ec; --r1: #a3bccb; --r2: #86a3b0; --r3: #5f8574; --r4: #f7f3ea; --orb: #fffaf0;
+  --sky-1: #3f7fc6; --sky-2: #cfe3ef; --r1: #a3bccb; --r2: #86a3b0; --r3: #5f8574; --r4: var(--page); --orb: #fffaf0;
+  --glow: #fff3cf; --crater: transparent; --star: transparent; --mist: #ffffff; --tree: #3f5f3e; --tree-lit: #6c8a4f; --tree-edge: #22351f;
+  --fol1: #4f6d48; --fol2: #3a5533; --fol3: #2a4127; --side-fol: #2d6a4c; --side-op: .10; --topo: rgba(45, 106, 76, .06);
   color-scheme: light;
 }
 
@@ -65,8 +69,11 @@ img { max-width: 100%; display: block; }
 .horizon { position: relative; height: 420px; overflow: hidden; background: linear-gradient(var(--sky-1), var(--sky-2)); transition: background .6s ease; }
 .horizon.slim { height: 150px; }
 .horizon:not(.slim) svg { height: 250px; }
-.horizon svg { position: absolute; inset: auto 0 0 0; width: 100%; height: 100%; }
-.horizon svg path, .horizon svg circle { transition: fill .6s ease; }
+.horizon svg { position: absolute; inset: auto 0 0 0; width: 100%; height: 100%; overflow: visible; }
+.horizon svg path, .horizon svg circle, .horizon svg rect { transition: fill .6s ease; }
+.horizon .t { fill: var(--tree); stroke: var(--tree-edge); stroke-width: .8; stroke-linejoin: round; }
+.horizon .tl { fill: var(--tree-lit); }
+:root[data-time="day"] .night-only { display: none; }
 .horizon .title { position: absolute; left: 0; right: 0; top: 108px; }
 
 /* Shared bits */
