@@ -1,7 +1,4 @@
 ---
-import { getPosts, readingMinutes, formatDate } from '../lib/posts';
-const posts = await getPosts();
+import Base from '../layouts/Base.astro';
 ---
-<html lang="en"><head><meta charset="utf-8"><title>lobocv</title></head><body>
-<ul>{posts.map(p => <li data-id={p.id}>{p.data.title} | {p.data.date && formatDate(p.data.date)} | {readingMinutes(p.body ?? '')} min</li>)}</ul>
-</body></html>
+<Base title="lobocv" page="posts"><main class="wrap" style="padding-top:120px"><h1>Layout check</h1><p class="meta">Oct 1, 2022</p></main></Base>
