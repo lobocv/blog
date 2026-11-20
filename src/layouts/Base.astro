@@ -32,7 +32,9 @@ import Footer from '../components/Footer.astro';
 </script>
 <title>{title}</title>
 <meta name="description" content={description}>
-<link rel="canonical" href={canonical}>
+{page === '404'
+  ? <meta name="robots" content="noindex">
+  : <link rel="canonical" href={canonical}>}
 <link rel="alternate" type="application/rss+xml" title="lobocv" href="/index.xml">
 <link rel="icon" href="/favicon.ico">
 <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-6GL7S6YEB3"></script>

@@ -152,6 +152,8 @@ h1, h2, h3, .display { font-family: "Fraunces", serif; font-weight: 500; letter-
 .post-body li + li { margin-top: .45em; }
 .post-body li::marker { color: var(--ink-3); }
 .post-body :not(pre) > code { font-family: "JetBrains Mono", monospace; font-size: .84em; padding: .14em .4em; border-radius: 6px; background: var(--accent-soft); color: var(--ink); }
+/* Wide display maths scrolls inside its own box instead of widening the page on phones */
+.post-body .katex-display { overflow-x: auto; overflow-y: hidden; }
 .post-body blockquote { border-left: 3px solid var(--accent); padding: 4px 0 4px 20px; color: var(--ink); font-style: italic; }
 .post-body pre { position: relative; margin-top: 1.6em; margin-bottom: 1.6em; padding: 44px 0 18px; border-radius: 14px; background: var(--code-bg); border: 1px solid var(--code-line); overflow-x: auto; font-size: 14.5px; line-height: 1.65; }
 .post-body pre code { font-family: "JetBrains Mono", monospace; display: block; padding: 0 22px; color: var(--ink); background: none; min-width: max-content; }
