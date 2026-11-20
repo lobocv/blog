@@ -1,4 +1,79 @@
 ---
+import '../styles/home.css';
 import Base from '../layouts/Base.astro';
+import PostRow from '../components/PostRow.astro';
+import AuthorBlock from '../components/AuthorBlock.astro';
+import RssLine from '../components/RssLine.astro';
+import Footer from '../components/Footer.astro';
+import { codeToHtml } from 'shiki';
+import { shikiTheme, trimCode } from '../lib/shiki.mjs';
+import { getPosts, categoryCounts, formatDate, readingMinutes } from '../lib/posts';
+
+const posts = await getPosts();
+const [newest, ...rest] = posts;
+const feature = newest?.data.feature;
+const featureHtml = feature ? await codeToHtml(feature.code, { lang: feature.lang, theme: shikiTheme, transformers: [trimCode] }) : '';
+const topics = categoryCounts(posts);
 ---
-<Base title="lobocv" page="posts"><main class="wrap" style="padding-top:120px"><h1>Layout check</h1><p class="meta">Oct 1, 2022</p></main></Base>
+<Base title="Calvin Lobo · lobocv" page="home" footer={false}>
+  <header class="hero">
+    <div class="scene">
+      <div id="scene" aria-hidden="true"></div>
+      <div class="copy" id="copy">
+        <div class="kicker">Software architecture · Go · Distributed systems</div>
+        <h1>Calvin Lobo</h1>
+        <p class="sub">Backend engineer. I build systems that scale, and write about the decisions behind them.</p>
+        <div class="ctas"><a class="btn primary" href="/posts/">Read the blog</a></div>
+      </div>
+      <div class="scroll-hint" id="hint">Scroll</div>
+    </div>
+  </header>
+
+  <main class="sheet" id="writing">
+    <div class="foliage-band" id="band"></div>
+    <div class="topo" id="topo"></div>
+    <div class="side-foliage" id="side"></div>
+    <div class="wrap">
+      <div class="sec-head"><h2>Latest writing</h2><a href="/posts/">All posts →</a></div>
+      {newest && (
+        <a class="feature" href={`/posts/${newest.id}/`}>
+          <div>
+            <div class="eyebrow"><span>Newest</span><span style="color:var(--ink-3)">{newest.data.date && formatDate(newest.data.date)} · {readingMinutes(newest.body ?? '')} min read</span></div>
+            <h3>{newest.data.title}</h3>
+            <p>{newest.data.summary}</p>
+            <span class="read">Read the article →</span>
+          </div>
+          {feature && <Fragment set:html={featureHtml} />}
+        </a>
+      )}
+      <div class="rows" id="recent">{rest.slice(0, 4).map(p => <PostRow post={p} />)}</div>
+
+      <div class="split">
+        <div>
+          <div class="sec-head" style="margin-bottom:16px"><h2>Topics</h2></div>
+          <div class="topics" id="topics">
+            {topics.map(([c, n]) => <a class="chip" href={`/posts/?cat=${encodeURIComponent(c)}`}>{c}<span class="n">{n}</span></a>)}
+          </div>
+        </div>
+        <AuthorBlock variant="home" />
+      </div>
+
+      <section style="margin-top: 96px"><RssLine /></section>
+    </div>
+    <Footer />
+  </main>
+
+  <script>
+    import { foliageBand, sideFoliage, topo } from '../scripts/art/landscape.js';
+    import { initHero } from '../scripts/hero/hero.js';
+    foliageBand(document.getElementById('band'));
+    const sheet = document.querySelector<HTMLElement>('.sheet')!;
+    sideFoliage(document.getElementById('side'), sheet.offsetHeight);
+    topo(document.getElementById('topo'), sheet.offsetWidth, sheet.offsetHeight);
+    // Nav switches to the page style once it's over the sheet
+    const nav = document.querySelector('.nav')!;
+    const solid = () => nav.classList.toggle('solid', sheet.getBoundingClientRect().top < 222);
+    addEventListener('scroll', solid, { passive: true }); solid();
+    initHero();
+  </script>
+</Base>

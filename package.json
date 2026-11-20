@@ -22,7 +22,8 @@
     "astro": "^7.4.13",
     "katex": "^0.19.1",
     "rehype-katex": "^7.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "shiki": "^4.6.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
