@@ -37,7 +37,7 @@ const chips: [string, number][] = [['All', posts.length], ...categoryCounts(post
   </header>
   <main class="wrap">
     <div class="filters" id="filters">
-      {chips.map(([c, n]) => <button class="chip" aria-pressed={String(c === 'All')} data-cat={c}>{c}<span class="n">{n}</span></button>)}
+      {chips.map(([c, n]) => <button class="chip" aria-pressed={c === 'All' ? 'true' : 'false'} data-cat={c}>{c}<span class="n">{n}</span></button>)}
     </div>
     {[...years].map(([y, list]) => (
       <section class="year" data-year={y}><h2>{y}</h2><div class="rows">{list.map(p => <PostRow post={p} />)}</div></section>

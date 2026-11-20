@@ -27,11 +27,13 @@ AGENTS.md                       rules every agent follows when helping me write
 The site is built with [Astro](https://astro.build). It needs Node 23 or later.
 
 ```bash
-npm install        # first time only
-npm run dev        # serves on http://localhost:4321, drafts included
-npm run build      # production build into dist/, drafts left out
-npm run preview    # serves the production build
-npm test           # unit tests
+make               # lists every target
+make dev           # serves on http://localhost:4321, drafts included (installs dependencies first)
+make build         # clean production build into dist/, drafts left out
+make preview       # builds, then serves the production build
+make verify        # everything the deploy checks: tests, type check, build, old URLs, links
+make lint          # lints the active draft (or POST=<slug>)
+make deploy        # verify, then push master
 ```
 
 ## Publishing

@@ -2,6 +2,7 @@ import { transformerMetaHighlight, transformerNotationHighlight } from '@shikijs
 // Code highlighting theme. Token colours point at the mockup's CSS variables (--tok-*),
 // so code follows day/night with the rest of the page. Shared by Markdown and the home feature card.
 const v = name => `var(--tok-${name})`;
+/** @type {import('shiki').ThemeRegistration} */
 export const shikiTheme = {
   name: 'lobocv',
   type: 'dark',
