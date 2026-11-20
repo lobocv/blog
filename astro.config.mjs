@@ -18,7 +18,7 @@ const publishedProjects = fs.existsSync('src/content/projects')
   : [];
 
 export default defineConfig({
-  site: 'https://www.lobocv.com',
+  site: 'https://blog.lobocv.com',
   build: { format: 'directory' },
   integrations: [mdx(), sitemap({ filter: page => publishedProjects.length > 0 || !page.includes('/projects/') })],
   redirects: legacyRedirects('src/content/posts'),

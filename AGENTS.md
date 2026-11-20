@@ -246,7 +246,7 @@ Node 23 or later is required: `scripts/check-urls.mjs` imports `src/lib/urls.ts`
 
 ### Architecture
 
-Static Astro site deployed to GitHub Pages (www.lobocv.com). The old `blog.lobocv.com` is served by the `lobocv/blog-redirect` repo, which sends every path to the same path here. Pushing to `master` runs `.github/workflows/gh-pages.yml`, which gates the deploy on the same checks as `make verify`.
+Static Astro site deployed to GitHub Pages (blog.lobocv.com). Pushing to `master` runs `.github/workflows/gh-pages.yml`, which gates the deploy on the same checks as `make verify`.
 
 #### Content
 

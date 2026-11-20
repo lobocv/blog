@@ -1,6 +1,6 @@
-# lobocv.com
+# blog.lobocv.com
 
-Source for [www.lobocv.com](https://www.lobocv.com), Calvin's blog and projects. This README covers how
+Source for [blog.lobocv.com](https://blog.lobocv.com). This README covers how
 the repo works: the layout, running and publishing the site, and how AI agents
 help with writing posts.
 
