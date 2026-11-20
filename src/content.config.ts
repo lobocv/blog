@@ -30,4 +30,28 @@ const pages = defineCollection({
   schema: z.object({ title: z.string() }),
 });
 
-export const collections = { posts, pages };
+const projects = defineCollection({
+  loader: glob({
+    pattern: '*/index.mdx',
+    base: './src/content/projects',
+    generateId: ({ entry }) => entry.split('/')[0],
+  }),
+  schema: z.object({
+    title: z.string(),
+    kind: z.enum(['work', 'personal']),
+    org: z.string().optional(),
+    role: z.string(),
+    period: z.string(),
+    /** One-line outcome: the card text and meta description */
+    summary: z.string(),
+    problem: z.string(),
+    contribution: z.string(),
+    outcome: z.string(),
+    impact: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
+    /** Lower comes first on the index */
+    order: z.number().default(100),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts, pages, projects };

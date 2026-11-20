@@ -1,0 +1,158 @@
+---
+// Interactive system diagram. Server-rendered SVG; src/scripts/diagram.ts adds the view toggle,
+// detail panel and flow playback. Without JS it is a static picture of the "after" view.
+import { validate, bounds, CELL, centre, edgeGeometry, edgeKey, NODE, PAD, type Architecture, type DiagramNode, type DiagramView, type NodeKind } from '../../lib/diagram';
+
+/** mini: card thumbnail. still: a small static diagram, eg inside a Detail block */
+interface Props { arch: Architecture; mini?: boolean; still?: boolean }
+const { arch, mini = false, still = false } = Astro.props;
+const problems = validate(arch);
+if (problems.length) throw new Error(`Invalid diagram (${arch.after.label}):\n${problems.join('\n')}`);
+
+const views: [string, DiagramView][] = [['after', arch.after], ...(arch.before && !mini && !still ? [['before', arch.before] as [string, DiagramView]] : [])];
+const box = bounds(views.map(([, v]) => v));
+
+// One node element per id across views, so a node in both views can glide between positions
+type Merged = { node: DiagramNode; pos: Record<string, string>; per: Record<string, DiagramNode> };
+const merged = new Map<string, Merged>();
+for (const [name, v] of views) {
+  for (const n of v.nodes) {
+    const c = centre(n.x, n.y);
+    const m = merged.get(n.id) ?? { node: n, pos: {}, per: {} };
+    m.pos[name] = `${c.x},${c.y}`;
+    m.per[name] = n;
+    if (name === 'after') m.node = n;
+    else m.node = { ...n, ...m.node, detail: m.node.detail ?? n.detail };
+    merged.set(n.id, m);
+  }
+}
+const nodes = [...merged.values()];
+
+const edgesFor = (v: DiagramView) => {
+  const byId = new Map(v.nodes.map(n => [n.id, n]));
+  return v.edges.map(e => ({ ...e, ...edgeGeometry(byId.get(e.from)!, byId.get(e.to)!, e.via) }));
+};
+
+// A node in both views can have different text in each (eg what a store held before and after)
+const textsFor = (m: Merged) => {
+  const own = Object.entries(m.per);
+  const same = own.every(([, n]) => n.label === own[0][1].label && n.sub === own[0][1].sub);
+  return (same ? [[undefined, m.node] as const] : own).map(([view, n]) => ({ view, label: n.label, sub: n.sub }));
+};
+
+const groupsSvg = (v: DiagramView) => (v.groups ?? []).map(g => {
+  const x = PAD + g.x * CELL.w + 6, y = PAD + g.y * CELL.h + 4, gw = g.w * CELL.w - 12, gh = g.h * CELL.h - 8;
+  const rect = (dx: number, cls: string) => `<rect class="${cls}" x="${x + dx}" y="${y + dx * 0.8}" width="${gw}" height="${gh}" rx="14"/>`;
+  return `<g class="group">${g.stack ? rect(14, 'ghost') + rect(7, 'ghost') : ''}${rect(0, 'lane-base')}${rect(0, 'lane')}<text class="group-label" x="${x + 12}" y="${y + 17}">${esc(g.label)}</text></g>`;
+}).join('');
+
+const w = NODE.w, h = NODE.h, hw = w / 2, hh = h / 2;
+const e = 7; // cylinder lid depth
+const shapes: Record<NodeKind, string> = {
+  service: `<rect class="shape" x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="10"/>`,
+  external: `<rect class="shape" x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="10"/>`,
+  client: `<rect class="shape" x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="10"/><path class="line" d="M${-hw},${-hh + 11} H${hw}"/>`,
+  config: `<path class="shape" d="M${-hw + 10},${-hh} H${hw - 14} L${hw},${-hh + 14} V${hh - 10} Q${hw},${hh} ${hw - 10},${hh} H${-hw + 10} Q${-hw},${hh} ${-hw},${hh - 10} V${-hh + 10} Q${-hw},${-hh} ${-hw + 10},${-hh} Z"/><path class="line" d="M${hw - 14},${-hh} V${-hh + 14} H${hw}"/>`,
+  queue: `<rect class="shape" x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="${hh}"/>`,
+  store: `<path class="shape" d="M${-hw},${-hh + e} A${hw},${e} 0 0 1 ${hw},${-hh + e} V${hh - e} A${hw},${e} 0 0 1 ${-hw},${hh - e} Z"/><path class="line" d="M${-hw},${-hh + e} A${hw},${e} 0 0 0 ${hw},${-hh + e}"/>`,
+};
+const kindNames: Record<NodeKind, string> = { service: 'Service', store: 'Data store', queue: 'Topic or queue', external: 'Outside the system', client: 'App or UI', config: 'Configuration' };
+const kindsUsed = [...new Set(nodes.map(n => n.node.kind))];
+const hasDetails = nodes.some(n => n.node.detail);
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const uid = `d${Math.abs([...arch.description].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)).toString(36)}`;
+
+const svg = (
+  `<defs>` +
+  ['', 'on', 'tangle'].map(k => `<marker id="${uid}-arrow${k && '-' + k}" class="arrow ${k}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 Z"/></marker>`).join('') +
+  `</defs>`
+);
+const stillSvg = () => svg + groupsSvg(arch.after) +
+  edgesFor(arch.after).map(ed => `<g class="edge-g ${ed.style ?? ''}"><path class="edge" d="${ed.d}" marker-end="url(#${uid}-arrow${ed.style === 'tangle' ? '-tangle' : ''})"/></g>`).join('') +
+  nodes.map(({ node: n, pos }) => `<g class="node kind-${n.kind}" transform="translate(${pos.after})">${shapes[n.kind]}<text class="label" y="${n.sub ? -3 : 5}">${esc(n.label)}</text>${n.sub ? `<text class="sub" y="14">${esc(n.sub)}</text>` : ''}</g>`).join('') +
+  // Labels go on top: arrows in these small diagrams are short, and a label wider than the gap would hide under the boxes
+  edgesFor(arch.after).filter(ed => ed.label).map(ed => `<text class="edge-label" x="${ed.at.x}" y="${ed.at.y - 6}">${esc(ed.label!)}</text>`).join('');
+---
+{still ? (
+  <figure class="sysdiag-still"><svg class="sysdiag-svg still" viewBox={`0 0 ${box.width} ${box.height}`} style={`--w:${box.width}px`} role="img" aria-label={arch.description} set:html={stillSvg()} /></figure>
+) : mini ? (
+  <svg class="sysdiag-svg mini" viewBox={`0 0 ${box.width} ${box.height}`} aria-hidden="true" set:html={svg + groupsSvg(arch.after) + edgesFor(arch.after).map(ed => `<path class="edge ${ed.style ?? ''}" d="${ed.d}"/>`).join('') + nodes.map(({ node: n, pos }) => `<g class="node kind-${n.kind}" transform="translate(${pos.after})">${shapes[n.kind]}<text class="label" y="5">${esc(n.label)}</text></g>`).join('')} />
+) : (
+<figure class="sysdiag" data-diagram data-view="after" data-flows={JSON.stringify(arch.flows ?? [])}>
+  <div class="sysdiag-bar" hidden>
+    {arch.before && (
+      <div class="seg" role="group" aria-label="Architecture view">
+        <button type="button" data-view-btn="before" aria-pressed="false">{arch.before.label}</button>
+        <button type="button" data-view-btn="after" aria-pressed="true">{arch.after.label}</button>
+      </div>
+    )}
+    {(arch.flows ?? []).map((f, i) => (
+      <button type="button" class="play" data-flow={i}><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3,2 L10,6 L3,10 Z"/></svg><span>{f.label}</span></button>
+    ))}
+  </div>
+  <div class="sysdiag-main">
+    <div class="sysdiag-canvas" tabindex="-1">
+      <svg class="sysdiag-svg" viewBox={`0 0 ${box.width} ${box.height}`} style={`--w:${box.width}px`} role="img" aria-label={arch.description}>
+        <Fragment set:html={svg} />
+        {views.map(([name, v]) => v.groups?.length ? (
+          <g class="groups" data-view={name} aria-hidden="true" data-off={name !== 'after' ? '' : undefined} set:html={groupsSvg(v)} />
+        ) : null)}
+        {views.map(([name, v]) => (
+          <g class="edges" data-view={name} aria-hidden="true" data-off={name !== 'after' ? '' : undefined}>
+            {edgesFor(v).map(ed => (
+              <g class={`edge-g ${ed.style ?? ''}`} data-key={edgeKey(ed.from, ed.to)}>
+                <path class="edge" d={ed.d} marker-end={`url(#${uid}-arrow${ed.style === 'tangle' ? '-tangle' : ''})`} />
+                {ed.label && <text class="edge-label" x={ed.at.x} y={ed.at.y - 6}>{ed.label}</text>}
+              </g>
+            ))}
+          </g>
+        ))}
+        <g class="pulses" aria-hidden="true"></g>
+        {nodes.map(({ node: n, pos, ...m }) => (
+          <g
+            class={`node kind-${n.kind}${n.detail ? ' has-detail' : ''}`}
+            data-id={n.id}
+            data-detail={n.detail}
+            data-pos-after={pos.after}
+            data-pos-before={pos.before}
+            data-absent={pos.after ? undefined : ''}
+            style={`transform: translate(${(pos.after ?? pos.before)!.replace(',', 'px,')}px)`}
+            tabindex={n.detail && pos.after ? '0' : undefined}
+            role={n.detail ? 'button' : undefined}
+            aria-label={n.detail ? `${n.label}: show how it works` : undefined}
+          >
+            <Fragment set:html={shapes[n.kind]} />
+            {textsFor({ node: n, pos, ...m }).map(t => (
+              <g data-for={t.view}>
+                <text class="label" y={t.sub ? -3 : 5}>{t.label}</text>
+                {t.sub && <text class="sub" y="14">{t.sub}</text>}
+              </g>
+            ))}
+            {n.detail && <g class="badge" transform={`translate(${hw - 2},${-hh + 2})`}><circle r="8" /><path d="M-3.5,0 H3.5 M0,-3.5 V3.5" /></g>}
+          </g>
+        ))}
+      </svg>
+    </div>
+    <p class="swipe-hint" aria-hidden="true">Swipe sideways to see the whole system →</p>
+    <aside class="sysdiag-panel" aria-live="polite">
+      <div class="panel-intro">
+        <div class="eyebrow">How to read this</div>
+        <ul class="legend">
+          {kindsUsed.map(k => (
+            <li><svg viewBox={`${-hw - 2} ${-hh - 2} ${w + 4} ${h + 4}`} class={`node kind-${k}`} aria-hidden="true"><Fragment set:html={shapes[k]} /></svg>{kindNames[k]}</li>
+          ))}
+          {views.some(([, v]) => v.edges.some(ed => ed.style === 'tangle')) && <li><svg viewBox="0 0 40 10" class="tangle-key" aria-hidden="true"><path d="M2,5 H38" /></svg>Coupling we wanted gone</li>}
+        </ul>
+        {hasDetails && <p class="hint">Select a component marked <span class="plus" aria-hidden="true">+</span> to see how it works.</p>}
+      </div>
+      <div class="panel-detail" hidden>
+        <button type="button" class="panel-close" aria-label="Close">×</button>
+        <h3 class="panel-title"></h3>
+        <div class="panel-body"></div>
+        <a class="panel-more" href="#">Read it in the page ↓</a>
+      </div>
+    </aside>
+  </div>
+  <p class="sysdiag-caption" aria-live="polite" hidden></p>
+</figure>
+)}

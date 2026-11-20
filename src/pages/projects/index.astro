@@ -1,0 +1,57 @@
+---
+import '../../styles/projects.css';
+import Base from '../../layouts/Base.astro';
+import SystemDiagram from '../../components/project/SystemDiagram.astro';
+import { getProjects, getArchitecture } from '../../lib/projects';
+
+const projects = await getProjects();
+const groups = [
+  { name: 'Work', list: projects.filter(p => p.data.kind === 'work') },
+  { name: 'Personal', list: projects.filter(p => p.data.kind === 'personal') },
+].filter(g => g.list.length);
+---
+<Base title="Projects · lobocv" description="Systems I have designed and built, explained at the level of the architecture." page="projects">
+  <style>
+    .intro h1 { font-size: clamp(44px, 6vw, 72px); line-height: 1; color: #f2f4fa; }
+    .intro p { margin-top: 12px; max-width: 560px; color: rgba(242,244,250,.82); line-height: 1.55; }
+    :root[data-time="day"] .intro p { text-shadow: 0 1px 10px rgba(20,55,100,.3); }
+  </style>
+  {projects.length === 0 && <meta slot="head" name="robots" content="noindex">}
+  <header class="horizon" id="horizon">
+    <div class="title wrap">
+      <div class="intro">
+        <div class="eyebrow" style="color: rgba(242,244,250,.75)">Projects</div>
+        <h1 style="margin-top:14px">Things I've built</h1>
+        <p>Systems I have designed and built, explained at the level of the architecture.</p>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    {groups.length === 0 && <p class="proj-empty">Nothing here yet.</p>}
+    {groups.map(g => (
+      <section class="proj-group">
+        <h2>{g.name}</h2>
+        <div class="proj-cards">
+          {g.list.map(p => {
+            const arch = getArchitecture(p.id);
+            return (
+              <a class="proj-card" href={`/projects/${p.id}/`}>
+                {arch && <div class="thumb"><SystemDiagram arch={arch} mini /></div>}
+                <div class="text">
+                  <div class="meta">{[p.data.org, p.data.period].filter(Boolean).join(' · ')}{p.data.draft && ' · draft'}</div>
+                  <h3>{p.data.title}</h3>
+                  <p>{p.data.summary}</p>
+                  <div class="meta role">{p.data.role}</div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+  </main>
+  <script>
+    import { horizon } from '../../scripts/art/landscape.js';
+    horizon(document.getElementById('horizon')!);
+  </script>
+</Base>

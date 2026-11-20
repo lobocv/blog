@@ -214,6 +214,18 @@ Guardrails:
 - Be honest about AI's role. If a post is about how he works with agents, it
   should be accurate about what the agent did and what he did
 
+## Projects
+
+`src/content/projects/<slug>/` holds project pages (`/projects/<slug>/`), kept separate from the blog. Design: `docs/superpowers/specs/2026-11-20-projects-section-design.md`.
+
+The one rule above is for posts. Project pages are different: Claude writes them, in Calvin's voice (see his voice notes), and Calvin reviews them. Over time, match the tone of his published posts more closely.
+
+- Source material is the WorkJournal archive in `writing/work-journal/` (a separate private repo, ignored by this one). Use the entries' facts, not their wording
+- Never include: people's names, internal politics or disagreements, customer names, security details, or business numbers that aren't already scale-level (eg "millions of posts" is fine)
+- New project pages start as `draft: true` until Calvin has read them
+- Pages are layered for skimmers: impact strip and summary cards, then the system diagram, then `Detail` blocks with a one-line `gist` each
+- The same prose rules apply: no em-dashes, no banned words (`make lint POST=projects/<slug>`)
+
 ## The site's code
 
 Everything above is about writing posts. This section is for working on the site itself.

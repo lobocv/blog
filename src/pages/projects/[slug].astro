@@ -1,0 +1,72 @@
+---
+import '../../styles/projects.css';
+import Base from '../../layouts/Base.astro';
+import AuthorBlock from '../../components/AuthorBlock.astro';
+import SystemDiagram from '../../components/project/SystemDiagram.astro';
+import Detail from '../../components/project/Detail.astro';
+import { render } from 'astro:content';
+import { getProjects, getArchitecture, type Project } from '../../lib/projects';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map(project => ({ params: { slug: project.id }, props: { project } }));
+}
+interface Props { project: Project }
+const { project } = Astro.props;
+const { Content } = await render(project);
+const d = project.data;
+const arch = getArchitecture(project.id);
+---
+<Base title={`${d.title} · lobocv`} description={d.summary} page="project" image={`/og/projects/${project.id}.png`}>
+  <div class="horizon slim" id="horizon"></div>
+  <article class="wrap">
+    <header class="post-head proj-head">
+      <div class="crumbs"><a class="meta" href="/projects/">← All projects</a><span class="tag">#{d.kind}</span>{d.draft && <span class="tag">draft</span>}</div>
+      <h1>{d.title}</h1>
+      <p class="lede">{d.summary}</p>
+      <div class="meta meta-line">
+        {d.org && <span>{d.org}</span>}
+        <span><b>{d.role}</b></span>
+        <span>{d.period}</span>
+      </div>
+    </header>
+
+    {d.impact.length > 0 && (
+      <div class="impact">{d.impact.map(i => <div><strong>{i.value}</strong><span>{i.label}</span></div>)}</div>
+    )}
+
+    <div class="summary">
+      <div><div class="eyebrow"><i>1</i>The problem</div><p>{d.problem}</p></div>
+      <div><div class="eyebrow"><i>2</i>What I did</div><p>{d.contribution}</p></div>
+      <div><div class="eyebrow"><i>3</i>The outcome</div><p>{d.outcome}</p></div>
+    </div>
+
+    {arch && (
+      <section>
+        <div class="proj-section-title">
+          <h2>The architecture</h2>
+          <p>{arch.flows?.length ? 'Press play to follow the data, or select a component.' : 'Select a component to see how it works.'}</p>
+        </div>
+        <SystemDiagram arch={arch} />
+      </section>
+    )}
+
+    <div class="post-body proj-body" id="body"><Content components={{ Detail }} /></div>
+
+    <footer class="post-end">
+      <AuthorBlock variant="post" />
+      <nav class="pager"><a href="/projects/"><span class="meta">← Back</span><strong>All projects</strong></a></nav>
+    </footer>
+  </article>
+  <script>
+    import { horizon } from '../../scripts/art/landscape.js';
+    import { initDiagram } from '../../scripts/diagram';
+    import { initCode } from '../../scripts/post';
+    horizon(document.getElementById('horizon')!);
+    document.querySelectorAll<HTMLElement>('[data-diagram]').forEach(initDiagram);
+    initCode(document.getElementById('body')!);
+    // A link straight to a detail (eg #detail-dedup) opens it
+    const target = location.hash && document.querySelector<HTMLDetailsElement>(`details${location.hash}`);
+    if (target) target.open = true;
+  </script>
+</Base>

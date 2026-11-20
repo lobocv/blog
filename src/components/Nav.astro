@@ -1,8 +1,13 @@
 ---
+import { getProjects } from '../lib/projects';
+
 interface Props { page: string }
 const { page } = Astro.props;
+// Projects stays out of the nav until one is published (drafts count in dev)
+const hasProjects = (await getProjects()).length > 0;
 const links = [
   { href: '/posts/', label: 'Writing', on: page === 'posts' || page === 'post' },
+  ...(hasProjects ? [{ href: '/projects/', label: 'Projects', on: page === 'projects' || page === 'project' }] : []),
   { href: '/about/', label: 'About', on: page === 'about' },
 ];
 ---

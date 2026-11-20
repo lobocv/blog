@@ -6,6 +6,7 @@ Usage:
   python3 scripts/lint_post.py <path|slug>  # lint a specific post
   python3 scripts/lint_post.py --links      # also check that external links resolve
   python3 scripts/lint_post.py --active     # print the active post's path and exit
+  python3 scripts/lint_post.py projects/<slug>  # lint a project page (no length cap)
 
 The active post is the post under src/content/posts/ whose front matter has
 `draft: true`. If there is more than one, pass the path or slug explicitly.
@@ -21,6 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 POSTS = ROOT / "src" / "content" / "posts"
+PROJECTS = ROOT / "src" / "content" / "projects"
 
 WORDS_PER_MINUTE = 213  # Hugo's reading-time rate
 HARD_CAP = 2000         # about 10 minutes
@@ -60,7 +62,9 @@ def resolve(arg):
         sys.exit(f"More than one draft ({names}). Pass a path or slug.")
     p = Path(arg)
     if p.is_dir():
-        p = p / "index.md"
+        p = p / "index.md" if (p / "index.md").exists() else p / "index.mdx"
+    if not p.exists() and arg.startswith("projects/"):
+        p = PROJECTS / arg.split("/", 1)[1] / "index.mdx"
     if not p.exists():
         p = POSTS / arg / "index.md"
     if not p.exists():
@@ -122,7 +126,10 @@ def main():
     minutes = math.ceil(total / WORDS_PER_MINUTE)
     print(f"{post.relative_to(ROOT)}")
     print(f"  words: {total} total, {prose} prose, about {minutes} min read")
-    if total > HARD_CAP:
+    is_project = post.suffix == ".mdx"
+    if is_project:
+        pass  # project pages are layered and mostly collapsed, so the reading-time cap doesn't apply
+    elif total > HARD_CAP:
         fails.append(f"length: {total} words is over the {HARD_CAP} cap (10 min)")
     elif total > SOFT_CAP:
         warns.append(f"length: {total} words is over the {SOFT_CAP} target")

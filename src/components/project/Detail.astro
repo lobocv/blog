@@ -1,0 +1,17 @@
+---
+// An expandable section of a project page. The title and gist stay visible for skimmers;
+// the body opens on demand. When a diagram node names this id, the same body shows in the diagram's panel.
+// An optional small static diagram sits at the top of the body.
+import SystemDiagram from './SystemDiagram.astro';
+import type { Architecture } from '../../lib/diagram';
+interface Props { id: string; title: string; gist: string; diagram?: Architecture }
+const { id, title, gist, diagram } = Astro.props;
+---
+<details class="detail" id={`detail-${id}`} data-detail={id}>
+  <summary>
+    <h3>{title}</h3>
+    <p class="gist">{gist}</p>
+    <span class="chev" aria-hidden="true"></span>
+  </summary>
+  <div class="detail-body">{diagram && <SystemDiagram arch={diagram} still />}<slot /></div>
+</details>

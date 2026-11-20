@@ -1,0 +1,141 @@
+---
+title: "Avalanche: re-architecting Hootsuite Impact"
+kind: work
+org: Hootsuite
+role: Staff Software Developer, Team Lead and Architect
+period: 2021 to 2025
+summary: I proposed and led the rewrite of Hootsuite's enterprise analytics product, from a copy of the same pipeline for every social network to one event-driven architecture that handled hundreds of millions of posts.
+problem: Impact ran a separate linear pipeline for every social network, each storing data in its own schema. The duplication was a steady source of bugs, the real processing flows weren't linear, and adding a social network meant changes across dozens of services.
+contribution: I proposed a new architecture with clear domain boundaries, an API-first platform and event-driven processing. Then I designed it, led the team that built it, and ran it next to the old system until we could switch over.
+outcome: Avalanche replaced the per-network pipelines and the PHP monolith. Every network shares one data model and one set of processing flows, and adding a social network went from about 10 months of work to 2.
+impact:
+  - value: 10 → 2
+    label: Months to add a new social network, before and after Avalanche
+  - value: 100s of millions
+    label: Posts collected from millions of social media accounts
+  - value: 85–98%
+    label: Redundant events folded away before they reached the processors
+  - value: Retired
+    label: The 7+ year old PHP monolith and a pipeline per network
+order: 1
+draft: true
+---
+
+import SystemDiagram from '../../../components/project/SystemDiagram.astro';
+import { migration } from './architecture';
+import * as d from './details';
+
+## How it works
+
+Impact is the advanced analytics side of Hootsuite (eg web attribution, auto-tagging and ROI on top of social media data). Avalanche is the architecture we rebuilt it on. The diagram above is the whole system at a glance. Each section below goes one level deeper on a single part of it.
+
+<Detail id="pipeline" diagram={d.pipeline} title="Why the old pipelines broke down" gist="Every social network had its own copy of the pipeline and its own schema, so every fix had to be made several times.">
+
+Each social network had its own pipeline of stages over Kestrel (a simple distributed queue). The stages did the same jobs for every network, but each copy was written against that network's data, so a bug fixed for Facebook still existed for Twitter. The duplication was a steady source of bugs.
+
+Each network also had its own schema, and posts were only normalized at read time, in the PHP monolith. That pushed network-specific logic into every stage and stopped us from writing one pipeline for all networks. On top of that, every stage wrote its results twice (to MongoDB, then Elasticsearch), and the real processing wasn't a straight line, so every edge case added another link between stages.
+
+</Detail>
+
+<Detail id="events" diagram={d.events} title="Events instead of a pipeline" gist="Services publish what happened and anyone interested reacts, so new flows don't need changes to old ones.">
+
+In Avalanche, services publish domain events (eg `ContentCreated`) to Kafka and subscribe to the ones they care about. A new processing flow is a new subscriber. It doesn't need the upstream service to know it exists.
+
+Stream processors work the same way: they publish their results as new events, and the Content service writes them, which sets off the next wave.
+
+The trade-off is eventual consistency. A post shows up in the app before every aggregation over it has finished. For analytics that was fine, and it meant we could stop forcing a web of flows into a single line.
+
+</Detail>
+
+<Detail id="model" diagram={d.model} title="One data model for every social network" gist="Posts are normalized when they are written, into a shape that doesn't care which network they came from.">
+
+The Content and Metric services consume posts from the ingestion topic and save them in MongoDB using a social network agnostic data model. Anything specific to one network (eg a field only LinkedIn returns) lives in a defined extension instead of a separate schema.
+
+The old system normalized at read time instead, so every stage had to know which network it was handling. The code filled up with `switch socialNetwork` statements, and adding a network meant finding and changing all of them. It took about 10 months. In Avalanche it took 2.
+
+</Detail>
+
+<Detail id="changestreams" diagram={d.changestreams} title="Turning database changes into events, fast" gist="A sharded change stream reader took the lag from several hours to a few seconds.">
+
+Domain events come from MongoDB's change streams (a feed of every write, read from the oplog). When a document lands in a social network collection, the reader publishes a `ContentCreated` event on Kafka.
+
+We collected hundreds of millions of posts from millions of accounts, and a single reader couldn't keep up. The oplog has a fixed size, so falling behind risks losing events. We raised it to the maximum for our cluster, which stopped the data loss, but the reader was still hours behind.
+
+I added a shard key to every document, a hash of the social network account ID and the network name:
+
+```text
+ShardKey = Hash(SocialNetworkAccountID, SocialNetwork)
+```
+
+All data for one account lands on the same shard, so its events are processed together, and the reader opens one change stream per shard. Busy networks (eg Twitter) get more shards than quiet ones. Lag dropped from several hours to a few seconds, or minutes at peak ingestion.
+
+Running more than one reader pod caused its own problem: each pod opened every stream and we got duplicate events. A global lock in Redis and a per-pod limit on streams fixed it. We ran a few spare pods so there was always capacity waiting if a pod died.
+
+```text
+MinPods = Ceil(Sum(ShardsPerNetwork) / StreamsPerPod)
+```
+
+</Detail>
+
+<Detail id="folding" diagram={d.folding} title="Folding bursts of events into one" gist="An event folder built on Redis sorted sets stopped us recomputing the same totals hundreds of times.">
+
+Some processing is an aggregation over many records (eg the total likes across every post on an account). When a Collector pulls an account's posts, each post triggers an event, and each event would trigger the aggregation again. Every result is stale as soon as the next post arrives.
+
+The event folder holds similar events in a Redis sorted set, scored by time, and releases one delayed event once the burst settles. The aggregation runs once per burst instead of once per post. In production it folded 85% to 98% of these events. Without it, we would have overloaded the database and had to give up on the event-driven approach.
+
+I wrote up how it works, and the maths for picking the folding window, in [Reducing System Load With Event Folding](/posts/event_folding/).
+
+</Detail>
+
+<Detail id="cqrs" diagram={d.cqrs} title="Separate paths for writes and reads" gist="MongoDB takes the writes, and an indexer copies every change into Elasticsearch for reads.">
+
+Avalanche follows CQRS (separate models for writing and reading data). Writes go to MongoDB. The Elasticsearch indexer is just another subscriber to the domain events, and it writes each change into Elasticsearch. The Hootsuite frontend reads from there, which suits the search and filtering that analytics screens need.
+
+In the old pipelines, every stage wrote to MongoDB and then to Elasticsearch itself. Moving the copy into one subscriber took that job away from every other service.
+
+Elasticsearch brought its own problem. Customers define their own metrics in tools like Google Analytics, and every new metric name would add a field to the index mapping for good. We capped it with a fixed set of reusable fields, which I wrote about in [Defusing an ElasticSearch Mapping Explosion with Slots](/posts/elasticsearch_slots/).
+
+</Detail>
+
+<Detail id="spr" diagram={d.spr} title="Social Platform Registry" gist="Rules for each social network live in one explicit registry, not in code or naming conventions.">
+
+Even with a shared data model, services need some network-specific settings (eg the Content and Metric services load extension schemas and per-network rules, and the change stream reader needs shard counts). We didn't want those in `switch` statements or in implicit conventions, like naming a collection after its network. Conventions break as soon as an API changes, and under deadline pressure people hack around them.
+
+The registry is a small Go gRPC service that stores a JSON document per network. Each service owns a namespace inside it:
+
+```json
+{
+  "id": "facebook",
+  "type": "organic",
+  "namespaces": {
+    "content": { "mongo_collection": "facebook_organic" },
+    "change_stream": { "shards": 3 }
+  }
+}
+```
+
+Services read their namespace at startup and cache it. It ended up holding configuration for over a dozen services.
+
+</Detail>
+
+## Getting there
+
+We built Avalanche next to the old system instead of replacing it in place. The Collectors fed both, so we could compare the results before anyone depended on them.
+
+<SystemDiagram arch={migration} />
+
+<Detail id="parallel" diagram={d.parallel} title="Running both systems side by side" gist="We fed the same data into both architectures and switched readers over with feature flags.">
+
+Building next to the old system slowed new product features for a while, but it got us to a better position faster than patching the per-network pipelines.
+
+The Collectors were the bridge. They published to Avalanche's ingestion topic as well as feeding their network's pipeline, so both systems processed the same data. A script exported the data from both systems and compared it field by field. Once we had feature parity, we migrated the historical data and moved the frontend to Avalanche's APIs behind feature flags. When we trusted it, we turned off the old services.
+
+</Detail>
+
+## Looking back
+
+<Detail id="lessons" diagram={d.lessons} title="What I'd do differently" gist="The registry should have been config files, not a service.">
+
+The Social Platform Registry worked well, but I'd build it differently today. As a service, it was one more thing every other service depended on at startup, and changes to it weren't reviewed like code. A set of configuration files copied to each service would have given us code review and history for free, with no runtime dependency.
+
+</Detail>
