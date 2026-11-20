@@ -1,0 +1,55 @@
+---
+import '../styles/fonts.css';
+import '../styles/site.css';
+import Nav from '../components/Nav.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  page: 'home' | 'posts' | 'post' | 'about' | '404';
+  footer?: boolean;
+}
+const { title, description = 'Calvin Lobo on software architecture, Go, databases and developer efficiency.', page, footer = true } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+import Footer from '../components/Footer.astro';
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script is:inline>
+  // Theme before first paint: ?time= override, then the saved choice, then the local hour.
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem('time'); } catch (e) {}
+    var forced = new URLSearchParams(location.search).get('time');
+    var h = new Date().getHours();
+    var t = forced || saved || (h >= 7 && h < 19 ? 'day' : 'night');
+    document.documentElement.dataset.time = t === 'day' ? 'day' : 'night';
+  })();
+</script>
+<title>{title}</title>
+<meta name="description" content={description}>
+{page === '404'
+  ? <meta name="robots" content="noindex">
+  : <link rel="canonical" href={canonical}>}
+<link rel="alternate" type="application/rss+xml" title="lobocv" href="/index.xml">
+<link rel="icon" href="/favicon.ico">
+<script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-6GL7S6YEB3"></script>
+<script is:inline>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-6GL7S6YEB3');
+</script>
+<slot name="head" />
+</head>
+<body data-page={page}>
+<Nav page={page}><slot name="nav" /></Nav>
+<slot />
+{footer && <Footer />}
+<ThemeToggle />
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Paths the Hugo site served, taken from https://blog.lobocv.com/sitemap.xml on 2026-11-19, plus feeds and post images.
+# Dropped on purpose (return 404): /page/N/, /posts/page/N/, /index.json, /categories/<slug>/index.xml.
+/categories/
+/categories/golang/
+/
+/posts/
+/posts/golang_testing/
+/posts/richer_golang_errors/
+/categories/databases/
+/posts/elasticsearch_slots/
+/categories/architecture/
+/posts/event_folding/
+/posts/dev_environment/
+/categories/developer-efficiency/
+/posts/recursive_jsonb_merge/
+/about/
+/tags/
+/index.xml
+/posts/index.xml
+/sitemap.xml
+/posts/elasticsearch_slots/es_slots.svg
+/posts/elasticsearch_slots/img.png
+/posts/elasticsearch_slots/slot_tx.svg
+/posts/event_folding/event_folder.png
+/posts/recursive_jsonb_merge/banner.png
+/posts/richer_golang_errors/gopher.svg

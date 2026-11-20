@@ -1,0 +1,58 @@
+---
+import 'katex/dist/katex.min.css';
+import Base from '../../layouts/Base.astro';
+import AuthorBlock from '../../components/AuthorBlock.astro';
+import Toc from '../../components/Toc.astro';
+import RssLine from '../../components/RssLine.astro';
+import { render } from 'astro:content';
+import { getPosts, neighbours, pickTocHeadings, formatDate, readingMinutes, categorySlug, type Post } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map(post => ({ params: { slug: post.id }, props: { post, posts } }));
+}
+interface Props { post: Post; posts: Post[] }
+const { post, posts } = Astro.props;
+const { Content, headings } = await render(post);
+const { title, summary, date, categories } = post.data;
+const { older, newer } = neighbours(posts, post.id);
+const toc = pickTocHeadings(headings);
+---
+<Base title={`${title} · lobocv`} description={summary} page="post">
+  <div class="progress" id="progress" slot="nav"></div>
+  <div class="horizon slim" id="horizon"></div>
+  <article class="wrap">
+    <header class="post-head">
+      <div class="crumbs"><a class="meta" href="/posts/">← All writing</a>{categories[0] && <span class="tag">#{categorySlug(categories[0])}</span>}</div>
+      <h1>{title}</h1>
+      {summary && <p class="lede">{summary}</p>}
+      <div class="meta">{date && <time datetime={date.toISOString().slice(0, 10)}>{formatDate(date)}</time>}<span>{readingMinutes(post.body ?? '')} min read</span><span>Calvin Lobo</span></div>
+    </header>
+    <div class="post-grid">
+      <div>
+        <div class="post-body" id="body"><Content /></div>
+        <footer class="post-end">
+          <AuthorBlock variant="post" />
+          <RssLine text="Or follow along via" link="RSS" />
+          <nav class="pager">
+            {older
+              ? <a href={`/posts/${older.id}/`}><span class="meta">← Previous</span><strong>{older.data.title}</strong></a>
+              : <a href="/posts/"><span class="meta">← Previous</span><strong>Back to all writing</strong></a>}
+            {newer
+              ? <a href={`/posts/${newer.id}/`}><span class="meta">Next →</span><strong>{newer.data.title}</strong></a>
+              : <a href="/posts/"><span class="meta">Next →</span><strong>Back to all writing</strong></a>}
+          </nav>
+        </footer>
+      </div>
+      <Toc headings={toc} />
+    </div>
+  </article>
+  <script>
+    import { horizon } from '../../scripts/art/landscape.js';
+    import { initCode, initReading } from '../../scripts/post';
+    horizon(document.getElementById('horizon')!);
+    const body = document.getElementById('body')!;
+    initCode(body);
+    initReading(body);
+  </script>
+</Base>

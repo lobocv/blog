@@ -1,0 +1,10 @@
+---
+interface Props { variant: 'post' | 'home'; aboutLink?: boolean }
+const { variant, aboutLink = true } = Astro.props;
+const bio = variant === 'home'
+  ? 'Backend engineer focused on software architecture, scalability and developer efficiency. Outside of work: electric guitar, home renovation and time outdoors.'
+  : 'Backend engineer writing about software architecture, Go and building systems that scale.';
+---
+<div class="author"><img src="/img/logo.jpg" alt=""><div><strong>Calvin Lobo</strong><span>{bio}</span>
+  {variant === 'home' && <div class="links-row"><a href="https://github.com/lobocv">GitHub</a><a href="https://www.linkedin.com/in/lobocv/">LinkedIn</a>{aboutLink && <a href="/about/">About me →</a>}</div>}
+</div></div>

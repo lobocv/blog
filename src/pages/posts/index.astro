@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostRow from '../../components/PostRow.astro';
+import RssLine from '../../components/RssLine.astro';
+import { getPosts, categoryCounts } from '../../lib/posts';
+
+const posts = await getPosts();
+const years = new Map<string, typeof posts>();
+for (const p of posts) {
+  const y = String((p.data.date ?? new Date()).getUTCFullYear());
+  years.set(y, [...(years.get(y) ?? []), p]);
+}
+const chips: [string, number][] = [['All', posts.length], ...categoryCounts(posts)];
+---
+<Base title="Writing · lobocv" description="Longer pieces on software architecture, Go, databases and the habits that make engineering teams faster." page="posts">
+  <style>
+    .intro { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
+    .intro h1 { font-size: clamp(44px, 6vw, 72px); line-height: 1; color: #f2f4fa; }
+    .intro p { margin-top: 12px; max-width: 520px; color: rgba(242,244,250,.82); line-height: 1.55; }
+    :root[data-time="day"] .intro p { text-shadow: 0 1px 10px rgba(20,55,100,.3); }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 36px 0 8px; }
+    .year { margin-top: 48px; }
+    .year h2 { font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: .14em; color: var(--ink-3); font-weight: 400; margin-bottom: 4px; }
+    .year[hidden] { display: none; }
+    .feed { margin-top: 64px; }
+  </style>
+  <header class="horizon" id="horizon">
+    <div class="title wrap">
+      <div class="intro">
+        <div>
+          <div class="eyebrow" style="color: rgba(242,244,250,.75)">Writing</div>
+          <h1 style="margin-top:14px">Field notes</h1>
+          <p>Longer pieces on software architecture, Go, databases and the habits that make engineering teams faster.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="filters" id="filters">
+      {chips.map(([c, n]) => <button class="chip" aria-pressed={String(c === 'All')} data-cat={c}>{c}<span class="n">{n}</span></button>)}
+    </div>
+    {[...years].map(([y, list]) => (
+      <section class="year" data-year={y}><h2>{y}</h2><div class="rows">{list.map(p => <PostRow post={p} />)}</div></section>
+    ))}
+    <div class="feed"><RssLine /></div>
+  </main>
+  <script>
+    import { horizon } from '../../scripts/art/landscape.js';
+    import { initFilter } from '../../scripts/filter';
+    horizon(document.getElementById('horizon')!);
+    initFilter(document.getElementById('filters')!);
+  </script>
+</Base>

@@ -1,0 +1,13 @@
+---
+interface Props { page: string }
+const { page } = Astro.props;
+const links = [
+  { href: '/posts/', label: 'Writing', on: page === 'posts' || page === 'post' },
+  { href: '/about/', label: 'About', on: page === 'about' },
+];
+---
+<nav class="nav">
+  <a class="brand" href="/"><svg viewBox="-30 -40 60 60" aria-hidden="true"><path fill={page === 'home' ? '#eef1f7' : undefined} d="M-18,10 L-20,-6 L-17,-30 L-8,-14 L0,-16 L8,-14 L17,-30 L20,-6 L18,10 L0,18 Z"/></svg>lobocv</a>
+  <div class="links">{links.map(l => <a href={l.href} aria-current={l.on ? 'page' : undefined}>{l.label}</a>)}</div>
+  <slot />
+</nav>

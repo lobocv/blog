@@ -1,0 +1,10 @@
+---
+import type { Heading } from '../lib/posts';
+interface Props { headings: Heading[] }
+const { headings } = Astro.props;
+---
+{headings.length > 0 && (
+  <aside class="toc" id="toc"><span class="eyebrow">On this page</span>
+    {headings.map(h => <a href={`#${h.slug}`}>{h.text}</a>)}
+  </aside>
+)}

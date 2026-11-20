@@ -1,0 +1,5 @@
+---
+interface Props { text?: string; link?: string }
+const { text = 'Prefer a feed reader?', link = 'Subscribe via RSS' } = Astro.props;
+---
+<p class="rss">{text} <a href="/index.xml">{link}</a></p>
