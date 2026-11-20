@@ -7,7 +7,7 @@ Usage:
   python3 scripts/lint_post.py --links      # also check that external links resolve
   python3 scripts/lint_post.py --active     # print the active post's path and exit
 
-The active post is the post under content/posts/ whose front matter has
+The active post is the post under src/content/posts/ whose front matter has
 `draft: true`. If there is more than one, pass the path or slug explicitly.
 
 Exit code is 1 when any check fails, 0 otherwise. Warnings don't fail.
@@ -20,7 +20,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-POSTS = ROOT / "content" / "posts"
+POSTS = ROOT / "src" / "content" / "posts"
 
 WORDS_PER_MINUTE = 213  # Hugo's reading-time rate
 HARD_CAP = 2000         # about 10 minutes

@@ -7,8 +7,10 @@ help with writing posts.
 ## Layout
 
 ```
-content/posts/<slug>/index.md   a post, with its images and diagrams next to it
-content/about/                  the about page
+src/content/posts/<slug>/index.md   a post, with its images and diagrams next to it
+src/content/pages/about.md          the about page
+src/pages/, src/components/         the Astro site (layouts, pages, scripts, styles)
+public/                             files served as-is (favicon, CNAME, older posts' images)
 writing/ideas.md                post ideas and parked tangents
 writing/briefs/<slug>.md        each post's thesis, reader, takeaway and scope
 writing/feedback.md             patterns that keep coming up in my drafts
@@ -16,26 +18,20 @@ scripts/lint_post.py            mechanical checks for a post
 AGENTS.md                       rules every agent follows when helping me write
 .agents/skills/                 the writing skills (slash commands)
 .claude/skills/                 links to .agents/skills so Claude Code finds them
-themes/                         Hugo theme (git submodule)
-static/                         files served as-is (favicon, CNAME, images)
 ```
 
-`content/` is what gets published. `writing/` is scaffolding that never ships.
+`src/content/` is what gets published. `writing/` is scaffolding that never ships.
 
 ## Running the site
 
-The site builds with Hugo inside Docker.
+The site is built with [Astro](https://astro.build). It needs Node 23 or later.
 
 ```bash
-git submodule update --init   # first time only, pulls the theme
-./build_image.sh              # builds the calvin-blog image
-./run.sh                      # serves on http://localhost:1313
-```
-
-`run.sh` doesn't show drafts. To preview a draft, add `-D`:
-
-```bash
-docker run -it -v $PWD:/src -p "1313:1313" calvin-blog server -D -b "localhost:1313/"
+npm install        # first time only
+npm run dev        # serves on http://localhost:4321, drafts included
+npm run build      # production build into dist/, drafts left out
+npm run preview    # serves the production build
+npm test           # unit tests
 ```
 
 ## Publishing
@@ -43,7 +39,8 @@ docker run -it -v $PWD:/src -p "1313:1313" calvin-blog server -D -b "localhost:1
 Pushing to `master` deploys to GitHub Pages through the workflow in
 `.github/workflows/`. The deploy doesn't build drafts, so a post with
 `draft: true` can sit on `master` safely. To publish, set `draft: false`,
-update the date, commit and push.
+update the date, make sure it has a `summary`, commit and push. The deploy
+runs the tests and checks that no old URL or internal link broke.
 
 ## Writing with agents
 
@@ -56,7 +53,7 @@ through `CLAUDE.md` and other agents (eg Codex) read directly.
 ### The active post
 
 Skills work on the active post unless I name a different one. The active post is
-whichever post under `content/posts/` has `draft: true`.
+whichever post under `src/content/posts/` has `draft: true`.
 
 - One draft: agents use it without asking
 - Several drafts: agents ask once per session which one

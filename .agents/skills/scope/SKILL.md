@@ -40,8 +40,8 @@ Stop when all five are answered. Don't draft any prose for the post.
   - Budget: 1,200 to 1,800 words
   ```
 
-- `content/posts/<slug>/index.md` with only front matter, `draft: true` and
-  today's date. Title options go in the brief, not the post
+- `src/content/posts/<slug>/index.md` with only front matter, `draft: true` and
+  today's date. Published posts also need a one-line `summary` (shown on cards and in RSS), added before shipping. Title options go in the brief, not the post
 - Move the idea out of `writing/ideas.md` if it came from there
 
 Then say the next step is `/outline`.

@@ -14,7 +14,7 @@ Find the active post and read its brief (see "Where things live" in `AGENTS.md`)
    - The ending lands on the takeaway without summarizing the post
    - Code snippets are correct. Compile or run Go snippets in a scratch
      directory where practical
-   - Front matter: title, date, categories
+   - Front matter: title, date, categories, and a one-line `summary` (required to publish; the build fails without it)
    - Any leftover outline comments (`<!-- ... -->`) or TODOs
 3. Report a short pass/fail list. Fixes to prose are suggestions for Calvin, not edits
 

@@ -18,7 +18,7 @@ and ask before going ahead.
 
 - Keep it small: the fewest boxes and arrows that make the point. Readable on a phone
 - Use the same names the post uses for things. No labels the text doesn't explain
-- Write D2 source to `content/posts/<slug>/<name>.d2` (the source of truth, so it
+- Write D2 source to `src/content/posts/<slug>/<name>.d2` (the source of truth, so it
   can be edited and re-rendered later)
 - Render it if `d2` is installed:
   `d2 --theme 0 --dark-theme 200 --pad 20 <name>.d2 <name>.svg`

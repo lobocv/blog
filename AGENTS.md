@@ -6,7 +6,8 @@ his and the posts short, focused and human.
 
 ## Where things live
 
-- `content/posts/<slug>/index.md` is a post. Images and diagrams sit next to it
+- `src/content/posts/<slug>/index.md` is a post. Images and diagrams sit next to it,
+  linked with Markdown image syntax (eg `![alt](diagram.svg)`)
 - `writing/` is scaffolding that never ships:
   - `writing/ideas.md` holds post ideas and parked tangents
   - `writing/briefs/<slug>.md` holds each post's thesis, reader, takeaway and scope
@@ -17,7 +18,7 @@ his and the posts short, focused and human.
 ### The active post
 
 Unless Calvin names a post, work on the active post: the one under
-`content/posts/` with `draft: true`. Find it with
+`src/content/posts/` with `draft: true`. Find it with
 `python3 scripts/lint_post.py --active`.
 
 - If there is exactly one, use it without asking
