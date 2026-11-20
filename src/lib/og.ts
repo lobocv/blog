@@ -44,7 +44,7 @@ export async function renderOg({ title, summary }: { title: string; summary?: st
       ...(summary ? [el('div', { marginTop: 18, fontSize: 25, lineHeight: 1.45, color: v['ink-2'], display: 'block', lineClamp: 2 }, summary)] : []),
       el('div', { marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 14, fontSize: 21, color: v.accent, letterSpacing: '0.04em' }, [
         el('div', { width: 10, height: 10, borderRadius: 5, background: v.accent }),
-        'blog.lobocv.com',
+        'lobocv.com',
       ]),
     ]),
   ]);
