@@ -1,0 +1,252 @@
+// Landscape art shared by the pages, ported unchanged from prototypes/mockups/site.js.
+// Seeds, constants and rng() call order must stay as they are: they define the art.
+
+function gen(seed) {
+  const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const f = n => Math.round(n * 10) / 10;
+  const W = 1600;
+  function mpd(n, rough) {
+    const a = new Array(n + 1).fill(0); a[0] = rng() * 2 - 1; a[n] = rng() * 2 - 1;
+    let step = n, scale = 1;
+    while (step > 1) { const h = step / 2; for (let i = h; i < n; i += step) a[i] = (a[i - h] + a[i + h]) / 2 + (rng() * 2 - 1) * scale; scale *= rough; step = h; }
+    const m = Math.max(...a.map(Math.abs)); return a.map(v => v / m);
+  }
+  function ridge(y0, amp, rough, bottom) {
+    const n = 128, a = mpd(n, rough), pts = a.map((v, i) => [i * W / n, y0 + v * amp]);
+    return { pts, d: `M0,${bottom}` + pts.map(p => `L${f(p[0])},${f(p[1])}`).join('') + `L${W},${bottom}Z` };
+  }
+  const yAt = (pts, x) => { const s = W / (pts.length - 1), i = Math.max(0, Math.min(pts.length - 2, Math.floor(x / s))), t = (x - pts[i][0]) / s; return pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t; };
+  // Varied tiered pine; returns [silhouette, lit right half]
+  function pine(x, y, h) {
+    const tiers = 2 + Math.floor(rng() * 3), w = h * (.28 + rng() * .14), lean = (rng() - .5) * .08;
+    const side = sgn => { const pts = []; for (let k = 1; k <= tiers; k++) { const t = k / tiers, ty = -1 + t * .92 + (rng() - .5) * .04, out = w * Math.pow(t, .8) * (.85 + rng() * .3); pts.push([sgn * out + lean * (1 + ty) * h, ty]); if (k < tiers) pts.push([sgn * out * (.42 + rng() * .15) + lean * (1 + ty) * h, ty + .02]); } return pts; };
+    const L = side(-1), R = side(1), P = ([px, py]) => f(x + px) + ',' + f(y + py * h);
+    const dark = 'M' + [[0, -1], ...L, [-w * .08, -.06], [-w * .08, 0], [w * .08, 0], [w * .08, -.06], ...R.slice().reverse()].map(P).join('L') + 'Z';
+    const lit = 'M' + [[0, -1], ...R, [w * .1, -.06], [lean * .5 * h, -.5]].map(P).join('L') + 'Z';
+    return [dark, lit];
+  }
+  // Fern frond: a curving stem with leaflets that shrink toward the tip
+  function fern(x, y, len, ang, curl) {
+    const leaf = (...a) => leafFn(...a);
+    const n = 14, pts = [];
+    for (let i = 0; i <= n; i++) { const t = i / n, a = ang + curl * t * t; const p = i ? pts[i - 1] : [x, y, ang]; pts.push(i ? [p[0] + Math.cos(a) * len / n, p[1] + Math.sin(a) * len / n, a] : [x, y, ang]); }
+    let d = `M${f(x)},${f(y)}` + pts.map(p => `L${f(p[0])},${f(p[1])}`).join('') + pts.slice().reverse().map(p => `L${f(p[0] + 1)},${f(p[1] + 1)}`).join('') + 'Z';
+    for (let i = 1; i < n; i++) {
+      const [px, py, a] = pts[i], t = i / n, L2 = len * .2 * Math.pow(1 - t, .7) + 2, w = L2 * .22;
+      for (const sgn of [-1, 1]) {
+        d += leaf(px, py, L2 * 1.15, a + sgn * 1.0, .38);
+      }
+    }
+    return d;
+  }
+  // Hanging sprig: a gently drooping branch with small oval leaves
+  function sprig(x, y, len, droop) {
+    let d = '', px = x, py = y, a = .1;
+    for (let i = 0; i < 12; i++) {
+      const nx = px + Math.cos(a) * len / 12, ny = py + Math.sin(a) * len / 12;
+      d += `M${f(px)},${f(py)}L${f(nx)},${f(ny)}L${f(nx)},${f(ny + 1.4)}L${f(px)},${f(py + 1.4)}Z`;
+      if (i > 1) for (const sgn of [-1, 1]) { const la = a + sgn * .9, r = 9 * (1 - i / 14); d += `M${f(nx)},${f(ny)}Q${f(nx + Math.cos(la - .3) * r)},${f(ny + Math.sin(la - .3) * r)} ${f(nx + Math.cos(la) * r * 1.7)},${f(ny + Math.sin(la) * r * 1.7)}Q${f(nx + Math.cos(la + .3) * r)},${f(ny + Math.sin(la + .3) * r)} ${f(nx)},${f(ny)}Z`; }
+      px = nx; py = ny; a += droop * .12;
+    }
+    return d;
+  }
+  // Pointed oval leaf from (x, y) pointing along ang
+  function leafFn(...a) { return leaf(...a); }
+  function leaf(x, y, len, ang, wid = .42) {
+    const c = Math.cos(ang), s = Math.sin(ang), tx = x + c * len, ty = y + s * len, mx = x + c * len * .45, my = y + s * len * .45, w = len * wid;
+    return `M${f(x)},${f(y)}Q${f(mx - s * w)},${f(my + c * w)} ${f(tx)},${f(ty)}Q${f(mx + s * w)},${f(my - c * w)} ${f(x)},${f(y)}Z`;
+  }
+  // A filled strip along a list of points, tapering from w0 to w1
+  function ribbon(pts, w0, w1) {
+    const L = [], Rr = [];
+    pts.forEach((p, i) => {
+      const q = pts[Math.min(pts.length - 1, i + 1)], o = pts[Math.max(0, i - 1)], dx = q[0] - o[0], dy = q[1] - o[1], d = Math.hypot(dx, dy) || 1, w = (w0 + (w1 - w0) * i / (pts.length - 1)) / 2;
+      L.push([p[0] - dy / d * w, p[1] + dx / d * w]); Rr.push([p[0] + dy / d * w, p[1] - dx / d * w]);
+    });
+    return 'M' + L.concat(Rr.reverse()).map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
+  }
+  // Winding vine down the full height, with oval leaves and the odd curling tendril
+  function vine(x0, height, ph) {
+    const pts = [];
+    for (let y = -20; y <= height + 20; y += 8) pts.push([x0 + 22 * Math.sin(y / 150 + ph) + 9 * Math.sin(y / 61 + ph * 2), y]);
+    let d = ribbon(pts, 2.4, 2.4), side = 1;
+    for (let i = 3; i < pts.length - 1; i += 4 + Math.floor(rng() * 3)) {
+      const [px, py] = pts[i], len = 16 + rng() * 14, ang = (side > 0 ? 0 : Math.PI) + side * (.5 + rng() * .5);
+      const sx = px + Math.cos(ang) * 6, sy = py + Math.sin(ang) * 6;
+      d += ribbon([[px, py], [sx, sy]], 1.2, 1) + leaf(sx, sy, len, ang + side * .2, .48);
+      if (rng() < .12) { // tendril
+        const tp = []; let a = ang - side * .4, r = 14;
+        for (let k = 0; k < 22; k++) { tp.push([px + Math.cos(a) * (14 - r) * 1.4 + Math.cos(ang) * k * .9, py + Math.sin(a) * (14 - r) * 1.4 + Math.sin(ang) * k * .9]); a += side * .45; r *= .93; }
+        d += ribbon(tp, 1, .4);
+      }
+      side = -side;
+    }
+    return d;
+  }
+  // Olive-like branch reaching in from the edge, with narrow paired leaves and a side shoot
+  function branch(x, y, len, ang, droop) {
+    const grow = (x, y, len, ang, droop, w) => {
+      const pts = []; let px = x, py = y, a = ang; const n = 16;
+      for (let i = 0; i <= n; i++) { pts.push([px, py]); px += Math.cos(a) * len / n; py += Math.sin(a) * len / n; a += droop / n; }
+      let d = ribbon(pts, w, .6);
+      for (let i = 3; i <= n; i += 2) { const [qx, qy] = pts[i], b = ang + droop * i / n, l = 14 + 10 * (1 - i / n) * rng() + 6; d += leaf(qx, qy, l, b - .9 + rng() * .2, .26) + leaf(qx, qy, l, b + .9 - rng() * .2, .26); }
+      d += leaf(pts[n][0], pts[n][1], 16, ang + droop, .26);
+      return { d, pts };
+    };
+    const main = grow(x, y, len, ang, droop, 3.2);
+    const at = main.pts[7];
+    return main.d + grow(at[0], at[1], len * .45, ang + droop * .4 - .7, droop * .6, 1.8).d;
+  }
+  return { rng, f, pine, ridge, yAt, fern, sprig, leaf, ribbon, vine, branch };
+}
+
+// Landscape header in the hero's style. Colors come from CSS variables, so it follows the theme.
+export function horizon(el) {
+  const g = gen(11), { rng, f, pine, ridge } = g, W = 1600, H = 300;
+  let stars = '';
+  for (let i = 0; i < 90; i++) stars += `<circle cx="${f(rng() * W)}" cy="${f(Math.pow(rng(), 1.3) * 190)}" r="${f(.4 + rng() * .8)}" opacity="${(.3 + rng() * .6).toFixed(2)}"/>`;
+  // Mid ridge with a dense row of small pines on its crest
+  const mid = ridge(212, 10, .6, H);
+  let midTrees = '';
+  for (let x = -10; x < W + 10; x += 3 + rng() * 4) midTrees += pine(x, g.yAt(mid.pts, x) + 3, 7 + rng() * 8)[0];
+  // Foreground treeline: bigger varied pines with a lit side and a thin outline
+  const near = [];
+  for (let x = -20; x < W + 20; x += 9 + rng() * 12) near.push([x, 268 + Math.sin(x / 160) * 6 + rng() * 6, 26 + rng() * 34]);
+  near.sort((p, q) => p[1] - q[1]);
+  let nearSvg = '';
+  for (const [x, y, h] of near) { const [d, l] = pine(x, y, h); nearSvg += `<path d="${d}" class="t"/><path d="${l}" class="tl"/>`; }
+  el.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs><filter id="hglow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="24"/></filter><filter id="hblur" x="-50%" y="-300%" width="200%" height="700%"><feGaussianBlur stdDeviation="10"/></filter></defs>
+    <g class="night-only" fill="var(--star)">${stars}</g>
+    <circle cx="1300" cy="78" r="44" fill="var(--glow)" opacity=".5" filter="url(#hglow)"/>
+    <circle cx="1300" cy="78" r="24" fill="var(--orb)"/>
+    <g class="night-only" fill="var(--crater)"><circle cx="1293" cy="73" r="5"/><circle cx="1307" cy="86" r="3.4"/><circle cx="1304" cy="68" r="2.2"/></g>
+    <path d="${ridge(150, 34, .55, H).d}" fill="var(--r1)"/>
+    <path d="${ridge(188, 24, .52, H).d}" fill="var(--r2)"/>
+    <ellipse cx="500" cy="214" rx="520" ry="10" fill="var(--mist)" opacity=".35" filter="url(#hblur)"/>
+    <path d="${mid.d}" fill="var(--r3)"/><path d="${midTrees}" fill="var(--r3)"/>
+    <rect x="0" y="262" width="${W}" height="40" fill="var(--tree)"/>
+    <g class="trees">${nearSvg}</g>
+    <path d="M0,${H} L0,290 Q400,280 800,290 T1600,286 L1600,${H} Z" fill="var(--r4)"/></svg>`);
+}
+
+// Plants and stones shared by the hero scene and the sheet's banks. C maps tone names to fills.
+export function flora(rng) {
+  const f = n => Math.round(n * 10) / 10;
+  const P = (d, c) => d ? `<path d="${d}" fill="${c}"/>` : '';
+  const blade = (x, y, h, lean, w) => `M${f(x - w)},${f(y)}Q${f(x + lean * .25)},${f(y - h * .6)} ${f(x + lean)},${f(y - h)}Q${f(x + lean * .45 + w * .5)},${f(y - h * .5)} ${f(x + w)},${f(y)}Z`;
+  const leaf = (x, y, len, ang, wid = .46) => { const c = Math.cos(ang), s = Math.sin(ang), tx = x + c * len, ty = y + s * len, mx = x + c * len * .45, my = y + s * len * .45, w = len * wid;
+    return `M${f(x)},${f(y)}Q${f(mx - s * w)},${f(my + c * w)} ${f(tx)},${f(ty)}Q${f(mx + s * w)},${f(my - c * w)} ${f(x)},${f(y)}Z`; };
+  // A tidy fan of blades, tallest in the middle. Returns [dark, light] path data.
+  const clumpD = (x, y, s) => {
+    const n = 7 + Math.floor(rng() * 4); let a = '', b = '';
+    for (let k = 0; k < n; k++) {
+      const t = (k + .5) / n * 2 - 1, h = (26 - 14 * t * t) * s * (.8 + rng() * .4), lean = t * h * .55 + (rng() - .5) * 3 * s;
+      const d = blade(x + t * 7 * s, y, h, lean, (1.5 + rng() * .8) * s);
+      if (k % 2) a += d; else b += d;
+    }
+    return [a, b];
+  };
+  const clump = (x, y, s, C) => { const [a, b] = clumpD(x, y, s); return P(a, C.g1) + P(b, C.g2); };
+  const dome = (x, cy, yc, rx, ry) => `M${f(x - rx * .78)},${f(cy)}Q${f(x - rx * 1.08)},${f((cy + yc) / 2)} ${f(x - rx)},${f(yc)}A${f(rx)},${f(ry)} 0 0 1 ${f(x + rx)},${f(yc)}Q${f(x + rx * 1.08)},${f((cy + yc) / 2)} ${f(x + rx * .78)},${f(cy)}Z`;
+  // A tall bush of three leafy mounds standing on (cx, cy), lit from the upper right
+  const bush = (cx, cy, r, C) => {
+    const m = rng() < .5 ? -1 : 1, v = () => .88 + rng() * .24;
+    const lobes = [[-.66 * m, .44 * v(), .58 * v(), .62 * v()], [.64 * m, .36 * v(), .5 * v(), .52 * v()], [.04 * m, .8 * v(), .8, v()]];
+    const len = Math.max(7, Math.min(24, r * .3)), T = ['', '', '', '', ''];
+    for (const [dx, hy, wx, wy] of lobes) {
+      const lx = cx + dx * r, ly = cy - hy * r, rx = wx * r, ry = wy * r;
+      T[0] += dome(lx, cy, ly, rx, ry);
+      const n = Math.round(rx * (ry + hy * r) / (len * len * .16));
+      for (let i = 0; i < n; i++) {
+        let ax, ay, px, py;
+        if (rng() < .22) { ax = (rng() < .5 ? -1 : 1) * (.45 + rng() * .55); py = ly + rng() * .8 * (cy - ly); ay = .15; px = lx + ax * rx; }
+        else { const t = -Math.PI * rng(), rr = Math.sqrt(.12 + .88 * rng()); ax = Math.cos(t) * rr; ay = Math.sin(t) * rr; px = lx + ax * rx; py = ly + ay * ry; }
+        const ang = Math.atan2((ay - .3) * ry, ax * rx) + (rng() - .5) * .8, l = len * (.75 + rng() * .5);
+        const light = ax * .5 - ay * .75 + (rng() - .5) * .5;
+        T[light > .72 ? 4 : light > .42 ? 3 : light > .05 ? 2 : 1] += leaf(px - Math.cos(ang) * l * .35, py - Math.sin(ang) * l * .35, l, ang);
+      }
+    }
+    const sh = C.sh ? `<ellipse cx="${f(cx + r * .1)}" cy="${f(cy)}" rx="${f(r * 1.3)}" ry="${f(r * .15)}" fill="${C.sh}"/>` : '';
+    return sh + P(T[0], C.b0) + P(T[1], C.b1) + P(T[2], C.b2) + P(T[3], C.b3) + P(T[4], C.b4);
+  };
+  // Low-poly stone with a lit top and a shaded side
+  const stone = (cx, cy, r, C) => {
+    const n = 6, p = [];
+    for (let i = 0; i <= n; i++) { const a = Math.PI * (1 - i / n), k = .82 + rng() * .3; p.push([cx + Math.cos(a) * r * k, cy - Math.sin(a) * r * .72 * k]); }
+    p[0][1] = cy; p[n][1] = cy;
+    const D = q => 'M' + q.map(v => f(v[0]) + ',' + f(v[1])).join('L') + 'Z', mid = [cx + r * .08, cy - r * .3];
+    return P(D(p), C.s0) + P(D([p[0], p[1], p[2], mid, [cx - r * .1, cy]]), C.s1) + P(D([p[2], p[3], p[4], p[5], mid]), C.s2);
+  };
+  return { clump, clumpD, bush, stone, P };
+}
+
+// The sheet's top edge: two grassy banks either side of the path, which widens and lightens into the page
+export function foliageBand(el) {
+  const g = gen(23), { rng, f } = g, FL = flora(rng), H = 340;
+  const C = { g1: 'var(--grass1)', g2: 'var(--grass2)', sh: 'var(--fol-sh)', b0: 'var(--fol1)', b1: 'var(--fol1b)', b2: 'var(--fol2)', b3: 'var(--fol3)', b4: 'var(--fol4)', s0: 'var(--stone)', s1: 'var(--stone-d)', s2: 'var(--stone-l)' };
+  const at = (K, v) => { for (let i = 0; i < K.length - 1; i++) if (v <= K[i + 1][0]) { const t = Math.max(0, (v - K[i][0]) / (K[i + 1][0] - K[i][0])); return K[i][1] + (K[i + 1][1] - K[i][1]) * t; } return K[K.length - 1][1]; };
+  const D = q => 'M' + q.map(v => f(v[0]) + ',' + f(v[1])).join('L') + 'Z';
+  // between the banks the path comes over a low crest: a lit lip, with the ground behind it falling into shade
+  const arc = 'M590,153Q800,126 1010,153';
+  let out = `<defs><linearGradient id="bandPath" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="322"><stop offset="0" style="stop-color:var(--path-near)"/><stop offset=".5" style="stop-color:color-mix(in srgb, var(--path-near) 55%, var(--sheet))"/><stop offset="1" style="stop-color:var(--sheet)"/></linearGradient>
+    <linearGradient id="bandShade" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="150"><stop offset="0" style="stop-color:var(--soil-2);stop-opacity:0"/><stop offset="1" style="stop-color:var(--soil-2);stop-opacity:.3"/></linearGradient></defs>
+    <path d="${arc}Q800,52 590,153Z" fill="url(#bandShade)"/>
+    <path d="${arc}L1640,345L-40,345Z" fill="url(#bandPath)"/>
+    <path d="${arc}" fill="none" style="stroke:var(--path-lt)" stroke-width="2.5" stroke-linecap="round"/>`;
+  // crest: x -> y. edge (where the bank meets the path): y -> x.
+  const bank = (crest, edge, mir) => {
+    const X = x => mir ? 1600 - x : x, items = [];
+    const top = [], side = [], inset = [];
+    for (let x = -40; x < 590; x += 12 + rng() * 10) top.push([X(x), at(crest, x) + (rng() - .5) * 4]);
+    for (let y = 153; y <= 342; y += 5) { const x = at(edge, y) + (rng() - .5) * 3; side.push([X(x), y]); inset.push([X(x - 22 - rng() * 5 - (y - 153) * .12), y - 7]); }
+    const turfTop = top.filter(p => (mir ? 1600 - p[0] : p[0]) < 566);
+    let s = `<path d="${D([...top, ...side])}" fill="var(--path-edge)"/><path d="${D([...turfTop, ...inset])}" fill="var(--turf-n)"/>`;
+    // a darker fold lower on the bank
+    const fold = []; for (let x = -40; x < 470; x += 64) fold.push([X(x), at(crest, x) + 92 + (rng() - .5) * 22 + x * .13]);
+    s += `<path d="${D([...fold, [X(170), 300], [X(-40), 342]])}" fill="var(--turf-n2)"/>`;
+    for (const [x, r] of [[110, 58], [318, 42], [478, 30]]) { const y = at(crest, x) + r * .55; items.push([y, FL.bush(X(x), y, r, C)]); for (const k of [-1.2, 1.25]) items.push([y + 3, FL.clump(X(x + k * r), y + 3, r / 30, C)]); }
+    for (let x = 20; x < 560; x += 46 + rng() * 50) { const y = at(crest, x) + 5; items.push([y, FL.clump(X(x), y, 1.3 + rng() * .6, C)]); }
+    for (let y = 176; y < 330; y += 16 + rng() * 14) { const x = at(edge, y) - 46 - (y - 153) * .12; items.push([y, FL.clump(X(x), y - 6, 1.2 + rng() * .7, C)]); }
+    for (const y of [186, 236, 292]) { const x = at(edge, y) - 9, r = 7 + rng() * 7; items.push([y, FL.stone(X(x), y + 2, r, C)]); }
+    items.sort((a, b) => a[0] - b[0]);
+    return s + items.map(i => i[1]).join('');
+  };
+  out += bank([[-40, 30], [200, 52], [400, 96], [520, 132], [590, 153]], [[153, 590], [196, 548], [236, 470], [272, 360], [304, 220], [330, 50], [342, -40]], false);
+  out += bank([[-40, 22], [190, 48], [390, 90], [515, 130], [590, 153]], [[153, 590], [194, 544], [240, 462], [276, 345], [306, 205], [331, 45], [342, -40]], true);
+  el.innerHTML = `<svg viewBox="0 0 1600 ${H}" preserveAspectRatio="xMidYMin slice" aria-hidden="true">${out}</svg>`;
+}
+
+// Faint vines, branches and ferns running down both side margins
+export function sideFoliage(el, height) {
+  const g = gen(37), { rng } = g, W = 260;
+  const column = (mirror, ph) => {
+    let d = g.vine(26, height, ph), kind = mirror ? 1 : 0;
+    for (let y = 140 + rng() * 120; y < height - 160; y += 420 + rng() * 240) {
+      if (kind % 2 === 0) d += g.branch(-4, y, 150 + rng() * 60, .15 + rng() * .3, .5 + rng() * .4);
+      else for (let i = 0; i < 2; i++) d += g.fern(-6, y + i * 40, 110 + rng() * 80, .2 + rng() * .4, .3 + rng() * .4);
+      kind++;
+    }
+    return `<svg class="side ${mirror ? 'right' : 'left'}" viewBox="0 0 ${W} ${height}" width="${W}" height="${height}" aria-hidden="true"><path d="${d}"/></svg>`;
+  };
+  el.innerHTML = column(false, 0) + column(true, 2.1);
+}
+
+// Very faint contour lines, like a topographic map, behind the content
+export function topo(el, width, height) {
+  const g = gen(51), { rng, f } = g;
+  let d = '';
+  const spots = Math.max(2, Math.round(height / 700));
+  for (let s = 0; s < spots; s++) {
+    const cx = rng() * width, cy = (s + .5) * height / spots + (rng() - .5) * 200, ph = rng() * 6;
+    for (let k = 1; k <= 9; k++) {
+      const r = k * 46;
+      d += 'M';
+      for (let a = 0; a <= 64; a++) {
+        const t = a / 64 * Math.PI * 2, wob = 1 + .16 * Math.sin(t * 3 + ph + k * .3) + .08 * Math.sin(t * 5 - ph);
+        d += `${f(cx + Math.cos(t) * r * wob * 1.5)},${f(cy + Math.sin(t) * r * wob)}${a < 64 ? 'L' : 'Z'}`;
+      }
+    }
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true"><path d="${d}"/></svg>`;
+}
