@@ -111,7 +111,7 @@ h1, h2, h3, .display { font-family: "Fraunces", serif; font-weight: 500; letter-
 .btn { font: 500 14px "Inter", sans-serif; padding: 12px 20px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); background: transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .btn.primary { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
 .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
-.subscribe .rss { margin-top: 12px; font-size: 13px; color: var(--ink-3); }
+.rss { margin-top: 12px; font-size: 13px; color: var(--ink-3); }
 .subscribe .rss a { color: var(--accent); }
 @media (max-width: 760px) { .subscribe { grid-template-columns: 1fr; padding: 24px; } }
 

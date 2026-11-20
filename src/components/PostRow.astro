@@ -1,0 +1,11 @@
+---
+import { type Post, categorySlug, formatDate, readingMinutes } from '../lib/posts';
+interface Props { post: Post }
+const { post } = Astro.props;
+const { title, date, summary, categories } = post.data;
+---
+<a class="row" href={`/posts/${post.id}/`} data-cats={categories.join('|')}>
+  <time class="meta" datetime={date?.toISOString().slice(0, 10)}>{date && formatDate(date)}</time>
+  <div><h3>{title}</h3><p>{summary}</p>
+    <div class="tags">{categories.map(c => <span class="tag">#{categorySlug(c)}</span>)}<span class="meta">{readingMinutes(post.body ?? '')} min read</span></div></div>
+  <span class="arrow" aria-hidden="true">→</span></a>
