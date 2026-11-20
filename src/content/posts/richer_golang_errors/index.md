@@ -386,7 +386,7 @@ func IsDuplicateKeyError(err error) error {
 ```
 
 The previous example of creating a user then looks like this, allowing us to use the 
-[`ecosystem/http`]((https://github.com/lobocv/simplerr/tree/master/ecosystem/http)) package to convert
+[`ecosystem/http`](https://github.com/lobocv/simplerr/tree/master/ecosystem/http) package to convert
 errors directly to status codes on the `*http.Response` object.
 
 ```go
@@ -429,7 +429,7 @@ when writing HTTP handlers makes it even easier by not having to handle the erro
 write the response status depending on the returned error.
 
 An analogous approach can be done for gRPC servers with the 
-[`ecosystem/grpc`]((https://github.com/lobocv/simplerr/tree/master/ecosystem/grpcc)) package. 
+[`ecosystem/grpc`](https://github.com/lobocv/simplerr/tree/master/ecosystem/grpc) package. 
 This time it is even easier to convert SimpleErrors to response codes through an interceptor (middleware).
 In both http and gRPC, the error translation mapping can be customized.
 
