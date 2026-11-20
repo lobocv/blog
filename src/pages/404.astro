@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found · lobocv" page="404">
+  <style>main { padding-bottom: 96px; }</style>
+  <div class="horizon slim" id="horizon"></div>
+  <main class="wrap">
+    <header class="post-head">
+      <h1>Page not found</h1>
+      <p class="lede">That page isn't here. It may have moved when the site was rebuilt.</p>
+      <p class="lede"><a href="/posts/" style="color: var(--accent)">Browse all writing →</a></p>
+    </header>
+  </main>
+  <script>
+    import { horizon } from '../scripts/art/landscape.js';
+    horizon(document.getElementById('horizon')!);
+  </script>
+</Base>

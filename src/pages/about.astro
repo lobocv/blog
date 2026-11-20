@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import AuthorBlock from '../components/AuthorBlock.astro';
+import { getEntry, render } from 'astro:content';
+const about = (await getEntry('pages', 'about'))!;
+const { Content } = await render(about);
+---
+<Base title="About · lobocv" page="about">
+  <div class="horizon slim" id="horizon"></div>
+  <article class="wrap">
+    <header class="post-head"><h1>{about.data.title}</h1></header>
+    <div class="post-grid" style="grid-template-columns: minmax(0, 1fr)">
+      <div>
+        <div class="post-body"><Content /></div>
+        <footer class="post-end"><AuthorBlock variant="home" aboutLink={false} /></footer>
+      </div>
+    </div>
+  </article>
+  <script>
+    import { horizon } from '../scripts/art/landscape.js';
+    horizon(document.getElementById('horizon')!);
+  </script>
+</Base>

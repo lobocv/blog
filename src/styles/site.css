@@ -126,9 +126,10 @@ h1, h2, h3, .display { font-family: "Fraunces", serif; font-weight: 500; letter-
 .author img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line); }
 .author strong { font-family: "Fraunces", serif; font-weight: 500; font-size: 19px; display: block; }
 .author span { color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.author .links-row { display: flex; gap: 18px; margin-top: 16px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--accent); }
 
 /* Post page */
-.post-head { padding-top: 120px; }
+.post-head { padding-top: 48px; } /* every page with a post header has the slim horizon above it */
 .post-head .crumbs { display: flex; gap: 12px; align-items: center; margin-bottom: 26px; }
 .post-head h1 { font-size: clamp(38px, 5.6vw, 64px); line-height: 1.04; max-width: 900px; }
 .post-head .lede { margin-top: 22px; font-size: clamp(18px, 1.6vw, 21px); line-height: 1.55; color: var(--ink-2); max-width: 720px; }
