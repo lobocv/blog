@@ -11,6 +11,7 @@ export function buildFeed(posts: Post[], site: string): string {
   const items = posts.map(p => {
     const path = `/posts/${p.id}/`;
     return `<item><title>${esc(p.data.title)}</title><link>${base}${path}</link>` +
+      // guids keep the Hugo-era domain so feed readers don't show every post as new after the move to www.lobocv.com
       `<guid isPermaLink="false">http://blog.lobocv.com${path}</guid>` +
       (p.data.date ? `<pubDate>${p.data.date.toUTCString()}</pubDate>` : '') +
       `<description>${esc(p.data.summary ?? '')}</description></item>`;
