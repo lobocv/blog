@@ -3,11 +3,12 @@ title: "Advanced Go Error Handling Made Simple"
 draft: false
 date: 2022-03-22
 categories: ["Golang"]
+summary: "Go handles errors explicitly. Here is how to carry richer context through your errors without giving up that simplicity."
 ---
 
 <div style="text-align:center">
 
-<img alt="SimpleError" src="https://blog.lobocv.com/posts/richer_golang_errors/gopher.svg"/>
+<img alt="SimpleError" src="/posts/richer_golang_errors/gopher.svg"/>
 
 </div>
 

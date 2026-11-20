@@ -3,6 +3,7 @@ title: "Building a Comfortable Dev Environment"
 draft: false
 date: 2021-07-06
 categories: ["Developer Efficiency"]
+summary: "The tools, aliases and habits that make the daily grind of git, docker, kubectl and friends feel effortless."
 ---
 
 Being a software developer can be overwhelming at times. There are an endlessly diverse set of tools, technologies, languages 

@@ -3,11 +3,12 @@ title: "Recursively Merging JSONB in PostgreSQL"
 draft: false
 date: 2021-05-01
 categories: ["Databases"]
+summary: "PostgreSQL merges JSONB one level deep. A small recursive function merges nested documents all the way down."
 ---
 
 <div style="text-align:center">
 
-<img alt="Recursively Merging JSON in PostgreSQL" src="https://blog.lobocv.com/posts/recursive_jsonb_merge/banner.png"/>
+<img alt="Recursively Merging JSON in PostgreSQL" src="/posts/recursive_jsonb_merge/banner.png"/>
 
 </div>
 

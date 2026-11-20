@@ -3,6 +3,21 @@ title: "Testing complex workflows in Go"
 draft: false
 date: 2022-10-01
 categories: ["Golang"]
+summary: "A testify/suite style that keeps sophisticated fixtures, mocks, edge cases and complex outputs readable as the test cases multiply."
+feature:
+  lang: go
+  code: |
+    // Before every test, fresh mocks and fixtures
+    func (s *CollectorSuite) SetupTest() {
+        s.mocks = Mocks{}
+        s.fix = Fixtures{input: happyPath()}
+        s.expect = Expectations{}
+    }
+
+    func (s *CollectorSuite) TestRateLimited() {
+        s.mocks.ListUGC(Fail)
+        s.run()
+    }
 ---
 
 The standard library `testing` package in Go does many things well. It is simple to use and

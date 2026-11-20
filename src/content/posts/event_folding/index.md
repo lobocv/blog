@@ -3,31 +3,13 @@ title: "Reducing System Load With Event Folding"
 draft: false
 date: 2021-08-01
 categories: ["Architecture"]
+summary: "Collapsing bursts of redundant events into a single unit of work, and the maths behind how much load it saves."
 ---
 
-[comment]: <> (This script allows us to use LaTex &#40;source: https://stackoverflow.com/a/12979200/2159157&#41;)
-<style TYPE="text/css">
-code.has-jax {font: inherit; font-size: 100%; background: inherit; border: inherit;}
-</style>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-    tex2jax: {
-        inlineMath: [['$','$'], ['\\(','\\)']],
-        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'] // removed 'code' entry
-    }
-});
-MathJax.Hub.Queue(function() {
-    var all = MathJax.Hub.getAllJax(), i;
-    for(i = 0; i < all.length; i += 1) {
-        all[i].SourceElement().parentNode.className += ' has-jax';
-    }
-});
-</script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML-full"></script>
 
 <div style="text-align:center">
 
-<img alt="Event Folder" src="https://blog.lobocv.com/posts/event_folding/event_folder.png"/>
+<img alt="Event Folder" src="/posts/event_folding/event_folder.png"/>
 
 </div>
 
@@ -50,7 +32,9 @@ view of post performance and view of posts' performance as a whole. Let's call m
 and metrics on your posts as a whole `account-level` metrics. To keep things simple, let's assume all post-level metrics can 
 be aggregated using a sum:
 
-<p style="text-align: center;">$M_{account} = \sum_{i=0}^{N_{posts}} M_{post_{i}}$</p>
+$$
+M_{account} = \sum_{i=0}^{N_{posts}} M_{post_{i}}
+$$
 
 From the equation above, it is clear that account-level metrics depend on the post-level metrics. Every time a metric on a post changes, we will
 need to recompute this sum[1]. In an event-driven architecture, you may have a service that performs this aggregation by
@@ -226,7 +210,9 @@ last time a post metric was updated.
 
 To get a feel for how long we should set our folding window to be, we can calculate the folding ratio, ${F}_{R}$:
 
-<p style="text-align: center;">${F}_{R}=\frac{N_F}{N_E}$</p>
+$$
+{F}_{R}=\frac{N_F}{N_E}
+$$
 
 where $N_E$ = Number of fold-eligible events and $N_F$ = Number of actually folded events.
 
@@ -235,11 +221,17 @@ the sorted-set (score updates excluded). Assuming we are inserting one event at 
 measured by how many times the `ZADD` operation returns `0` and the number of new events is measured by how many times 
 `ZADD` returns `1`. With this in mind, we can measure the following values:
 
-<p style="text-align: center;">$N_E= N_{Total} - Count(ZADD == 1)$</p>
+$$
+N_E= N_{Total} - Count(ZADD == 1)
+$$
 
-<p style="text-align: center;">$N_F$ = Count(ZADD == 0)</p>
+$$
+N_F = Count(ZADD == 0)
+$$
 
-<p style="text-align: center;">$F_R = \frac{Count(ZADD == 0)}{N_{Total} - Count(ZADD == 1)}$</p>
+$$
+F_R = \frac{Count(ZADD == 0)}{N_{Total} - Count(ZADD == 1)}
+$$
 
 where $N_{Total}$ is the total number of events.
 
@@ -270,7 +262,9 @@ Below is an example of what that could look like:
 If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
 window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:
 
-<p style="text-align: center;">${F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}$</p>
+$$
+{F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}
+$$
 
 If it is really important that you have the most optimal folding ratio, you will need to do some offline analysis such as looking
 at historical events within a time range. In this case, you will actually know the number of events that should be folded.

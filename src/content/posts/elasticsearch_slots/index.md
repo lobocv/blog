@@ -3,8 +3,9 @@ title: "Defusing an ElasticSearch Mapping Explosion with Slots"
 draft: false
 date: 2021-12-12
 categories: ["Databases"]
+summary: "When user-defined fields threaten to blow up your index mapping, a fixed set of reusable slots keeps it under control."
 ---
-<img alt="Diffusing A Mapping Explosion" src="https://blog.lobocv.com/posts/elasticsearch_slots/img.png"/>
+<img alt="Diffusing A Mapping Explosion" src="/posts/elasticsearch_slots/img.png"/>
 
 ElasticSearch (and similarly [OpenSearch](https://opensearch.org/)[1]) is a popular OLAP database that allows you to quickly search and aggregate your 
 data in a rich and powerful way. It is a mature storage technology build on top of [Apache Lucene](https://lucene.apache.org/) that has been used to back
@@ -55,7 +56,7 @@ With the slots approach, we gain control of unbounded mapping growth by predefin
 them in the application code to the user-defined values. We call the application-level translation from metric to slot the
 `slot-mapping`. 
 
-<img alt="ElasticSearch Slots" src="https://blog.lobocv.com/posts/elasticsearch_slots/es_slots.svg"/>
+<img alt="ElasticSearch Slots" src="/posts/elasticsearch_slots/es_slots.svg"/>
 
 **Figure 1: Translation of metric names into slots before writing to ElasticSearch. Each customer gets it's own set of slots.**
 
@@ -120,7 +121,7 @@ potential race conditions from multiple API requests trying to grab the next slo
 one of the attempts to write to the slot_mapping table will fail on the unique-constraint and we can roll back the transaction and
 simply retry again.  
 
-<img alt="ElasticSearch Slots" src="https://blog.lobocv.com/posts/elasticsearch_slots/slot_tx.svg"/>
+<img alt="ElasticSearch Slots" src="/posts/elasticsearch_slots/slot_tx.svg"/>
 
 **Figure 2: A flow diagram of how using a transaction, a unique constraint on the slot_mappings table and a retry mechanism 
 keeps concurrent requests from creating the same slot mapping.**

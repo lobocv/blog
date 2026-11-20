@@ -1,3 +1,7 @@
 ---
+import { getPosts, readingMinutes, formatDate } from '../lib/posts';
+const posts = await getPosts();
 ---
-<html lang="en"><head><meta charset="utf-8"><title>lobocv</title></head><body><p>Astro scaffold</p></body></html>
+<html lang="en"><head><meta charset="utf-8"><title>lobocv</title></head><body>
+<ul>{posts.map(p => <li data-id={p.id}>{p.data.title} | {p.data.date && formatDate(p.data.date)} | {readingMinutes(p.body ?? '')} min</li>)}</ul>
+</body></html>
