@@ -30,9 +30,9 @@ The mockups are the design. The Hugo theme goes away entirely. Where this doc an
 ## Constraints
 
 - Static output only (GitHub Pages).
-- `static/CNAME` (`blog.lobocv.com`) must end up in the build output.
+- The custom domain `blog.lobocv.com` keeps working. With an Actions-based Pages deploy the domain comes from the repo's Pages settings and GitHub ignores a `CNAME` file in the artifact, so keeping `CNAME` in `public/` is harmless but not what makes the domain work.
 - Google Analytics ID `G-6GL7S6YEB3` stays.
-- Day/night theming works the way the mockups do it: `data-time="day|night"` on `<html>`, chosen from the saved choice in `localStorage` (`time`), else a `?time=` override, else local hour (day from 07:00 to 19:00). Colours come from CSS variables in `site.css`. The theme must be set before first paint, so there's no flash of the wrong theme.
+- Day/night theming works the way the mockups do it: `data-time="day|night"` on `<html>`, chosen from a `?time=` override, else the saved choice in `localStorage` (`time`), else local hour (day from 07:00 to 19:00). This is the order in `site.js`. Colours come from CSS variables in `site.css`. The theme must be set before first paint, so there's no flash of the wrong theme.
 
 ## Approaches
 
@@ -60,9 +60,8 @@ Chosen: option 3. The scene is already split into layers and sprites, so moving 
 - Astro replaces Hugo in the same repo. Work happens on a new branch off `hero-prototype` and merges to `master` when ready.
 - Hugo files are removed:
   - `config.toml`
-  - `themes/` (a git submodule; remove it from `.gitmodules` too)
-  - `archetypes/`, if present
-  - Hugo's `layouts/`, if present
+  - `themes/` (a git submodule; it is the only entry in `.gitmodules`, so delete that file too)
+  - `archetypes/`
   - the Docker dev wrapper (`Dockerfile`, `run.sh`, `build_image.sh`). Local dev becomes `npm run dev`, with no Docker replacement.
 - `prototypes/` stays as reference until the Astro site matches it. Deleting it is a separate decision.
 - `prototypes/blog2/` is untracked and out of scope. Its `content/` is identical to the repo's `content/`, so the content move starts from `content/`.
@@ -70,13 +69,15 @@ Chosen: option 3. The scene is already split into layers and sprites, so moving 
 
 ### Content
 
-- Posts move to `src/content/posts/<slug>/index.md` (the same page-bundle layout Hugo uses) and load through an Astro content collection.
+- Posts move to `src/content/posts/<slug>/index.md` and load through an Astro content collection (eg a `glob` loader with pattern `*/index.md`). The entry id must equal the folder name, since it becomes the URL slug. Image files do not stay next to the Markdown (see below).
 - Front matter keeps `title`, `date`, `categories` and `draft`, and gains two fields:
   - `summary` (required for published posts): the one-line description shown on cards, the post lede and RSS. The six published posts take the summaries written in `site.js` `POSTS`.
-  - `feature` (optional): a short code excerpt with a language, shown on the home page's feature card when that post is the newest. `golang_testing` takes the snippet in `home.html`. When a newest post has no `feature`, the card renders without the code panel.
-- Reading time is computed at build time from word count, at about 200 words per minute and rounded up.
-- `draft: true` posts (`db_model_signatures`, `plugin_pattern`) are excluded from production builds but shown in `astro dev`.
-- `content/about/index.md` becomes the About page. `content/_index.md` is dropped.
+  - `feature` (optional): a short code excerpt with a language (eg `feature: { lang: go, code: "..." }`), shown on the home page's feature card when that post is the newest. `golang_testing` takes the snippet in `home.html`. The mockup's snippet is hand-coloured with `<span>` classes; the real one is highlighted with the same Shiki setup as post code blocks and tuned to look the same. When a newest post has no `feature`, the card renders without the code panel.
+- `date` and `summary` are required only when `draft` is false. The two drafts have neither, so the schema must allow that, and sorting in dev must not choke on a missing date (eg treat it as today).
+- Reading time is computed at build time from the rendered text's word count, at Hugo's 213 words per minute, rounded up, so the numbers stay close to the live site and the mockup.
+- Dates are formatted in UTC (eg "Oct 1, 2022"). Front matter dates parse as UTC midnight, so formatting in local time shows the previous day for anyone west of UTC.
+- `draft: true` posts (`db_model_signatures`, `plugin_pattern`) are excluded from production builds but shown in `astro dev`. Astro does not do this itself; filter on `import.meta.env.PROD` wherever the collection is read (pages, RSS, sitemap, home lists).
+- `content/about/index.md` becomes the About page. It is not a post, so it stays out of the posts collection. `content/_index.md` is dropped.
 
 ### Post images and raw HTML
 
@@ -84,7 +85,9 @@ Chosen: option 3. The scene is already split into layers and sprites, so moving 
 - Image files move to `public/posts/<slug>/`, so they are served at the same URLs as today.
 - The `src` attributes are rewritten to root-relative paths (`/posts/<slug>/img.png`) so they also work in local dev.
 - Raw HTML in Markdown must keep rendering (Hugo had `unsafe = true`).
-- The `event_folding` post loads MathJax 2 from a CDN in an inline `<script>` and uses `$...$` inline math. Replace that with `remark-math` and `rehype-katex` at build time, delete the inline MathJax config and script, and load KaTeX's CSS on posts that use math. Check that every formula still renders.
+- The `event_folding` post loads MathJax 2 from a CDN in an inline `<script>` and uses `$...$` math. Replace that with `remark-math` and `rehype-katex` at build time, delete the inline `<style>`, MathJax config and script, and load KaTeX's CSS on posts that use math. Check that every formula still renders.
+  - Most of its formulas sit inside raw HTML (`<p style="text-align: center;">$...$</p>`). `remark-math` does not look inside raw HTML, so those stay as literal `$` text. Rewrite each as a Markdown display block (`$$ ... $$`), which KaTeX centres.
+  - `remark-math` runs on every post. No other post has a `$` outside code today, but a future post with a bare `$` in prose would need it escaped (`\$`).
 
 ### Pages and URLs
 
@@ -102,16 +105,18 @@ Chosen: option 3. The scene is already split into layers and sprites, so moving 
 
 Hugo also publishes other URLs. They are handled as follows:
 
-- `/categories/<name>/` becomes a static redirect page (meta refresh plus a canonical link) to `/posts/?cat=<Name>`, one per category in use.
+- `/categories/<slug>/` becomes a static redirect page (meta refresh plus a canonical link, eg via Astro's `redirects` config) to `/posts/?cat=<Name>`, one per category in use. Hugo's `<slug>` is the lowercased, hyphenated name (eg `/categories/developer-efficiency/`); `<Name>` is the category exactly as written in front matter, URL-encoded (eg `?cat=Developer%20Efficiency`).
+- `/categories/` (Hugo's category list, linked from its nav) redirects to `/posts/`.
 - `/posts/index.xml` serves a second copy of the RSS feed.
 - These are dropped and return 404:
   - paging (`/page/N/`, `/posts/page/N/`)
   - `/index.json` (it only fed the search we're dropping)
-  - per-category feeds (`/categories/<name>/index.xml`)
-- To build the "old URL exists" check, take the list of URLs from the live `https://blog.lobocv.com/sitemap.xml`, minus the dropped ones above.
-- The RSS feed is served at `/index.xml`, Hugo's home feed path, so existing subscribers keep working. Use `@astrojs/rss`. Items carry the title, date, summary and link.
-- Add a sitemap (`@astrojs/sitemap`). It's cheap and replaces nothing.
-- The `site` setting is `https://blog.lobocv.com`, with no base path.
+  - per-category feeds (`/categories/<slug>/index.xml`)
+- To build the "old URL exists" check, take the list of URLs from the live `https://blog.lobocv.com/sitemap.xml`, minus the dropped ones above. Save that list into the repo before cutover, since the live file changes once the Astro site deploys.
+- The RSS feed is served at `/index.xml`, Hugo's home feed path, so existing subscribers keep working. Use `@astrojs/rss` (eg an endpoint at `src/pages/index.xml.js`). Items carry the title, date, summary and link.
+  - Item links must be the full URL with trailing slash (eg `https://blog.lobocv.com/posts/golang_testing/`). `@astrojs/rss` uses the link as the item's `<guid>`, and Hugo did the same, so matching them stops feed readers from showing every post as new. Compare against the live feed's `<guid>` values.
+- Add a sitemap (`@astrojs/sitemap`). It writes `sitemap-index.xml` and `sitemap-0.xml`, not `sitemap.xml`, so also serve `/sitemap.xml` (eg a small endpoint with the same URLs) to replace Hugo's and keep any search console setup working.
+- The `site` setting is `https://blog.lobocv.com`, with no base path. Keep the default `build.format: 'directory'` so pages are written as `<path>/index.html` and served with a trailing slash, like Hugo.
 
 ### Wiring nav and footer links
 
@@ -123,9 +128,14 @@ Hugo also publishes other URLs. They are handled as follows:
 - Home hero buttons:
   - "Read the blog" goes to `/posts/`
   - "See projects" is removed
-- GitHub goes to `https://github.com/lobocv`, and LinkedIn goes to `https://www.linkedin.com/in/lobocv/` (both handles are from `config.toml` `[social]`).
+- GitHub goes to `https://github.com/lobocv`, and LinkedIn goes to `https://www.linkedin.com/in/lobocv/` (both handles are from `config.toml` `[social]`). This covers the footer and the home author block.
+- The home author block's "About me →" goes to `/about/`.
 - RSS links go to `/index.xml`.
-- On the home page, topic chips link to `/posts/?cat=<name>`, and the posts index applies that filter on load.
+- Home "Latest writing":
+  - the feature card is the newest post, and "Read the article →" goes to it
+  - the rows under it are the next four posts, newest first (as `POSTS.slice(1, 5)` in the mockup)
+  - "All posts →" goes to `/posts/`
+- On the home page, topic chips (sorted by post count, most first) link to `/posts/?cat=<Name>`, and the posts index selects that chip on load. The posts index chips are "All" followed by the same count order.
 - The post pager has two links:
   - "Previous" is the next-older post.
   - "Next" is the next-newer post.
@@ -133,7 +143,7 @@ Hugo also publishes other URLs. They are handled as follows:
 
 ### Dropped from the mockups
 
-- Every email signup block (the `.subscribe` sections on home, posts and post). Where a block also held the "Prefer a feed reader? Subscribe via RSS" line, keep that line as a small RSS link in the same spot.
+- Every email signup block (the `.subscribe` sections on home, posts and post). Each block also holds an RSS line ("Prefer a feed reader? Subscribe via RSS" on home and posts, "Or follow along via RSS" on post). Keep that line as a small RSS link in the same spot.
 
 ### Hero
 
@@ -149,31 +159,33 @@ Hugo also publishes other URLs. They are handled as follows:
 - The home page loads it with a bundled `<script>`.
 - Port it with behaviour unchanged. Splitting it into a few files is fine. Changing the drawing, seeds or `rng()` call order is not, because the scene is seeded and any change to the call order changes the art.
 - `site.js` splits into:
-  - an inline theme bootstrap in `<head>` (sets `data-time` before paint)
+  - an inline theme bootstrap in `<head>` (sets `data-time` before paint). It must be `<script is:inline>`. Astro turns a plain `<script>` into a deferred module, which runs after first paint and brings back the flash.
   - the theme toggle
   - the horizon header (posts and post pages)
   - the foliage band, side foliage and topo lines (home)
   - the shared flora helpers the hero uses (`Site.flora`)
 - The `POSTS` array in `site.js` goes away. Lists, cards, topics and counts are rendered at build time from the content collection.
-- Keep `prototypes/tools/record-toggle.mjs` working against `astro preview`. It is how we check the toggle for flicker.
+- Keep `prototypes/tools/record-toggle.mjs` working against `astro preview`. It is how we check the toggle for flicker. It clicks `#toggle`, so keep that id on the toggle button.
 
 ### Post page
 
 - Markdown renders at build time. The mockup's `marked` and `highlight.js` client libraries go away.
-- Code highlighting uses Astro's built-in Shiki with two themes (light for day, dark for night), switched by `data-time` through CSS variables, and colours tuned to match the mockup's code panels.
-- Map `postgresql` code fences to Shiki's SQL grammar.
-- The language label and Copy button on each code block stay. The label is rendered at build time, and the copy needs a small client script.
-- The table of contents is built at build time from the post's `h2` headings, using Astro's heading slugs as ids. Current-section highlighting and the reading progress bar stay as a small client script.
+- Code highlighting uses Astro's built-in Shiki with two themes (light for day, dark for night), switched by `data-time` through CSS variables (eg `shikiConfig.themes` with `defaultColor: false`, then pick `--shiki-light` or `--shiki-dark` under `:root[data-time]`), and colours tuned to match the mockup's code panels.
+- Fence languages in use are `go`, `bash`, `json`, `dockerfile` and `postgresql`. Shiki has no `postgresql` grammar, so map it to `sql` (eg `shikiConfig.langAlias`); otherwise those blocks render unhighlighted.
+- The language label and Copy button on each code block stay. The label is rendered at build time (Astro puts the fence language in `data-language` on the `<pre>`), and the copy needs a small client script. The mockup labels unmarked fences as `go`; the real site shows no label for them instead (only the `db_model_signatures` draft has any).
+- The table of contents is built at build time from the post's headings, using Astro's heading slugs as ids. Current-section highlighting and the reading progress bar stay as a small client script.
+  - The mockup uses `h2` only, but `event_folding` has no `h2` (only `h3`) and `recursive_jsonb_merge` has one. Use the post's highest heading level that has at least two headings (eg `h3` for `event_folding`), and hide the TOC when there is nothing to list.
 
 ### Analytics and fonts
 
 - Google Analytics uses the standard `gtag.js` snippet in the shared layout, loaded with `async`.
-- Fonts (Fraunces, Inter, Inter Tight and JetBrains Mono at the weights in the mockups) are self-hosted via Fontsource rather than the Google Fonts `<link>`. This avoids a third-party request and a layout shift.
+- Fonts (Fraunces, Inter, Inter Tight and JetBrains Mono at the weights in the mockups) are self-hosted via Fontsource rather than the Google Fonts `<link>`. This avoids a third-party request.
+- The mockups load Fraunces with its optical size axis (`opsz` 9 to 144). Fontsource's default Fraunces import only carries weight, so use the variable package's file that includes `opsz`, or headings will drift from the mockups.
 
 ### Deploy
 
-- Replace `.github/workflows/gh-pages.yml` with an Astro build (Node LTS, `npm ci`, `astro build`, upload `dist/`) using the current `actions/upload-pages-artifact` and `actions/deploy-pages` versions. Keep the trigger on push to `master` and manual dispatch.
-- `CNAME` moves to `public/CNAME`.
+- Replace `.github/workflows/gh-pages.yml` with an Astro build (Node LTS, `npm ci`, `astro build`, upload `dist/`) using the current `actions/upload-pages-artifact` and `actions/deploy-pages` versions. Keep the trigger on push to `master` and manual dispatch. Drop the Hugo and Dart Sass install steps and `submodules: recursive` on checkout.
+- Everything in `static/` moves to `public/`: `CNAME`, `favicon.ico` and `img/logo.jpg` (the author photo the mockups use).
 
 ## Left to the builder
 
@@ -182,6 +194,6 @@ Hugo also publishes other URLs. They are handled as follows:
 - Exact Shiki themes, as long as day and night both match the mockups' code panels closely.
 - How the theme toggle crossfade on the home page coordinates with the hero module, as long as it matches the mockup's behaviour.
 - Testing approach. At minimum:
-  - a build in CI that fails on broken internal links
+  - a build in CI that fails on broken internal links (Astro does not check this itself, so run a link checker over `dist/`)
   - a check that every old post URL and `/index.xml` exist in `dist/`
   - recording the day/night toggle with `record-toggle.mjs` before merge
