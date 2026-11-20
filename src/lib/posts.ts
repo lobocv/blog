@@ -44,8 +44,10 @@ export function neighbours(posts: Post[], id: string): { older?: Post; newer?: P
 
 /** The highest heading level (h2 and below) that has at least two headings. */
 export function pickTocHeadings<T extends Heading>(headings: T[]): T[] {
+  // footnote-label is the "Footnotes" heading Markdown footnotes generate
+  const real = headings.filter(h => h.slug !== 'footnote-label');
   for (let depth = 2; depth <= 6; depth++) {
-    const at = headings.filter(h => h.depth === depth);
+    const at = real.filter(h => h.depth === depth);
     if (at.length >= 2) return at;
   }
   return [];

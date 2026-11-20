@@ -155,18 +155,76 @@ h1, h2, h3, .display { font-family: "Fraunces", serif; font-weight: 500; letter-
 /* Wide display maths scrolls inside its own box instead of widening the page on phones */
 .post-body .katex-display { overflow-x: auto; overflow-y: hidden; }
 .post-body blockquote { border-left: 3px solid var(--accent); padding: 4px 0 4px 20px; color: var(--ink); font-style: italic; }
-.post-body pre { position: relative; margin-top: 1.6em; margin-bottom: 1.6em; padding: 44px 0 18px; border-radius: 14px; background: var(--code-bg); border: 1px solid var(--code-line); overflow-x: auto; font-size: 14.5px; line-height: 1.65; }
-.post-body pre code { font-family: "JetBrains Mono", monospace; display: block; padding: 0 22px; color: var(--ink); background: none; min-width: max-content; }
-.post-body pre .lang { position: absolute; top: 12px; left: 22px; font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
-.post-body pre .copy { position: absolute; top: 8px; right: 10px; font: 12px "JetBrains Mono", monospace; color: var(--ink-3); background: none; border: 1px solid var(--code-line); border-radius: 8px; padding: 4px 9px; cursor: pointer; }
-.post-body pre .copy:hover { color: var(--ink); }
-@media (max-width: 720px) { .post-body pre { margin-left: -16px; margin-right: -16px; border-radius: 0; border-left: 0; border-right: 0; } }
-.hljs-keyword, .hljs-built_in { color: var(--tok-kw); }
-.hljs-string { color: var(--tok-str); }
-.hljs-title.function_, .hljs-title { color: var(--tok-fn); }
-.hljs-type, .hljs-title.class_ { color: var(--tok-type); }
-.hljs-comment { color: var(--tok-com); font-style: italic; }
-.hljs-number, .hljs-literal { color: var(--tok-num); }
+.post-body .code { position: relative; margin-top: 1.6em; margin-bottom: 1.6em; border-radius: 14px; background: var(--code-bg); border: 1px solid var(--code-line); overflow: hidden; }
+.post-body .code-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 40px; padding: 6px 10px 6px 20px; border-bottom: 1px solid var(--code-line); font-family: "JetBrains Mono", monospace; }
+.post-body .code-head .lang { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.post-body .code-head .file { font-size: 12.5px; color: var(--ink-2); }
+.post-body .code-head .file::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 9px; border-radius: 50%; background: var(--accent); opacity: .7; vertical-align: 1px; }
+.post-body .copy { font: 12px "JetBrains Mono", monospace; color: var(--ink-3); background: none; border: 1px solid var(--code-line); border-radius: 8px; padding: 4px 9px; cursor: pointer; }
+.post-body .copy:hover { color: var(--ink); border-color: var(--ink-3); }
+.post-body .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.post-body pre { margin: 0; padding: 16px 0 18px; background: transparent !important; overflow-x: auto; font-size: 14.5px; line-height: 1.7; tab-size: 4; -moz-tab-size: 4; }
+.post-body pre code { font-family: "JetBrains Mono", monospace; display: block; color: var(--ink); background: none; min-width: max-content; }
+.post-body pre .line { display: inline-block; min-width: 100%; padding: 0 22px; }
+.post-body pre .line.highlighted { background: var(--accent-soft); box-shadow: inset 3px 0 var(--accent); }
+/* Fade on the right while part of a line is scrolled out of view */
+.post-body .code::after { content: ""; position: absolute; top: 41px; right: 0; bottom: 0; width: 48px; background: linear-gradient(to right, transparent, var(--code-bg)); opacity: 0; transition: opacity .2s; pointer-events: none; }
+.post-body .code.more::after { opacity: 1; }
+@media (max-width: 720px) { .post-body .code { margin-left: -16px; margin-right: -16px; border-radius: 0; border-left: 0; border-right: 0; } }
+
+/* Figures, captions and tables */
+.post-body figure { margin-top: 1.8em; margin-bottom: 1.8em; }
+.post-body figure img { margin: 0 auto; }
+.post-body figcaption { margin-top: 14px; font-size: 14.5px; line-height: 1.55; color: var(--ink-3); }
+.post-body figure:not(.table) figcaption { text-align: center; max-width: 600px; margin-left: auto; margin-right: auto; }
+.post-body figcaption .label { font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .04em; color: var(--ink-2); margin-right: 2px; }
+.post-body .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--sheet); }
+.post-body table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.post-body caption { caption-side: top; text-align: left; padding: 10px 16px; font: 500 12.5px "JetBrains Mono", monospace; color: var(--ink); background: var(--raise); border-bottom: 1px solid var(--line); }
+.post-body th { text-align: left; padding: 10px 16px; font: 500 12px "JetBrains Mono", monospace; letter-spacing: .03em; color: var(--ink); background: var(--accent-soft); white-space: nowrap; }
+.post-body td { padding: 9px 16px; border-top: 1px solid var(--line); color: var(--ink-2); vertical-align: top; }
+.post-body th + th, .post-body td + td { border-left: 1px solid var(--line); }
+.post-body tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+
+/* Images open full screen */
+.post-body img.zoomable { cursor: zoom-in; border-radius: 6px; }
+.post-body img.zoomable:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.lightbox { margin: auto; padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 96vh; overflow: visible; cursor: zoom-out; }
+.lightbox::backdrop { background: rgba(5, 8, 15, .86); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.lightbox img { width: min(94vw, 1400px); max-height: 92vh; height: auto; object-fit: contain; padding: 20px; border-radius: 14px; background: var(--sheet); }
+
+/* Heading links: a # beside the heading on hover */
+.post-body .anchor { margin-left: .3em; color: var(--ink-3); text-decoration: none; font-family: "Inter", sans-serif; font-weight: 400; opacity: 0; transition: opacity .15s, color .15s; }
+.post-body .anchor::before { content: "#"; }
+.post-body :is(h2, h3):hover .anchor, .post-body .anchor:focus-visible { opacity: 1; }
+.post-body .anchor:hover { color: var(--accent); }
+
+/* Footnotes */
+.post-body sup { line-height: 0; }
+.post-body sup a[data-footnote-ref] { text-decoration: none; font: 500 11px "JetBrains Mono", monospace; padding: 1px 5px; margin-left: 2px; border-radius: 5px; background: var(--accent-soft); vertical-align: 2px; }
+.post-body sup a[data-footnote-ref]:hover, .post-body sup a[data-footnote-ref]:focus-visible { background: var(--accent); color: var(--sheet); }
+.post-body sup a[data-footnote-ref]::before { content: "["; } .post-body sup a[data-footnote-ref]::after { content: "]"; }
+.post-body .footnotes { margin-top: 3.5em; padding-top: 1.6em; border-top: 1px solid var(--line); font-size: 15.5px; line-height: 1.65; }
+.post-body .footnotes h2 { position: static; width: auto; height: auto; clip: auto; overflow: visible; margin: 0 0 14px; font: 500 12px "JetBrains Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+.post-body .footnotes h2 .anchor { display: none; }
+.post-body .footnotes ol { padding-left: 1.5em; }
+.post-body .footnotes li { scroll-margin-top: 90px; border-radius: 8px; transition: background .4s; }
+.post-body .footnotes li:target { background: var(--accent-soft); }
+.post-body .footnotes li::marker { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+.post-body [data-footnote-backref] { text-decoration: none; margin-left: 4px; font-family: "Inter", sans-serif; }
+.post-body sup a { scroll-margin-top: 120px; }
+.fn-pop { position: absolute; z-index: 70; max-width: min(380px, calc(100vw - 24px)); padding: 12px 16px; border-radius: 12px; background: var(--raise); border: 1px solid var(--line); box-shadow: 0 12px 32px rgba(0, 0, 0, .28); font-size: 14.5px; line-height: 1.6; color: var(--ink-2); opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .15s, transform .15s, visibility .15s; }
+.fn-pop.on { opacity: 1; visibility: visible; transform: none; }
+.fn-pop a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.fn-pop code { font-family: "JetBrains Mono", monospace; font-size: .85em; }
+
+/* Faint vines and ferns down both margins (home page and every inner page) */
+.side-foliage { position: absolute; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.side-foliage .side { position: absolute; top: 0; fill: var(--side-fol); opacity: var(--side-op); transition: fill .8s ease; }
+.side-foliage .left { left: 0; } .side-foliage .right { right: 0; transform: scaleX(-1); }
+@media (max-width: 1240px) { .side-foliage { display: none; } }
+body { position: relative; }
+.page-side ~ :is(article, main, .footer) { position: relative; z-index: 1; }
 
 .post-end { max-width: 720px; margin-top: 72px; display: grid; gap: 40px; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

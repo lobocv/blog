@@ -37,7 +37,7 @@ M_{account} = \sum_{i=0}^{N_{posts}} M_{post_{i}}
 $$
 
 From the equation above, it is clear that account-level metrics depend on the post-level metrics. Every time a metric on a post changes, we will
-need to recompute this sum[1]. In an event-driven architecture, you may have a service that performs this aggregation by
+need to recompute this sum[^1]. In an event-driven architecture, you may have a service that performs this aggregation by
 listening to `post-metric-updated` events. If many of these events are produced within a short period of time, the service
 will be computing this sum many times over, with only the last computation being valuable (all other computations would produce 
 a stale value). What we would really like to do in this situation is detect when the last `post-metric-updated` event comes
@@ -138,7 +138,7 @@ same string value. We can use the time of the event as the `score` in the sorted
 the `score`, thus keeping track of the last event in the group. Our sorted-set then holds a time-ordered collection 
 of events, where each element represents a folded view of events from each group. We can then regularly query the
 sorted-set with `ZRANGEBYSCORE` to get values with timestamps (scores) before `time.Now()-X`. 
-These values are then published as `post-metric-last-updated-X-minutes-ago` events and removed from the sorted set[2].
+These values are then published as `post-metric-last-updated-X-minutes-ago` events and removed from the sorted set[^2].
 
 Back to our example, the `post-metric-updated` event has the following schema:
 
@@ -260,7 +260,7 @@ Below is an example of what that could look like:
 
 
 If your system is processing a large number of folded events ($N_{Total} \gg Count(ZADD == 1)$) and your folding
-window is reasonable[3], then the error becomes negligible and the folding ratio simplifies further:
+window is reasonable[^3], then the error becomes negligible and the folding ratio simplifies further:
 
 $$
 {F}_{R}\approx\frac{Count(ZADD == 0)}{N_{Total}}
@@ -290,7 +290,7 @@ unfolded events, just be sure to place them on separate topics to prevent confus
 Another use-case where the event folder is highly effective is during database syncing. In a 
 [CQRS](https://martinfowler.com/bliki/CQRS.html) pattern,
 we can separate database technologies used for writing and reading by syncing all writes to the read database. Some databases
-such as ElasticSearch perform poorly for document updates[4]. Using an event folder we can reduce the number of
+such as ElasticSearch perform poorly for document updates[^4]. Using an event folder we can reduce the number of
 writes to ElasticSearch, significantly reducing the number of deleted documents that need to be garbage collected.
 
 ### A Powerful Tool
@@ -301,22 +301,19 @@ events. If your events are not transient, you may find that your folded events m
 constantly resetting folding window. With a few adjustments, this design can be used for non-transient event streams
 as well.
 
+[^1]: Many social networks provide APIs for gathering account level metrics so you don't need to do this aggregation yourself.
+    However, there are certain metrics which are not supported and cause us to have to do the aggregation ourselves. 
 
-### Appendix
+[^2]: While Redis sorted-sets do have the ability to atomically pop elements from the top or bottom of the sorted set, it
+    unfortunately does not have an atomic way to query and remove elements from the middle. This means that we have to make
+    two separate commands: `ZRANGE` to get the values and `ZREM` to remove the key after we publish the event.
+    The consequence of this is that there is are race conditions if you have multiple threads looking for folded events
+    to publish. This means a folded event can be published more than once. If this is a real issue you can consider using
+    global locks or partitioning the key-space, with the trade-off of added complexity.
 
-[1] Many social networks provide APIs for gathering account level metrics so you don't need to do this aggregation yourself.
-However, there are certain metrics which are not supported and cause us to have to do the aggregation ourselves. 
+[^3]: You should have some reasonable initial guess for your folding window. If not, take a sampling of events and
+    determine it retrospectively offline. If your latency requirements allow for it, start with a larger folding window and 
+    gradually reduce it while monitoring your folding ratio.
 
-[2] While Redis sorted-sets do have the ability to atomically pop elements from the top or bottom of the sorted set, it
-unfortunately does not have an atomic way to query and remove elements from the middle. This means that we have to make
-two separate commands: `ZRANGE` to get the values and `ZREM` to remove the key after we publish the event.
-The consequence of this is that there is are race conditions if you have multiple threads looking for folded events
-to publish. This means a folded event can be published more than once. If this is a real issue you can consider using
-global locks or partitioning the key-space, with the trade-off of added complexity.
-
-[3] You should have some reasonable initial guess for your folding window. If not, take a sampling of events and
-determine it retrospectively offline. If your latency requirements allow for it, start with a larger folding window and 
-gradually reduce it while monitoring your folding ratio.
-
-[4] Even though ElasticSearch has APIs for updating documents, under the hood it is actually indexing a new document and
-marking the old document for deletion.
+[^4]: Even though ElasticSearch has APIs for updating documents, under the hood it is actually indexing a new document and
+    marking the old document for deletion.

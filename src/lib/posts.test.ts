@@ -64,6 +64,10 @@ describe('pickTocHeadings', () => {
     expect(pickTocHeadings(h(2, 3, 3)).map(x => x.slug)).toEqual(['s1', 's2']);
     expect(pickTocHeadings(h(2, 2, 3)).map(x => x.slug)).toEqual(['s0', 's1']);
   });
+  it('ignores the generated footnotes heading', () => {
+    const hs = [{ depth: 2, slug: 'a', text: 'A' }, { depth: 2, slug: 'footnote-label', text: 'Footnotes' }, { depth: 3, slug: 'b', text: 'B' }, { depth: 3, slug: 'c', text: 'C' }];
+    expect(pickTocHeadings(hs).map(x => x.slug)).toEqual(['b', 'c']);
+  });
   it('returns nothing when no level has two headings', () => {
     expect(pickTocHeadings(h(2))).toEqual([]);
     expect(pickTocHeadings(h(1, 1))).toEqual([]);

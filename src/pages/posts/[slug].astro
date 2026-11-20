@@ -18,7 +18,7 @@ const { title, summary, date, categories } = post.data;
 const { older, newer } = neighbours(posts, post.id);
 const toc = pickTocHeadings(headings);
 ---
-<Base title={`${title} · lobocv`} description={summary} page="post">
+<Base title={`${title} · lobocv`} description={summary} page="post" image={`/og/${post.id}.png`}>
   <div class="progress" id="progress" slot="nav"></div>
   <div class="horizon slim" id="horizon"></div>
   <article class="wrap">
@@ -49,10 +49,12 @@ const toc = pickTocHeadings(headings);
   </article>
   <script>
     import { horizon } from '../../scripts/art/landscape.js';
-    import { initCode, initReading } from '../../scripts/post';
+    import { initCode, initFootnotes, initLightbox, initReading } from '../../scripts/post';
     horizon(document.getElementById('horizon')!);
     const body = document.getElementById('body')!;
     initCode(body);
+    initFootnotes(body);
+    initLightbox(body);
     initReading(body);
   </script>
 </Base>

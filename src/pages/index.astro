@@ -2,7 +2,7 @@
 import '../styles/home.css';
 import Base from '../layouts/Base.astro';
 import PostRow from '../components/PostRow.astro';
-import AuthorBlock from '../components/AuthorBlock.astro';
+import { philosophy, about } from '../data/home';
 import RssLine from '../components/RssLine.astro';
 import Footer from '../components/Footer.astro';
 import { codeToHtml } from 'shiki';
@@ -34,6 +34,31 @@ const topics = categoryCounts(posts);
     <div class="topo" id="topo"></div>
     <div class="side-foliage" id="side"></div>
     <div class="wrap">
+      <section class="philosophy" aria-labelledby="philosophy-h">
+        <div class="eyebrow">Philosophy</div>
+        <h2 id="philosophy-h">{philosophy.heading}</h2>
+        <p class="intro">{philosophy.intro}</p>
+        <ol class="principles">
+          {philosophy.principles.map((p, i) => (
+            <li>
+              <span class="n">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{p.prefer} <span class="over">over {p.over}</span></h3>
+              <p>{p.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section class="about-me" aria-labelledby="about-h">
+        <img src="/img/logo.jpg" alt="Calvin Lobo" width="132" height="132">
+        <div>
+          <div class="eyebrow">{about.heading}</div>
+          <h2 id="about-h">Calvin Lobo</h2>
+          <p>{about.text}</p>
+          <div class="links-row"><a href="/about/">More about me →</a><a href="https://github.com/lobocv">GitHub</a><a href="https://www.linkedin.com/in/lobocv/">LinkedIn</a></div>
+        </div>
+      </section>
+
       <div class="sec-head"><h2>Latest writing</h2><a href="/posts/">All posts →</a></div>
       {newest && (
         <a class="feature" href={`/posts/${newest.id}/`}>
@@ -48,14 +73,11 @@ const topics = categoryCounts(posts);
       )}
       <div class="rows" id="recent">{rest.slice(0, 4).map(p => <PostRow post={p} />)}</div>
 
-      <div class="split">
-        <div>
-          <div class="sec-head" style="margin-bottom:16px"><h2>Topics</h2></div>
-          <div class="topics" id="topics">
-            {topics.map(([c, n]) => <a class="chip" href={`/posts/?cat=${encodeURIComponent(c)}`}>{c}<span class="n">{n}</span></a>)}
-          </div>
+      <div class="topics-sec">
+        <div class="sec-head" style="margin-bottom:16px"><h2>Topics</h2></div>
+        <div class="topics" id="topics">
+          {topics.map(([c, n]) => <a class="chip" href={`/posts/?cat=${encodeURIComponent(c)}`}>{c}<span class="n">{n}</span></a>)}
         </div>
-        <AuthorBlock variant="home" />
       </div>
 
       <section style="margin-top: 96px"><RssLine /></section>

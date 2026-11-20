@@ -160,9 +160,12 @@ mistakes, short sentences after long ones.
 
 - Match existing posts: `###` for section headings, sparse headings (a heading
   every few paragraphs, not every paragraph)
-- Bold only for table and figure captions (eg `**Table 1: ...**`), not emphasis
+- Bold only for table and figure captions (eg `**Table 1: ...**`), not emphasis. A caption
+  paragraph directly below (or above) an image, table or code block becomes its caption on the site
 - Lists for genuinely list-shaped content (steps, options). Arguments stay in prose
-- Inline code for identifiers, fenced blocks with a language tag for snippets
+- Inline code for identifiers, fenced blocks with a language tag for snippets. Fence options:
+  `title="main.go"` shows a filename, `{3,5-7}` highlights lines
+- Footnotes use Markdown footnote syntax (`text[^1]` and `[^1]: note` at the end)
 - Suggest a table or diagram when it replaces a paragraph, not when it repeats one
 
 ## Assets

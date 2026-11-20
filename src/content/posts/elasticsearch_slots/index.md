@@ -7,7 +7,7 @@ summary: "When user-defined fields threaten to blow up your index mapping, a fix
 ---
 <img alt="Diffusing A Mapping Explosion" src="/posts/elasticsearch_slots/img.png"/>
 
-ElasticSearch (and similarly [OpenSearch](https://opensearch.org/)[1]) is a popular OLAP database that allows you to quickly search and aggregate your 
+ElasticSearch (and similarly [OpenSearch](https://opensearch.org/)[^1]) is a popular OLAP database that allows you to quickly search and aggregate your 
 data in a rich and powerful way. It is a mature storage technology build on top of [Apache Lucene](https://lucene.apache.org/) that has been used to back
 many online storefronts and analytical processing products around the world.
 Under the hood, ElasticSearch uses Lucene to index each field in the document so that queries can be executed efficiently. 
@@ -16,7 +16,7 @@ In order to provide rich searching capabilities, ElasticSearch creates indices f
 created is determined by the data type of the field. Possible data types include numeric types such as `integer`, `float`
 and `double` as well as two string data types, `keyword` and `text`. The list of all indexed fields (and how they are indexed)
 are stored in what is called an [index mapping](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html). 
-By default, ElasticSearch will create a mapping entry when a new field is encountered by deducing it's data type[2].
+By default, ElasticSearch will create a mapping entry when a new field is encountered by deducing it's data type[^2].
 This is called dynamic mapping. 
 
 The problem with dynamic mapping is that once ElasticSearch introduces a field to the mapping, it can 
@@ -24,7 +24,7 @@ The problem with dynamic mapping is that once ElasticSearch introduces a field t
 also consumes cluster memory and must be replicated to all nodes. If you are not careful, leaving dynamic mapping enabled
 can lead to very large index mappings and slow down your cluster. This is called a `mapping explosion`. For this reason,
 it is recommended to disable dynamic mapping and enable it sparingly only for objects that you can trust have a finite number
-of fields[3].
+of fields[^3].
 
 In many cases this is not an issue and it is not restrictive to disable dynamic mapping. However, in some cases a user
 may determine the name of a field. In such situations, one must come up with a strategy to mitigate the 
@@ -62,7 +62,7 @@ them in the application code to the user-defined values. We call the application
 
 Each user will have their own slot-mapping, meaning that the metric referred to by each slot will be different for each 
 user. The number of slots we need to allocate needs to be, at a minimum, equal to the amount that the customer with the 
-highest number of custom-named metrics has[4]. From looking at our own data, the customer with the largest
+highest number of custom-named metrics has[^4]. From looking at our own data, the customer with the largest
 amount of custom metrics had about 200 metrics. To be safe, we allocated 1000 slots.
 
 ## Trade offs
@@ -139,22 +139,20 @@ ElasticSearch / OpenSearch works well for indexing complex data schemas but has 
 is unbounded. Using application-level translation with the `Slots` approach, we can multiplex a fixed number of fields to
 represent a larger number of fields and prevent a mapping explosion. The trade off is an overall increase in complexity
 and reduction to the ease of debugging. The performance impact of adding an additional translation layer is negligible 
-with the help of an LRU cache. 
+with the help of an LRU cache.
 
+[^1]: In 2021, Elastic.co, the company that owns the license to ElasticSearch, changed their license to be more restrictive
+    and in conflict of open source values. In response, Amazon created a fork of ElasticSearch 7.10.2 named OpenSearch which
+    continues the Apache 2.0 license.
 
-### Footnotes
-**[1]** In 2021, Elastic.co, the company that owns the license to ElasticSearch, changed their license to be more restrictive
-and in conflict of open source values. In response, Amazon created a fork of ElasticSearch 7.10.2 named OpenSearch which
-continues the Apache 2.0 license.
+[^2]: ElasticSearch prevents you from shooting yourself in the foot too much by setting an 
+    [upper limit](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html) on the number of
+    fields in a mapping. As of writing this, the default is 1000. This limit can be increased at any time.
 
-**[2]** ElasticSearch prevents you from shooting yourself in the foot too much by setting an 
-[upper limit](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html) on the number of
-fields in a mapping. As of writing this, the default is 1000. This limit can be increased at any time.
+[^3]: Dynamic mapping has another problem, it will set the field settings to general purpose presets. If you want
+    more control of your fields, such as defining a 
+    [custom analyzer](https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-custom-analyzer.html),
+    you should define the field mappings explicitly.
 
-**[3]** Dynamic mapping has another problem, it will set the field settings to general purpose presets. If you want
-more control of your fields, such as defining a 
-[custom analyzer](https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-custom-analyzer.html),
-you should define the field mappings explicitly.
-
-**[4]** Generally speaking, having hundreds or even thousands of fields in an ElasticSearch mapping is
-not as much of an issue as the unbounded growth of the mapping.
+[^4]: Generally speaking, having hundreds or even thousands of fields in an ElasticSearch mapping is
+    not as much of an issue as the unbounded growth of the mapping.

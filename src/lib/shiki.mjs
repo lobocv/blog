@@ -1,3 +1,4 @@
+import { transformerMetaHighlight, transformerNotationHighlight } from '@shikijs/transformers';
 // Code highlighting theme. Token colours point at the mockup's CSS variables (--tok-*),
 // so code follows day/night with the rest of the page. Shared by Markdown and the home feature card.
 const v = name => `var(--tok-${name})`;
@@ -17,4 +18,17 @@ export const shikiTheme = {
 };
 // Posts often open a fence with a blank line; the mockup trimmed leading blank lines and trailing space.
 export const trimCode = { name: 'trim-code', preprocess: code => code.replace(/^\s*\n/, '').replace(/\s+$/, '') };
-export const shikiConfig = { theme: shikiTheme, langAlias: { postgresql: 'sql' }, transformers: [trimCode] };
+// ```go title="main.go" puts the filename on the block (shown instead of the language label)
+export const codeTitle = {
+  name: 'code-title',
+  pre(node) {
+    const title = this.options.meta?.__raw?.match(/title="([^"]+)"/)?.[1];
+    if (title) node.properties['data-title'] = title;
+  },
+};
+export const shikiConfig = {
+  theme: shikiTheme,
+  langAlias: { postgresql: 'sql' },
+  // {3,5-7} in the fence meta or a `// [!code highlight]` comment highlights lines
+  transformers: [trimCode, codeTitle, transformerMetaHighlight(), transformerNotationHighlight()],
+};

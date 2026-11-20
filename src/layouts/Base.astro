@@ -9,8 +9,11 @@ interface Props {
   description?: string;
   page: 'home' | 'posts' | 'post' | 'about' | '404';
   footer?: boolean;
+  /** Social preview image path, eg /og/<slug>.png */
+  image?: string;
 }
-const { title, description = 'Calvin Lobo on software architecture, Go, databases and developer efficiency.', page, footer = true } = Astro.props;
+const { title, description = 'Calvin Lobo on software architecture, Go, databases and developer efficiency.', page, footer = true, image = '/og/site.png' } = Astro.props;
+const ogImage = new URL(image, Astro.site);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 import Footer from '../components/Footer.astro';
 ---
@@ -35,6 +38,15 @@ import Footer from '../components/Footer.astro';
 {page === '404'
   ? <meta name="robots" content="noindex">
   : <link rel="canonical" href={canonical}>}
+<meta property="og:site_name" content="lobocv">
+<meta property="og:type" content={page === 'post' ? 'article' : 'website'}>
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={ogImage}>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="lobocv" href="/index.xml">
 <link rel="icon" href="/favicon.ico">
 <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-6GL7S6YEB3"></script>
@@ -47,9 +59,27 @@ import Footer from '../components/Footer.astro';
 <slot name="head" />
 </head>
 <body data-page={page}>
+{page !== 'home' && <div class="side-foliage page-side" id="page-side" aria-hidden="true"></div>}
 <Nav page={page}><slot name="nav" /></Nav>
 <slot />
 {footer && <Footer />}
 <ThemeToggle />
+{page !== 'home' && (
+  <script>
+    import { sideFoliage } from '../scripts/art/landscape.js';
+    // Starts below the horizon band and is redrawn when the page height changes (eg images loading)
+    const el = document.getElementById('page-side')!;
+    let drawn = 0;
+    const draw = () => {
+      const top = document.getElementById('horizon')?.offsetHeight ?? 0;
+      const h = document.body.scrollHeight - top;
+      if (Math.abs(h - drawn) < 40) return;
+      drawn = h;
+      el.style.top = `${top}px`;
+      sideFoliage(el, h);
+    };
+    new ResizeObserver(draw).observe(document.body);
+  </script>
+)}
 </body>
 </html>
