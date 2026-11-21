@@ -1,0 +1,55 @@
+---
+// Slider that shows how a radar pulse through wood changes with moisture, next to the air pulse
+// used for calibration. Used on the log moisture meter page. Without JS it shows the middle setting.
+// The diagram panel clones Detail bodies, so the script uses event delegation and no ids.
+import { AIR, BOX, TMAX, FULL_SCALE_MV, samples, toPath, woodPulse, x, y } from '../../lib/waveform';
+
+const start = 0.5;
+const air = samples(AIR);
+---
+<figure class="mw">
+  <svg viewBox={`0 0 ${BOX.w} ${BOX.h}`} role="img" aria-label="Two radar pulses lined up at the start. The pulse through air is tall and tight. The pulse through wood is shorter and more spread out, and the wetter the wood, the more so.">
+    <line class="axis" x1={x(0)} x2={x(TMAX)} y1={y(0)} y2={y(0)} />
+    <line class="guide" x1={x(0)} x2={x(TMAX)} y1={y(FULL_SCALE_MV)} y2={y(FULL_SCALE_MV)} />
+    <text class="tick" x={x(0) - 6} y={y(FULL_SCALE_MV) + 4} text-anchor="end">50 mV</text>
+    <text class="tick" x={x(TMAX)} y={BOX.h - 8} text-anchor="end">time →</text>
+    <path class="air" d={toPath(air)} />
+    <path class="wood" d={toPath(samples(woodPulse(start)))} />
+  </svg>
+  <label class="mw-control">
+    <span>Drier</span>
+    <input class="mw-slider" type="range" min="0" max="100" value={start * 100} aria-label="Moisture in the wood" />
+    <span>Wetter</span>
+  </label>
+  <div class="mw-legend"><span class="k air-k"></span>Air pulse (calibration)<span class="k wood-k"></span>Through the wood</div>
+  <figcaption>An illustration of the effect, not measured data.</figcaption>
+</figure>
+
+<script>
+  import { samples, toPath, woodPulse } from '../../lib/waveform';
+  document.addEventListener('input', e => {
+    const input = e.target;
+    if (!(input instanceof HTMLInputElement) || !input.matches('.mw-slider')) return;
+    const m = Number(input.value) / 100;
+    input.closest('.mw')?.querySelector('.wood')?.setAttribute('d', toPath(samples(woodPulse(m))));
+    // Keep the attribute in step, so a copy shown in the diagram panel starts where this one is
+    input.setAttribute('value', input.value);
+  });
+</script>
+
+<style>
+  .mw { margin: 8px 0 20px; }
+  svg { display: block; width: 100%; height: auto; }
+  .axis { stroke: var(--line); stroke-width: 1.5; }
+  .guide { stroke: var(--line); stroke-dasharray: 4 5; }
+  .tick { font: 11px "JetBrains Mono", monospace; fill: var(--ink-3); }
+  .air { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .wood { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+  .mw-control { display: flex; align-items: center; gap: 12px; margin-top: 6px; font: 12.5px "JetBrains Mono", monospace; color: var(--ink-2); }
+  .mw-slider { flex: 1; accent-color: var(--accent); }
+  .mw-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+  .k { display: inline-block; width: 22px; height: 0; border-top: 2.5px solid var(--accent); }
+  .k.air-k { border-top: 1.5px dashed var(--ink-3); }
+  .k.wood-k { margin-left: 8px; }
+  figcaption { margin-top: 6px; font-size: 13.5px; color: var(--ink-3); }
+</style>

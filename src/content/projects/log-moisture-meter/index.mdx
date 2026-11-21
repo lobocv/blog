@@ -1,0 +1,116 @@
+---
+title: "Log Moisture Meter: reading wet wood with radar"
+kind: work
+org: Sensors & Software
+role: Software Developer
+period: "2017"
+summary: I turned a university research project into a radar moisture meter for lumberyards, replacing a one to two day oven test with a reading on the spot.
+problem: Lumberyards dry logs for months, and hauling wet wood hundreds of kilometres costs fuel and truck wear. The only way to check a log was to cut a slice off it and bake it for 24 to 48 hours, so the yard waited days to know if a log was ready to ship.
+contribution: A University of New Brunswick researcher had shown that a radar pulse could reveal how wet a log is. I built the models that turn the radar's waveform into a moisture reading (one per tree species) and the Visual Basic app that drives the radar in the yard.
+outcome: The meter ran at two lumberyards, reading within 2 to 5% moisture of the oven test. The yard foreman used it to decide which logs were dry enough to ship, and every batch of data he sent back made the models better.
+impact:
+  - value: Days → seconds
+    label: Time to get a moisture reading, oven test vs radar
+  - value: 2–5%
+    label: Accuracy against the oven test, in moisture content
+  - value: ~1,000
+    label: Labelled radar readings from Spruce, Aspen and Douglas Fir logs
+  - value: 30%
+    label: More accurate with one model per species than one model for all
+order: 2
+draft: false
+---
+
+import MoistureWaveform from '../../../components/project/MoistureWaveform.astro';
+import PlsrFigure from '../../../components/project/PlsrFigure.astro';
+import * as d from './details';
+
+## How it works
+
+The meter is a radar held against the end of a log, an app that reads it, and a set of models trained on oven results. Switch the diagram above to the oven test to see what it replaced.
+
+### What the radar sees
+
+Water weakens a radar pulse. The meter compares a pulse through the wood with one fired through air, and the wetter the wood, the weaker and more spread out its pulse gets. Calibration lines the two up where they start. Drag the slider to see it.
+
+<MoistureWaveform />
+
+### How the model reads a wave
+
+A waveform is a long list of voltage samples taken over time. We need one number out of it: the moisture.
+
+PLSR (Partial Least Squares Regression) learns how to get that number from examples. We gave it waveforms from logs that were also tested in the oven, and it worked out a weight for every point in time. Points where wet and dry waves differ get large weights, positive or negative. Points that look the same whatever the moisture get weights close to zero.
+
+To read a new log, multiply each point of its wave by its weight and add them all up. The total is the moisture reading:
+
+```text
+Moisture = Weights · Waveform
+```
+
+What makes PLSR a good fit is that it doesn't treat every point on its own. Neighbouring points rise and fall together, so it first boils the waveform down to a few patterns that move with moisture and fits on those. That stops it from chasing noise when you only have about a thousand samples to learn from.
+
+Drag the slider below. The weights never change, only the wave does, and the reading follows the true moisture.
+
+<PlsrFigure />
+
+<Detail id="oven" diagram={d.oven} title="Why moisture was slow to measure" gist="Checking a log meant cutting a slice off it and baking it for a day or two.">
+
+Lumberyards fell trees and leave the logs to dry for months until they reach the right moisture for processing. Wet logs also travel hundreds of kilometres on large trucks, so even a small drop in moisture saves fuel and truck maintenance.
+
+To measure moisture, you cut a 2 to 3 inch slice off the log (called a cookie), weigh it, dry it in a low temperature oven for 24 to 48 hours and weigh it again. All of the lost weight is water:
+
+```text
+Moisture = (WetWeight - DryWeight) / DryWeight × 100
+```
+
+It's accurate, but every log you check costs a day or two of waiting.
+
+</Detail>
+
+<Detail id="radar" title="How radar sees water" gist="Water weakens a radar pulse, so comparing a pulse through wood with one through air tells you how wet the wood is.">
+
+A researcher at the University of New Brunswick was experimenting with ground penetrating radar (a radar that sends short pulses into a material and records what comes back) on logs. Water has a high dielectric constant (it responds strongly to an electric field), so the wetter the wood, the more it weakens the pulse. Their thesis suggested that comparing a pulse through the wood with one through air could measure moisture to within 2 to 5%.
+
+We used a Sensors & Software T1000 radar, placed flat on the cut face of the log or cookie.
+
+</Detail>
+
+<Detail id="calibration" diagram={d.calibration} title="Calibrating with an air pulse" gist="Before each batch, a pulse through air sets the starting point every reading is measured from.">
+
+Comparing waveforms only works if they all start from the same point. Before each batch of measurements, the app records a pulse through air and finds its first break: the moment the wave reaches 7 mV (the radar tops out at 50 mV). Every reading in the batch is lined up against it.
+
+We asked the yard to recalibrate at least once an hour.
+
+</Detail>
+
+<Detail id="plsr" diagram={d.plsr} title="Training the models" gist="About a thousand oven-tested readings from our partner lumberyards trained the first models.">
+
+Our partner lumberyards collected about a thousand radar waveforms from logs they also tested in the oven, across Spruce, Aspen and Douglas Fir, and sent them to me for analysis. I ran PLSR on them to get the weights for each model.
+
+A trained model is just a list of numbers, so a reading is one dot product. That kept it cheap to run in the app.
+
+</Detail>
+
+<Detail id="species" diagram={d.species} title="One model per species" gist="Models trained on one species were about 30% more accurate than one model for all of them.">
+
+Each species has a different fibre structure, so the same moisture gives a slightly different waveform. I trained a model for each species and one for all of them together.
+
+The combined model held up well, but the species models were about 30% more accurate. The yards already sort their logs by species, so picking the right model cost the operator nothing. The combined model stayed in the app for when they didn't know the species.
+
+</Detail>
+
+## In the yard
+
+<Detail id="app" diagram={d.app} title="The meter app" gist="A Visual Basic app drove the radar directly, so the foreman got a reading on the spot.">
+
+I wrote a Visual Basic app that talks directly to the radar. It handles calibration, lets the operator pick a species model, records every waveform and shows the moisture reading straight away.
+
+We shipped it to two lumberyards owned by the same company. Their yard foreman used the readings to decide which logs were dry enough to truck out and which needed more time.
+
+</Detail>
+
+<Detail id="feedback" diagram={d.feedback} title="Every batch made the models better" gist="The foreman sent back his readings with oven results for the same cookies, and I folded them into the next models.">
+
+The foreman sent me all of the data he collected. He also dried out the cookies he had measured and weighed them before and after, so every radar reading came with its true moisture. I added those to the training set and retrained the models, so each batch from the yard made the next readings a little more accurate.
+
+</Detail>

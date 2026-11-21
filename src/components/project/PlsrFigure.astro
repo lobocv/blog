@@ -1,0 +1,90 @@
+---
+// How PLSR turns a waveform into a reading, in three stacked panels: the wave among the training
+// waves, the weights PLSR learned, and wave × weight per point. Their sum is the reading on the gauge.
+// The model is a real fit on the made-up waves (src/lib/plsr.ts). Without JS it shows the middle setting.
+import { model, POINTS } from '../../lib/plsr';
+import { geometry, PANELS, W, H, xAt, T0, T1 } from '../../lib/plsr-figure';
+
+const start = 0.5;
+const g = geometry(start);
+const md = model();
+const shown = md.training.filter((_, i) => i % 5 === 0);
+---
+<figure class="pf">
+  <div class="pf-head">Moisture of the log being measured</div>
+  <label class="pf-control">
+    <span>Drier</span>
+    <input class="pf-slider" type="range" min="0" max="100" value={start * 100} aria-label="Moisture of the log being measured" />
+    <span>Wetter</span>
+  </label>
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Three panels. Top: the radar wave among the training waves. Middle: the weights PLSR learned for each point in time, positive in some places and negative in others. Bottom: the wave multiplied by the weights at each point. Adding up the bottom panel gives the moisture reading, shown on a scale next to the true moisture.">
+    {PANELS.map(p => (
+      <g>
+        <text class="ptitle" x={xAt(T0)} y={p.top + 12}>{p.title}</text>
+        <line class="zero" x1={xAt(T0)} x2={xAt(T1)} y1={p.mid} y2={p.mid} />
+      </g>
+    ))}
+    {shown.map(r => <path class="train" style={`opacity:${0.15 + 0.35 * (1 - r.moisture)}`} d={g.wavePath(r.wave)} />)}
+    <path class="wave" d={g.wavePath(g.wave)} />
+    <path class="weights" d={g.weightsPath} />
+    <g class="bars">{g.bars.map(b => <rect class={b.pos ? 'pos' : 'neg'} x={b.x} y={b.y} width={b.w} height={b.h} />)}</g>
+    <g class="gauge">
+      <text class="ptitle" x={xAt(T0)} y={g.gauge.y - 14}>4. Add it all up: the moisture reading</text>
+      <line class="ruler" x1={g.gauge.x0} x2={g.gauge.x1} y1={g.gauge.y + 6} y2={g.gauge.y + 6} />
+      {Array.from({ length: 11 }, (_, i) => <line class="ruler" x1={g.gauge.at(i / 10)} x2={g.gauge.at(i / 10)} y1={g.gauge.y + 6} y2={g.gauge.y + (i % 5 ? 10 : 13)} />)}
+      <text class="tick" x={g.gauge.x0} y={g.gauge.y + 28}>drier</text>
+      <text class="tick" x={g.gauge.x1} y={g.gauge.y + 28} text-anchor="end">wetter</text>
+      <circle class="truth" cx={g.gauge.at(start)} cy={g.gauge.y + 6} r="5" />
+      <path class="reading" d="M-6 -8 L6 -8 L0 2 Z" transform={`translate(${g.gauge.at(g.reading)} ${g.gauge.y + 2})`} />
+    </g>
+  </svg>
+  <div class="pf-legend"><span class="k truth-k"></span>True moisture (the oven result)<span class="k tri"></span>Model reading</div>
+  <figcaption>A real PLSR fit, with {POINTS} points per wave, trained on {md.training.length} made-up waves like the one above. Not measured data.</figcaption>
+</figure>
+
+<script>
+  import { geometry } from '../../lib/plsr-figure';
+  document.addEventListener('input', e => {
+    const input = e.target;
+    if (!(input instanceof HTMLInputElement) || !input.matches('.pf-slider')) return;
+    const fig = input.closest('.pf');
+    if (!fig) return;
+    const m = Number(input.value) / 100;
+    const g = geometry(m);
+    fig.querySelector('.wave')!.setAttribute('d', g.wavePath(g.wave));
+    fig.querySelectorAll('.bars rect').forEach((r, i) => {
+      const b = g.bars[i];
+      r.setAttribute('y', String(b.y));
+      r.setAttribute('height', String(b.h));
+      r.setAttribute('class', b.pos ? 'pos' : 'neg');
+    });
+    fig.querySelector('.truth')!.setAttribute('cx', String(g.gauge.at(m)));
+    fig.querySelector('.reading')!.setAttribute('transform', `translate(${g.gauge.at(g.reading)} ${g.gauge.y + 2})`);
+    // Keep the attribute in step, so a copy shown in the diagram panel starts where this one is
+    input.setAttribute('value', input.value);
+  });
+</script>
+
+<style>
+  .pf { margin: 8px 0 20px; }
+  svg { display: block; width: 100%; height: auto; }
+  .ptitle { font: 11.5px "JetBrains Mono", monospace; fill: var(--ink-2); }
+  .tick { font: 11px "JetBrains Mono", monospace; fill: var(--ink-3); }
+  .zero { stroke: var(--line); stroke-width: 1.5; }
+  .train { fill: none; stroke: var(--ink-3); stroke-width: 1; }
+  .wave { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+  .weights { fill: none; stroke: var(--ink); stroke-width: 1.75; stroke-linejoin: round; }
+  .bars .pos { fill: var(--accent); }
+  .bars .neg { fill: var(--ink-3); }
+  .ruler { stroke: var(--ink-3); stroke-width: 1.25; }
+  .truth { fill: var(--page); stroke: var(--ink); stroke-width: 2; }
+  .reading { fill: var(--accent); }
+  .pf-head { font: 12.5px "JetBrains Mono", monospace; color: var(--ink-2); }
+  .pf-control { display: flex; align-items: center; gap: 12px; margin: 6px 0 18px; font: 12.5px "JetBrains Mono", monospace; color: var(--ink-2); }
+  .pf-slider { flex: 1; accent-color: var(--accent); }
+  .pf-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+  .k { display: inline-block; }
+  .truth-k { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ink); }
+  .tri { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 10px solid var(--accent); margin-left: 8px; }
+  figcaption { margin-top: 6px; font-size: 13.5px; color: var(--ink-3); }
+</style>
