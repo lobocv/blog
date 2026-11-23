@@ -51,3 +51,17 @@ export function cameraPos(tops: number[], line: number, lastBottom: number): { i
   const next = tops[i + 1] ?? lastBottom;
   return { index: i, pos: i + Math.min(1, (line - tops[i]) / (next - tops[i])) };
 }
+
+/** Share of a chapter's scroll over which the wolf grows into that chapter's age */
+const AGE_BLEND = 0.2;
+
+/**
+ * The wolf's (fractional) age at a camera position, so growing up is tied to scroll like everything
+ * else in the scene: it blends from the previous chapter's age over the first AGE_BLEND of a chapter.
+ */
+export function ageAt(ages: number[], pos: number): number {
+  const i = Math.max(0, Math.min(ages.length - 1, Math.floor(pos)));
+  const f = pos - i, prev = ages[i - 1];
+  if (prev === undefined || f >= AGE_BLEND) return ages[i];
+  return prev + (ages[i] - prev) * Math.max(0, f) / AGE_BLEND;
+}

@@ -1,11 +1,11 @@
 // The journey scene: a pinned SVG landscape whose camera follows the chapter being read.
 // Chapter i spans world x = START + i * GAP to the next chapter, the same stretch the wolf covers while it is read. Layers move at 0.3 (far), 0.6 (mid) and 1 (ground);
-// the wolf stays at WOLF_X and runs while the camera moves (backwards when scrolling up).
+// the wolf stays at WOLF_X and its stride follows the distance scrolled (backwards when scrolling up).
 import { TIMELINE } from '../../data/timeline';
-import { cameraPos } from '../../lib/timeline';
+import { ageAt, cameraPos } from '../../lib/timeline';
 import { el, GROUND_Y, layerX, WOLF_X } from './kit';
 import { SCENES, type Follow, type Prop, type SceneLayers } from './scenes';
-import { drawWolf, poseWolf } from './wolf';
+import { drawWolf, poseWolf, strideLength } from './wolf';
 
 export const GAP = 700;
 const START = 600;
@@ -50,53 +50,50 @@ export function initJourney(root: HTMLElement): void {
     lastBottom = tops.at(-1)! + last.offsetHeight + 200;
   };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-  let target = 0, cam = 0, cycle = 0, gait = 0, age = chapters[0].age as number, active = -1, running = false;
+  let target = 0, pos = 0, cam = 0, cycle = 0, active = -1, running = false, stopTimer = 0;
+  const ages = chapters.map(c => c.age as number);
 
   const read = () => {
     const h = stage.offsetHeight + stage.getBoundingClientRect().top;
-    const { index, pos } = cameraPos(tops, scrollY + h + (innerHeight - h) * 0.35, lastBottom);
+    const r = cameraPos(tops, scrollY + h + (innerHeight - h) * 0.35, lastBottom);
+    pos = r.pos;
     target = START + pos * GAP - WOLF_X;
-    if (index !== active) {
-      active = index;
-      rows.forEach((r, k) => r.classList.toggle('active', k === index));
-      hudWhen.textContent = chapters[index].when;
-      hudEra.textContent = chapters[index].era;
+    if (r.index !== active) {
+      active = r.index;
+      rows.forEach((row, k) => row.classList.toggle('active', k === active));
+      hudWhen.textContent = chapters[active].when;
+      hudEra.textContent = chapters[active].era;
     }
   };
 
+  // Stop-motion: every frame is a pure function of scroll. The camera follows scroll exactly, the
+  // stride advances by distance travelled (so paws never slide), and when scrolling stops the scene
+  // freezes where it is, mid-stride or not.
   const frame = () => {
-    const goalAge = chapters[active].age;
-    const prev = cam;
-    if (reduce.matches) { cam = target; age = goalAge; }
-    else { cam += (target - cam) * 0.12; age += (goalAge - age) * 0.08; }
-    if (Math.abs(target - cam) < 0.05) cam = target;
-    if (Math.abs(goalAge - age) < 0.005) age = goalAge;
-    const v = cam - prev;
-    // Stride: one cycle per ~95 world units travelled, but never faster than a real gallop
-    // (~2.7 strides a second), so a fast fling reads as a sprint rather than a blur of legs
-    const step = Math.sign(v) * Math.min(Math.abs(v) / 95, 0.045);
-    const goalGait = reduce.matches ? 0 : Math.min(1, Math.abs(v) / 6);
-    gait += (goalGait - gait) * (goalGait > gait ? 0.2 : 0.06);
-    if (gait < 0.01) gait = 0;
-    cycle += step;
-    const moving = gait > 0;
+    running = false;
+    const d = target - cam;
+    cam = target;
+    const age = ageAt(ages, pos);
+    const lo = Math.floor(age), s = AGE_SCALE[lo] + (AGE_SCALE[Math.min(3, lo + 1)] - AGE_SCALE[lo]) * (age - lo);
+    cycle += d / (strideLength(age) * s);
 
     layers.far.setAttribute('transform', `translate(${-cam * 0.3},0)`);
     layers.mid.setAttribute('transform', `translate(${-cam * 0.6},0)`);
     layers.ground.setAttribute('transform', `translate(${-cam},0)`);
-    const s = AGE_SCALE[Math.floor(age)] + (AGE_SCALE[Math.min(3, Math.floor(age) + 1)] - AGE_SCALE[Math.floor(age)]) * (age - Math.floor(age));
     wolfG.setAttribute('transform', `translate(${WOLF_X},${GROUND_Y}) scale(${s})`);
-    poseWolf(wolf, cycle, gait, age);
+    poseWolf(wolf, cycle, reduce.matches ? 0 : 1, age);
     for (const p of props) {
       const dx = p.x - cam * p.layer - WOLF_X;
       p.el.classList.toggle('in', p.kind === 'draw' ? dx <= 0 && dx > -GAP * 2 : Math.abs(dx) < NEAR);
     }
     const wx = cam + WOLF_X;
     for (const f of follow) f.el.classList.toggle('in', wx >= f.x0 && wx <= f.x1);
-
-    // Sleep once everything has settled; scrolling wakes it again
-    if (cam === target && age === goalAge && !moving) { running = false; return; }
-    requestAnimationFrame(frame);
+    // Effects that loop on their own (radar pulses) only play while the scene is moving
+    if (d !== 0) {
+      stage.classList.add('moving');
+      clearTimeout(stopTimer);
+      stopTimer = window.setTimeout(() => stage.classList.remove('moving'), 160);
+    }
   };
   const wake = () => { if (!running && !document.hidden) { running = true; requestAnimationFrame(frame); } };
 

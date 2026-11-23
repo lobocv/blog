@@ -133,6 +133,18 @@ export function drawWolf(parent: SVGGElement): Wolf {
   return { ages, body };
 }
 
+/**
+ * World distance covered by one stride at an age (in drawing units, before display scale), so the
+ * legs keep pace with the ground: a planted front paw sweeps exactly the ground that scrolls past.
+ */
+export function strideLength(age: number): number {
+  const [[, u0], [t1, u1]] = GAIT.front;
+  const rad = Math.PI / 180;
+  const at = (b: Build) => (b.leg + 6) * (Math.sin(Math.abs(u0) * rad) + Math.sin(Math.abs(u1) * rad)) / t1;
+  const lo = Math.max(0, Math.min(3, Math.floor(age))), hi = Math.min(3, lo + 1), f = age - lo;
+  return at(BUILDS[lo]) + (at(BUILDS[hi]) - at(BUILDS[lo])) * f;
+}
+
 /** Upper and lower leg angles at a point in the cycle, eased between keyframes */
 export function gaitAngles(keys: Key[], t: number): [number, number] {
   t = ((t % 1) + 1) % 1;

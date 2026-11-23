@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TIMELINE, type Chapter, type SideItem } from '../data/timeline';
-import { attachSideItems, cameraPos, validateTimeline } from './timeline';
+import { ageAt, attachSideItems, cameraPos, validateTimeline } from './timeline';
 
 const ch = (over: Partial<Chapter>): Chapter => ({
   id: 'a', kind: 'work', start: '2020-01', when: '', era: '', title: 'T', scene: 'sky', age: 0, paragraphs: [], ...over,
@@ -89,5 +89,27 @@ describe('cameraPos', () => {
   });
   it('clamps past the end', () => {
     expect(cameraPos(tops, 5000, 1300)).toEqual({ index: 2, pos: 3 });
+  });
+});
+
+describe('ageAt', () => {
+  const ages = [0, 1, 1, 3];
+  it('uses the first age before the first chapter', () => {
+    expect(ageAt(ages, -0.4)).toBe(0);
+  });
+  it('holds a chapter age once past the blend', () => {
+    expect(ageAt(ages, 1.5)).toBe(1);
+    expect(ageAt(ages, 2.9)).toBe(1);
+  });
+  it('blends from the previous age across the start of a chapter', () => {
+    expect(ageAt(ages, 1)).toBe(0);
+    expect(ageAt(ages, 1.1)).toBeCloseTo(0.5);
+    expect(ageAt(ages, 1.2)).toBeCloseTo(1);
+  });
+  it('blends across a jump of more than one age', () => {
+    expect(ageAt(ages, 3.1)).toBeCloseTo(2);
+  });
+  it('holds the last age past the end', () => {
+    expect(ageAt(ages, 9)).toBe(3);
   });
 });
