@@ -1,0 +1,46 @@
+---
+import '../styles/journey.css';
+import Base from '../layouts/Base.astro';
+import { TIMELINE } from '../data/timeline';
+import { attachSideItems, validateTimeline } from '../lib/timeline';
+
+const errs = validateTimeline(TIMELINE);
+if (errs.length) throw new Error(`src/data/timeline.ts:\n  ${errs.join('\n  ')}`);
+const { chapters } = TIMELINE;
+const side = attachSideItems(chapters, TIMELINE.side);
+const sideLabel = { renovation: 'Renovation', hobby: 'Hobby', project: 'Project' };
+---
+<Base title="Journey · lobocv" description="Calvin Lobo's path from physics to staff software engineer." page="journey">
+  {TIMELINE.draft && <meta slot="head" name="robots" content="noindex">}
+  <div class="jr-stage" id="jr-stage" aria-hidden="true">
+    <svg id="jr-svg" viewBox="0 0 1600 400" preserveAspectRatio="xMidYMid slice"></svg>
+    <div class="jr-hud"><div><b id="jr-when">{chapters[0]?.when}</b><span id="jr-era">{chapters[0]?.era}</span></div></div>
+  </div>
+  <main class="jr-story wrap">
+    <header class="jr-intro">
+      <div class="eyebrow">Journey</div>
+      <h1>Calvin Lobo</h1>
+      <p class="meta">Staff Software Engineer</p>
+    </header>
+    {chapters.map((c, i) => (
+      <div class="jr-row" data-i={i} data-scene={c.scene} data-age={c.age}>
+        <section class={`jr-entry ${c.kind}`}>
+          <div class="jr-when">{c.when}</div>
+          <h2>{c.title}</h2>
+          {c.role && <p class="jr-role">{c.role}</p>}
+          {c.paragraphs.map(p => <p>{p}</p>)}
+          {c.bullets && <ul>{c.bullets.map(b => <li>{b}</li>)}</ul>}
+          {c.link && <p class="jr-link"><a href={c.link.href}>{c.link.label} →</a></p>}
+        </section>
+        <aside class="jr-aside">
+          {(side.get(c.id) ?? []).map(s => (
+            <details class="jr-side">
+              <summary><span class="jr-kind">{sideLabel[s.kind]}</span> {s.title}<span class="jr-side-when">{s.when}</span><span class="jr-summary">{s.summary}</span></summary>
+              {s.body && <p>{s.body}</p>}
+            </details>
+          ))}
+        </aside>
+      </div>
+    ))}
+  </main>
+</Base>
