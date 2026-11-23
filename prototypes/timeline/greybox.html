@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline greybox</title>
+<!-- Throwaway grey-box: tests layout, pacing and scroll feel only. Art is boxes, copy is placeholder. -->
+<style>
+  :root {
+    --page: #10141c; --stage: #171c26; --far: #222937; --mid: #2b3344; --ground: #353e52; --zone: #3f4a61;
+    --ink: #e6e9ef; --ink-2: rgba(230,233,239,.7); --ink-3: rgba(230,233,239,.45); --line: rgba(230,233,239,.12);
+    --accent: #9fb6ff; --off: #e0c27a; --life: #a5d6a7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page); color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+  .mono { font-family: ui-monospace, Menlo, monospace; }
+
+  /* Pinned scene */
+  .stage { position: sticky; top: 0; height: 34vh; min-height: 220px; background: var(--stage); border-bottom: 1px solid var(--line); overflow: hidden; z-index: 2; }
+  .stage svg { width: 100%; height: 100%; display: block; }
+  .hud { position: absolute; inset: 12px 16px auto 16px; display: flex; justify-content: space-between; gap: 16px; font: 12px ui-monospace, Menlo, monospace; color: var(--ink-2); pointer-events: none; }
+  #scene { max-width: 50%; text-align: right; }
+  .hud b { color: var(--ink); font-weight: 500; font-size: 20px; display: block; }
+  .zone-label { font: 13px ui-monospace, Menlo, monospace; fill: var(--ink-3); }
+  .prop { transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .8s; }
+  #wolf .muzzle { transition: opacity .6s; }
+
+  /* Story: main column plus a side rail for things that ran in parallel */
+  .story { max-width: 1040px; margin: 0 auto; padding: 48px 16px 60vh; }
+  .intro { padding: 24px 0 64px; max-width: 680px; }
+  .intro h1 { font-size: 32px; font-weight: 600; }
+  .intro p { color: var(--ink-2); }
+  .row { display: grid; grid-template-columns: minmax(0, 680px) minmax(0, 280px); gap: 48px; margin-bottom: 72px; }
+  .entry { padding: 4px 0 4px 20px; border-left: 2px solid var(--line); opacity: .35; transform: translateY(16px); transition: opacity .5s, transform .5s, border-color .5s; }
+  .row.seen .entry { transform: none; }
+  .row.active .entry { opacity: 1; border-color: var(--accent); }
+  .when { font: 12px ui-monospace, Menlo, monospace; color: var(--ink-3); letter-spacing: .04em; }
+  .tag { font: 11px ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-left: 8px; }
+  .entry h2 { font-size: 22px; font-weight: 600; margin: 2px 0 10px; }
+  .entry p, .entry li { color: var(--ink-2); font-size: 16px; }
+  .entry p + p, .entry p + ul, .entry ul + p { margin-top: 12px; }
+  .entry ul { padding-left: 18px; }
+  .entry.life { border-left-style: dotted; }
+  .entry.life .tag { color: var(--life); }
+  .row.active .entry.life { border-color: var(--life); }
+  .ph { color: var(--off); }
+
+  /* Side rail: one line each, expands for more */
+  .aside { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; opacity: .35; transition: opacity .5s; }
+  .row.active .aside { opacity: 1; }
+  .aside details { border: 1px dashed rgba(224,194,122,.35); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+  .aside summary { cursor: pointer; list-style: none; color: var(--ink-2); }
+  .aside summary::-webkit-details-marker { display: none; }
+  .aside summary::before { content: '+'; color: var(--off); font-family: ui-monospace, Menlo, monospace; margin-right: 8px; }
+  .aside details[open] summary::before { content: '−'; }
+  .aside summary .when { display: block; margin-left: 18px; }
+  .aside details p { color: var(--ink-2); margin-top: 8px; }
+  .aside .label { font: 11px ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--off); }
+
+  @media (max-width: 900px) {
+    .row { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .aside { padding-left: 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .entry, .aside, .prop { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <svg viewBox="0 0 1600 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g id="far"></g>
+    <g id="mid"></g>
+    <g id="ground"></g>
+    <g id="wolf">
+      <!-- a box-and-triangle wolf, facing right -->
+      <rect x="-60" y="-46" width="96" height="40" rx="10" fill="#8a93a8"/>
+      <polygon points="30,-66 70,-44 34,-20" fill="#a3abbd"/>
+      <polygon points="36,-66 44,-84 50,-62" fill="#a3abbd"/>
+      <rect class="muzzle" x="52" y="-50" width="18" height="10" fill="#e6e9ef" opacity="0"/>
+      <polygon points="-60,-40 -96,-56 -62,-26" fill="#8a93a8"/>
+      <g stroke="#8a93a8" stroke-width="9" stroke-linecap="round">
+        <line id="l1" x1="-40" y1="-10" x2="-40" y2="18"/>
+        <line id="l2" x1="20" y1="-10" x2="20" y2="18"/>
+      </g>
+      <text id="wolfLabel" x="-20" y="44" text-anchor="middle" class="zone-label">pup</text>
+    </g>
+  </svg>
+  <div class="hud"><div><b id="year"></b><span id="era"></span></div><div id="scene"></div></div>
+</div>
+
+<main class="story" id="story">
+  <header class="intro">
+    <h1>Calvin Lobo</h1>
+    <p class="mono">Staff Software Engineer · Toronto</p>
+    <p class="ph">[Your one-line intro: who you are as a developer and a person]</p>
+  </header>
+</main>
+
+<script>
+const LONG = '<p class="ph">[2 or 3 short paragraphs: what you built, what you learned, one story from this time]</p>';
+// Main entries are the chapters (work never overlaps). `side` holds things that ran in parallel.
+const ENTRIES = [
+  { kind: 'life', when: '~2004–2008', era: 'High school', title: 'High school', scene: 'fork in the trail (science / build)', age: 0,
+    body: '<p class="ph">[Your words: liked science, really liked building. No engineering classes, only science. Not much career guidance.]</p>' },
+  { kind: 'work', when: '2008–2013', era: 'University', title: 'McMaster University · Honours BSc Physics (co-op)', scene: 'night sky, constellations', age: 0,
+    body: LONG, list: ["Dean's Honour List every year"] },
+  { kind: 'life', when: '2013', era: 'University', title: 'Physics to software', scene: 'night sky, constellations', age: 1,
+    body: '<p class="ph">[Your words: how the switch happened]</p>' },
+  { kind: 'work', when: 'Jul 2013 – Nov 2017', era: 'Sensors & Software', title: 'Sensors & Software · Software Developer', scene: 'ground cutaway, radar pulses', age: 1,
+    body: LONG, list: ['Desktop software for ground penetrating radar (Python, C/C++)', 'ML on radar data, ROS sensor messaging'],
+    side: [{ label: 'Hobby', when: '[years]', title: '[Hobby]', body: '[A few lines, shown only when expanded]' }] },
+  { kind: 'work', when: 'Nov 2017 – Nov 2018', era: 'Patriot One', title: 'Patriot One · Software Engineer', scene: 'radar sweep', age: 2,
+    body: LONG, list: ['Led a team of 6', 'Concealed weapons detection with microwave radar and ML'] },
+  { kind: 'work', when: 'Nov 2018 – Dec 2019', era: 'Stratoscale', title: 'Stratoscale · Backend Software Developer', scene: 'low clouds in the valley', age: 2,
+    body: LONG, list: ['Private cloud: managed database services (MySQL, Postgres, MongoDB, Redis)'] },
+  { kind: 'work', when: 'Feb 2020 – 2024', era: 'Hootsuite', title: 'Hootsuite · Senior → Staff Engineer, Social Analytics', scene: 'snowy pass, avalanche', age: 2,
+    body: LONG, list: ['Led the team behind Avalanche, an event-driven analytics platform', 'Broke up a PHP monolith into Go services', 'Go and architecture guild lead'],
+    side: [{ label: 'Renovation', when: '[years]', title: '[Renovation]', body: '[A few lines, evenings and weekends]' },
+           { label: 'Renovation', when: '[years]', title: '[Renovation]', body: '[A few lines]' }] },
+  { kind: 'work', when: '2024 – Aug 2025', era: 'Hootsuite', title: 'Hootsuite · Staff Engineer, Architecture', scene: 'summit view', age: 3,
+    body: LONG, list: ['API-first standards and tooling across the org'] },
+  { kind: 'work', when: 'Sep 2025 – Aug 2026', era: 'Pulley', title: 'Pulley · Staff Engineer, Architect / Tech Lead', scene: 'ridge climb', age: 3,
+    body: LONG, list: ['Architect for equity management', 'Drove AI adoption: knowledge graphs, skills, MCP tools'],
+    side: [{ label: 'Project', when: '2025–now', title: 'Trellis', body: 'Knowledge graph for codebases plus agent workflows. [A few lines]' }] },
+  { kind: 'work', when: 'Aug 2026 – Oct 2026', era: 'Infisical', title: 'Infisical · Architect', scene: 'ridge climb', age: 3,
+    body: LONG, list: ['Node to Go migration strategy', 'Introduced decision records'] },
+  { kind: 'life', when: 'Now', era: 'Now', title: 'The view from here', scene: 'the rock over the valley (home hero)', age: 3,
+    body: '<p class="ph">[Your words: what you are looking for next]</p>' },
+];
+const AGES = ['pup', 'yearling', 'adult', 'grey muzzle'];
+const AGE_SCALE = [0.55, 0.72, 0.9, 1];
+const GAP = 700; // world units between entries
+const WOLF_X = 740; // near the centre so it survives the phone crop
+
+// --- Build the story
+const story = document.getElementById('story');
+const rows = ENTRIES.map(e => {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const tag = { work: 'Work', life: 'Life' }[e.kind];
+  row.innerHTML = `<section class="entry ${e.kind}"><div><span class="when">${e.when}</span><span class="tag">${tag}</span></div><h2>${e.title}</h2>` +
+    (e.body || '') + (e.list ? `<ul>${e.list.map(x => `<li>${x}</li>`).join('')}</ul>` : '') + `</section>` +
+    `<aside class="aside">${(e.side || []).map(s =>
+      `<details><summary><span class="label">${s.label}</span> ${s.title}<span class="when">${s.when}</span></summary><p class="${s.body.startsWith('[') ? 'ph' : ''}">${s.body}</p></details>`).join('')}</aside>`;
+  story.appendChild(row);
+  return row;
+});
+
+// --- Build the world
+const NS = 'http://www.w3.org/2000/svg';
+const mk = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; };
+const far = document.getElementById('far'), mid = document.getElementById('mid'), ground = document.getElementById('ground');
+const WORLD = ENTRIES.length * GAP + 1600;
+for (let x = -400; x < WORLD * 0.3 + 1600; x += 260) mk('polygon', { points: `${x},260 ${x + 130},${120 + (x * 7 % 60)} ${x + 260},260`, fill: 'var(--far)' }, far);
+for (let x = -400; x < WORLD * 0.6 + 1600; x += 180) mk('rect', { x, y: 210 + (x * 3 % 40), width: 150, height: 120, rx: 40, fill: 'var(--mid)' }, mid);
+mk('rect', { x: -800, y: 300, width: WORLD + 2400, height: 100, fill: 'var(--ground)' }, ground);
+
+const props = [];
+let zoneStart = 0;
+ENTRIES.forEach((e, i) => {
+  const x = 600 + i * GAP;
+  const next = ENTRIES[i + 1];
+  if (!next || next.scene !== e.scene) {
+    const x0 = 600 + zoneStart * GAP - GAP / 2, x1 = x + GAP / 2;
+    mk('rect', { x: x0 + 8, y: 40, width: x1 - x0 - 16, height: 256, rx: 6, fill: 'none', stroke: 'var(--zone)', 'stroke-dasharray': '8 8' }, ground);
+    mk('text', { x: x0 + 24, y: 70, class: 'zone-label' }, ground).textContent = 'SCENE: ' + e.scene;
+    zoneStart = i + 1;
+  }
+  // main prop on the trail
+  const color = e.kind === 'life' ? 'var(--life)' : 'var(--accent)';
+  const g = mk('g', { class: 'prop', style: 'transform: translateY(80px); opacity: 0' }, ground);
+  mk('rect', { x: x + 180, y: 220, width: 90, height: 80, rx: 4, fill: 'none', stroke: color, 'stroke-width': 2 }, g);
+  mk('text', { x: x + 225, y: 266, 'text-anchor': 'middle', class: 'zone-label', style: `fill:${color}` }, g).textContent = 'prop';
+  props.push({ g, x: x + 225, layer: 1 });
+  // side things sit in the background layer, so the wolf passes them without stopping
+  (e.side || []).forEach((s, k) => {
+    const sx = (x - WOLF_X) * 0.6 + WOLF_X + 120 + k * 150; // lines up with the wolf's arrival at x
+    const sg = mk('g', { class: 'prop', style: 'transform: translateY(60px); opacity: 0' }, mid);
+    mk('rect', { x: sx, y: 170, width: 120, height: 60, rx: 4, fill: 'var(--stage)', stroke: 'var(--off)', 'stroke-dasharray': '5 4' }, sg);
+    mk('text', { x: sx + 60, y: 205, 'text-anchor': 'middle', class: 'zone-label', style: 'fill:var(--off)' }, sg).textContent = s.label.toLowerCase();
+    props.push({ g: sg, x: sx, layer: 0.6 });
+  });
+  mk('line', { x1: x, y1: 300, x2: x, y2: 316, stroke: 'var(--ink-3)' }, ground);
+  mk('text', { x: x + 6, y: 336, class: 'zone-label' }, ground).textContent = e.when;
+});
+
+// --- Scroll → camera
+const stage = document.getElementById('stage');
+const wolf = document.getElementById('wolf'), l1 = document.getElementById('l1'), l2 = document.getElementById('l2');
+const hudYear = document.getElementById('year'), hudEra = document.getElementById('era'), hudScene = document.getElementById('scene');
+let camTarget = 0, cam = 0, stride = 0, active = -1, scale = AGE_SCALE[0];
+
+function readingLine() { const h = stage.offsetHeight; return scrollY + h + (innerHeight - h) * 0.35; }
+function onScroll() {
+  const y = readingLine();
+  const tops = rows.map(r => r.offsetTop);
+  let i = tops.findIndex((t, k) => y < (tops[k + 1] ?? Infinity));
+  if (y < tops[0]) { camTarget = 600 - WOLF_X - GAP * 0.6 * (1 - Math.max(0, y / tops[0])); i = 0; }
+  else {
+    const t0 = tops[i], t1 = tops[i + 1] ?? t0 + rows[i].offsetHeight + 200;
+    camTarget = 600 + (i + Math.min(1, (y - t0) / (t1 - t0))) * GAP - WOLF_X;
+  }
+  if (i !== active) setActive(i);
+}
+function setActive(i) {
+  active = i;
+  rows.forEach((r, k) => r.classList.toggle('active', k === i));
+  const e = ENTRIES[i];
+  hudYear.textContent = e.when; hudEra.textContent = e.era; hudScene.textContent = 'scene: ' + e.scene;
+  document.getElementById('wolfLabel').textContent = AGES[e.age];
+  wolf.querySelector('.muzzle').setAttribute('opacity', e.age === 3 ? 1 : 0);
+}
+const seen = new IntersectionObserver(es => es.forEach(x => x.isIntersecting && x.target.classList.add('seen')), { threshold: 0.1 });
+rows.forEach(r => seen.observe(r));
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame() {
+  const prev = cam;
+  cam = reduce ? camTarget : cam + (camTarget - cam) * 0.12;
+  const v = cam - prev;
+  far.setAttribute('transform', `translate(${-cam * 0.3},0)`);
+  mid.setAttribute('transform', `translate(${-cam * 0.6},0)`);
+  ground.setAttribute('transform', `translate(${-cam},0)`);
+  // Scrolling up rewinds: the wolf keeps facing right and the run cycle plays backwards
+  stride += v * 0.06;
+  const moving = Math.abs(v) > 0.3;
+  const swing = moving ? Math.sin(stride) * 14 : 0, bob = moving ? Math.abs(Math.sin(stride)) * -6 : 0;
+  l1.setAttribute('x2', -40 + swing); l2.setAttribute('x2', 20 - swing);
+  scale += (AGE_SCALE[ENTRIES[Math.max(active, 0)].age] - scale) * 0.08;
+  wolf.style.transform = `translate(${WOLF_X}px, ${300 + bob}px) scale(${scale})`;
+  for (const p of props) {
+    const near = Math.abs(p.x - cam * p.layer - WOLF_X) < 560;
+    p.g.style.transform = near ? 'translateY(0)' : `translateY(${p.layer === 1 ? 80 : 60}px)`;
+    p.g.style.opacity = near ? 1 : 0;
+  }
+  requestAnimationFrame(frame);
+}
+addEventListener('scroll', onScroll, { passive: true });
+addEventListener('resize', onScroll);
+onScroll(); cam = camTarget; frame();
+</script>
+</body>
+</html>
