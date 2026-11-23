@@ -1,6 +1,6 @@
 // Screenshots of one page at several scroll positions, through the DevTools protocol.
 // Usage: node prototypes/tools/shoot.mjs URL OUT_DIR WIDTHxHEIGHT [SPEC ...]
-// SPEC is `name=js expression` evaluated before the shot, eg `radar=scrollTo(0, 2400)`.
+// SPEC is `name=js expression` evaluated before the shot, eg `radar=scrollTo(0, 2400)`, or `resize=WxH`.
 // Reports page exceptions, so a script error shows up next to the images.
 import { spawn } from 'node:child_process'; import fs from 'node:fs';
 const [,, url, outDir, size = '1280x900', ...specs] = process.argv;
@@ -22,6 +22,8 @@ await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceSc
 await send('Page.navigate', { url }); await sleep(2500);
 for (const spec of specs.length ? specs : ['top=0']) {
   const [name, ...rest] = spec.split('='); const expr = rest.join('=');
+  // `resize=WxH` changes the viewport instead of evaluating
+  if (name === 'resize') { const [rw, rh] = expr.split('x').map(Number); await send('Emulation.setDeviceMetricsOverride', { width: rw, height: rh, deviceScaleFactor: 1, mobile: rw < 600 }); await sleep(1500); continue; }
   const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true });
   await sleep(1500);
   const shot = await send('Page.captureScreenshot', { format: 'png' });

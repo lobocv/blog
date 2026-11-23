@@ -1,16 +1,20 @@
 /* Journey page: a pinned scene above a column of chapters, with a side rail for things that ran in parallel. */
 
-.jr-stage { position: sticky; top: 52px; height: 34vh; min-height: 220px; overflow: hidden; z-index: 5; background: var(--jr-sky, var(--sheet)); border-bottom: 1px solid var(--line); margin-top: 52px; }
+.jr-stage { position: sticky; top: 52px; height: 34vh; min-height: 220px; overflow: hidden; z-index: 5; background: linear-gradient(var(--sky-1), var(--sky-2)); border-bottom: 1px solid var(--line); margin-top: 52px; }
 .jr-stage svg { width: 100%; height: 100%; display: block; }
 .jr-hud { position: absolute; inset: 12px 16px auto 16px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--jr-hud, var(--ink-2)); pointer-events: none; }
 .jr-hud b { display: block; font-weight: 500; font-size: 18px; color: var(--jr-hud-strong, var(--ink)); }
 
-.jr-story { padding-top: 48px; padding-bottom: 50vh; }
+.jr-story.wrap { padding-top: 48px; padding-bottom: 65vh; } /* lets the last row reach the reading line */
 .jr-intro { padding: 8px 0 64px; max-width: 680px; }
 .jr-intro h1 { font-size: clamp(36px, 5vw, 52px); line-height: 1.05; margin: 10px 0 6px; }
 
 .jr-row { display: grid; grid-template-columns: minmax(0, 680px) minmax(0, 280px); gap: 48px; margin-bottom: 72px; }
 .jr-entry { padding: 2px 0 2px 20px; border-left: 2px solid var(--line); transition: opacity .5s, transform .5s, border-color .5s; }
+/* Props rise in as the wolf nears them; only transform and opacity animate */
+.jr-prop { opacity: 0; transform: translateY(60px); transition: opacity .8s, transform .8s cubic-bezier(.2,.8,.2,1); }
+.jr-prop.in { opacity: 1; transform: none; }
+
 /* Rows dim and rise in only once the script runs, so the page reads fine without it */
 .jr-on .jr-entry, .jr-on .jr-aside { opacity: .4; }
 .jr-on .jr-row:not(.seen) .jr-entry { transform: translateY(16px); }
@@ -41,6 +45,6 @@
   .jr-aside:empty { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .jr-entry, .jr-aside { transition: none; }
+  .jr-entry, .jr-aside, .jr-prop { transition: none; }
   .jr-on .jr-row:not(.seen) .jr-entry { transform: none; }
 }
