@@ -10,7 +10,8 @@ export const GAP = 700;
 /** The wolf's fixed x in the 1600-wide viewBox, near the centre so it survives the phone crop */
 export const WOLF_X = 740;
 const START = 600;
-const AGE_SCALE = [0.55, 0.72, 0.9, 1];
+// The drawings already grow with age; this only adds a little extra size on top
+const AGE_SCALE = [1.1, 1.15, 1.2, 1.2];
 const NEAR = 560;
 
 /** Where something at world x belongs in a layer moving at speed k, so it passes the wolf when the wolf reaches x */
