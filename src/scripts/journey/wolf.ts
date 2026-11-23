@@ -17,9 +17,9 @@ interface Build {
 }
 const BUILDS: Build[] = [
   { len: 64, depth: 34, leg: 22, thick: 11, head: 1.25, muzzle: 0.6, ear: 1.25, ruff: 0, tail: 0.55, paw: 1.5, grey: false },  // pup
-  { len: 96, depth: 33, leg: 42, thick: 9, head: 1.0, muzzle: 0.9, ear: 1.1, ruff: 0.3, tail: 0.85, paw: 1.1, grey: false },   // yearling
-  { len: 110, depth: 42, leg: 40, thick: 11, head: 1.05, muzzle: 1, ear: 1, ruff: 1, tail: 1, paw: 1, grey: false },            // adult
-  { len: 110, depth: 42, leg: 40, thick: 11, head: 1.05, muzzle: 1, ear: 1, ruff: 1, tail: 1, paw: 1, grey: true },             // grey muzzle
+  { len: 98, depth: 38, leg: 36, thick: 10, head: 1.05, muzzle: 0.9, ear: 1.1, ruff: 0.3, tail: 0.85, paw: 1.1, grey: false }, // yearling
+  { len: 116, depth: 48, leg: 35, thick: 12.5, head: 1.15, muzzle: 1, ear: 1, ruff: 1, tail: 1, paw: 1.05, grey: false },      // adult
+  { len: 116, depth: 48, leg: 35, thick: 12.5, head: 1.15, muzzle: 1, ear: 1, ruff: 1, tail: 1, paw: 1.05, grey: true },       // grey muzzle
 ];
 
 /**
@@ -32,8 +32,11 @@ const GAIT: Record<'front' | 'hind', Key[]> = {
   front: [[0, -38, 0], [0.38, 32, 8], [0.52, 30, 88], [0.78, -26, 46], [1, -38, 0]],
   hind: [[0, -30, 4], [0.36, 34, 2], [0.5, 42, -40], [0.78, -6, -72], [1, -30, 4]],
 };
-/** When each leg's cycle starts: hind pair lands first, then the fore pair, each pair slightly split */
-const OFFSETS = { hindFar: 0, hindNear: 0.1, frontNear: 0.48, frontFar: 0.58 };
+/**
+ * When each leg's cycle starts, in a gallop's footfall order (back-far, back-near, front-near, front-far).
+ * Each pair is split by a quarter stride so the near and far legs read as two legs, not one.
+ */
+const OFFSETS = { hindFar: 0, hindNear: 0.24, frontNear: 0.5, frontFar: 0.74 };
 /** Head angle (degrees, positive is nose down) when standing and the extra drop at full gallop */
 const HEAD_REST = 10, HEAD_RUN = 16;
 
@@ -91,20 +94,21 @@ function drawAge(b: Build, parent: SVGGElement): AgeRig {
   svg('path', { d: d([back, wither, [L * 0.25, top + H * 0.3]]), fill: 'var(--jr-wolf-4)' }, torso);
   svg('path', { d: d([wither, chest, chestLow, [L * 0.28, top + H * 0.55]]), fill: 'var(--jr-wolf-3)' }, torso);
   svg('path', { d: d([[rx + 4, top + H * 0.4], mid, tuck, haunch, rump]), fill: 'var(--jr-wolf-1)', opacity: 0.55 }, torso);
-  svg('path', { d: open([rumpTop, back, wither]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, torso);
+  svg('path', { d: open([rumpTop, back]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, torso);
 
-  // Mane: a jagged collar behind the head, bigger with age
-  const hx = L / 2 + 2, hy = top + 6, s = b.head;
-  if (b.ruff > 0) {
-    const r = b.ruff;
-    svg('path', { d: d([[hx - 4, hy - 16 * s], [hx - 14 - 8 * r, hy - 8], [hx - 8 - 4 * r, hy - 4], [hx - 16 - 8 * r, hy + 6], [hx - 6 - 3 * r, hy + 6], [hx - 12 - 6 * r, hy + 18 * r], [hx + 4, hy + 16]]), fill: 'var(--jr-wolf-3)' }, torso);
-  }
+  // Neck: a solid wedge from the withers and chest up into the head, so the head can tilt without
+  // opening a gap. Adults carry a soft ruff along its back edge.
+  const hx = L / 2 + 2, hy = top + 6, s = b.head, r = b.ruff;
+  const nape: Pt = [hx - 4 * s, hy - 15 * s], throat: Pt = [hx + 14 * s, hy + 14 * s];
+  svg('path', { d: d([[wither[0] - 18, top + 4], [wither[0] - 10 - 4 * r, top - 4 - 3 * r], nape, [hx + 10 * s, hy - 6 * s], throat, chest, [L / 2 - 6, top + H * 0.45]]), fill: 'var(--jr-wolf-2)' }, torso);
+  svg('path', { d: d([[wither[0] - 10 - 4 * r, top - 4 - 3 * r], nape, [hx + 6 * s, hy + 2 * s], [L / 2 - 4, top + H * 0.3]]), fill: 'var(--jr-wolf-3)' }, torso);
+  svg('path', { d: open([back, [wither[0] - 10 - 4 * r, top - 4 - 3 * r], nape]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, torso);
 
   // Head, in its own group so it can tilt about the neck
   const neck: Pt = [hx - 6, hy + 6];
   const head = group(torso);
   const m = b.muzzle, e = b.ear;
-  const H_: Pt[] = [[-8, 6], [-2, -16], [10, -20], [18, -19], [18 + 16 * m, -12], [18 + 22 * m, -8], [18 + 19 * m, -2], [16 + 8 * m, 2], [14, 12], [6, 22]];
+  const H_: Pt[] = [[-10, 10], [-9, -4], [-4, -14], [-2, -16], [10, -20], [18, -19], [18 + 16 * m, -12], [18 + 22 * m, -8], [18 + 19 * m, -2], [16 + 8 * m, 2], [14, 12], [6, 22]];
   const at = (p: Pt): Pt => [hx + p[0] * s, hy + p[1] * s];
   svg('path', { d: d(H_.map(at)), fill: 'var(--jr-wolf-2)' }, head);
   svg('path', { d: d(([[-2, -16], [10, -20], [18, -19], [18 + 16 * m, -12], [14, -7], [2, -6]] as Pt[]).map(at)), fill: 'var(--jr-wolf-4)' }, head);
@@ -115,7 +119,7 @@ function drawAge(b: Build, parent: SVGGElement): AgeRig {
   svg('path', { d: d(([[3, -18], [0, -28 * e], [9, -19]] as Pt[]).map(at)), fill: 'var(--jr-wolf-4)' }, head);
   const [ex, ey] = at([17, -12]);
   svg('circle', { cx: ex, cy: ey, r: 1.6 * s, fill: 'var(--jr-rim)', opacity: 0.85 }, head);
-  svg('path', { d: open([at([-8, 0]), at([-2, -16]), at([-2 * e, -33 * e]), at([12, -19]), at([18, -19]), at([18 + 16 * m, -12]), at([18 + 22 * m, -8])]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, head);
+  svg('path', { d: open([at([-4, -15]), at([-2, -16]), at([-2 * e, -33 * e]), at([12, -19]), at([18, -19]), at([18 + 16 * m, -12]), at([18 + 22 * m, -8])]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, head);
 
   // Near legs in front of the body
   legs.push(drawLeg(parent, hipF, b, false, 'var(--jr-wolf-2)', OFFSETS.frontNear));

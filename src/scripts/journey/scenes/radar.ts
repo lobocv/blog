@@ -72,6 +72,7 @@ export const drawRadar: DrawScene = ({ mid, ground }, { x0, x1 }) => {
 
   // --- The radar cart (a four-wheeled GPR cart): yellow antenna box slung low between big wheels,
   // a dark frame, and a tall handle raked back with the console at the top
+  // Permanent scenery, not a prop: it stays put while the wolf runs past
   const cartProp = el('g', {}, ground), cx = x0 + 110, gy = GROUND_Y;
   // Drawn at a nominal size, then scaled up so the handle stands about level with the adult wolf's head
   const cart = el('g', { transform: `translate(${cx},${gy}) scale(1.75) translate(${-cx},${-gy})` }, cartProp);
@@ -98,7 +99,6 @@ export const drawRadar: DrawScene = ({ mid, ground }, { x0, x1 }) => {
   el('rect', { x: cx - 10, y: gy - 19, width: 12, height: 6, rx: 1, fill: 'var(--jr-frame)', opacity: 0.85 }, cart);
   // Near-side wheels in front
   wheel(cx - 26, 12, false); wheel(cx + 24, 12, false);
-  props.push({ el: cartProp, x: cx, layer: 1 });
 
   // --- Pulses rippling down from the wolf's feet while it crosses the cutaway
   const pulses = document.createElementNS('http://www.w3.org/2000/svg', 'g');
