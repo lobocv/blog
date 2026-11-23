@@ -14,6 +14,17 @@
 /* Props rise in as the wolf nears them; only transform and opacity animate */
 .jr-prop { opacity: 0; transform: translateY(60px); transition: opacity .8s, transform .8s cubic-bezier(.2,.8,.2,1); }
 .jr-prop.in { opacity: 1; transform: none; }
+/* Draw-in strokes (paths use pathLength="1") */
+.jr-draw path { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.1s ease-out; }
+.jr-draw.in path { stroke-dashoffset: 0; }
+/* Effects at the wolf's feet, only while it is in their scene */
+.jr-follow { opacity: 0; transition: opacity .6s; }
+.jr-follow.in { opacity: 1; }
+.jr-pulse { transform-box: fill-box; transform-origin: 50% 0; animation: jr-pulse 1.8s ease-out infinite; }
+.jr-pulse:nth-child(2) { animation-delay: .6s; }
+.jr-pulse:nth-child(3) { animation-delay: 1.2s; }
+.jr-follow:not(.in) .jr-pulse { animation-play-state: paused; }
+@keyframes jr-pulse { from { transform: scale(.15); opacity: .9; } to { transform: scale(1); opacity: 0; } }
 
 /* Rows dim and rise in only once the script runs, so the page reads fine without it */
 .jr-on .jr-entry, .jr-on .jr-aside { opacity: .4; }
@@ -45,6 +56,7 @@
   .jr-aside:empty { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .jr-entry, .jr-aside, .jr-prop { transition: none; }
+  .jr-entry, .jr-aside, .jr-prop, .jr-draw path, .jr-follow { transition: none; }
+  .jr-pulse { animation: none; opacity: 0; }
   .jr-on .jr-row:not(.seen) .jr-entry { transform: none; }
 }

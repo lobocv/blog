@@ -3,19 +3,16 @@
 // the wolf stays at WOLF_X and runs while the camera moves (backwards when scrolling up).
 import { TIMELINE } from '../../data/timeline';
 import { cameraPos } from '../../lib/timeline';
-import { el, GROUND_Y, SCENES, type Prop, type SceneLayers } from './scenes';
+import { el, GROUND_Y, layerX, WOLF_X } from './kit';
+import { SCENES, type Follow, type Prop, type SceneLayers } from './scenes';
 import { drawWolf, poseWolf } from './wolf';
 
 export const GAP = 700;
-/** The wolf's fixed x in the 1600-wide viewBox, near the centre so it survives the phone crop */
-export const WOLF_X = 740;
 const START = 600;
 // The drawings already grow with age; this only adds a little extra size on top
 const AGE_SCALE = [1.1, 1.15, 1.2, 1.2];
 const NEAR = 560;
 
-/** Where something at world x belongs in a layer moving at speed k, so it passes the wolf when the wolf reaches x */
-export const layerX = (x: number, k: number) => WOLF_X + k * (x - WOLF_X);
 
 export function initJourney(root: HTMLElement): void {
   const stage = root.querySelector<HTMLElement>('#jr-stage')!;
@@ -30,15 +27,18 @@ export function initJourney(root: HTMLElement): void {
   const layers: SceneLayers = { far: el('g', {}, svg), mid: el('g', {}, svg), ground: el('g', {}, svg) };
   const worldEnd = START + chapters.length * GAP + 1600;
   backdrop(layers, worldEnd);
-  const props: Prop[] = [];
+  const props: Prop[] = [], follow: Follow[] = [];
   for (let i = 0; i < chapters.length;) {
     let j = i; while (j + 1 < chapters.length && chapters[j + 1].scene === chapters[i].scene) j++;
     const chapterX = chapters.slice(i, j + 1).map((_, k) => START + (i + k) * GAP);
     const drawn = SCENES[chapters[i].scene](layers, { x0: chapterX[0], x1: chapterX.at(-1)! + GAP, chapterX });
     props.push(...(drawn.props ?? []));
+    follow.push(...(drawn.follow ?? []));
     i = j + 1;
   }
-  for (const p of props) p.el.classList.add('jr-prop');
+  for (const p of props) p.el.classList.add(p.kind === 'draw' ? 'jr-draw' : 'jr-prop');
+  const followG = el('g', { transform: `translate(${WOLF_X},${GROUND_Y})` }, svg);
+  for (const f of follow) { followG.appendChild(f.el); f.el.classList.add('jr-follow'); }
   const wolfG = el('g', {}, svg);
   const wolf = drawWolf(wolfG);
 
@@ -81,7 +81,12 @@ export function initJourney(root: HTMLElement): void {
     const s = AGE_SCALE[Math.floor(age)] + (AGE_SCALE[Math.min(3, Math.floor(age) + 1)] - AGE_SCALE[Math.floor(age)]) * (age - Math.floor(age));
     wolfG.setAttribute('transform', `translate(${WOLF_X},${GROUND_Y}) scale(${s})`);
     poseWolf(wolf, phase, moving, age);
-    for (const p of props) p.el.classList.toggle('in', Math.abs(p.x - cam * p.layer - WOLF_X) < NEAR);
+    for (const p of props) {
+      const dx = p.x - cam * p.layer - WOLF_X;
+      p.el.classList.toggle('in', p.kind === 'draw' ? dx <= 0 && dx > -GAP * 2 : Math.abs(dx) < NEAR);
+    }
+    const wx = cam + WOLF_X;
+    for (const f of follow) f.el.classList.toggle('in', wx >= f.x0 && wx <= f.x1);
 
     // Sleep once everything has settled; scrolling wakes it again
     if (cam === target && age === goalAge && !moving) { running = false; return; }
@@ -109,8 +114,8 @@ function backdrop({ far, mid, ground }: SceneLayers, worldEnd: number) {
     for (let x = x0; x <= x1; x += step) d += `L${x.toFixed(0)},${(y - rng() * amp).toFixed(0)}`;
     el('path', { d: d + `L${x1},${GROUND_Y + 10}Z`, fill }, layer);
   };
-  ridge(far, 0.3, 200, 90, 70, 'var(--r2)');
-  ridge(mid, 0.6, 250, 45, 55, 'var(--r3)');
-  el('rect', { x: -1600, y: GROUND_Y, width: worldEnd + 3200, height: 120, fill: 'var(--soil)' }, ground);
+  ridge(far, 0.3, 190, 90, 70, 'var(--r2)');
+  ridge(mid, 0.6, 236, 45, 55, 'var(--r3)');
+  el('rect', { x: -1600, y: GROUND_Y, width: worldEnd + 3200, height: 400 - GROUND_Y + 20, fill: 'var(--soil)' }, ground);
   el('rect', { x: -1600, y: GROUND_Y - 4, width: worldEnd + 3200, height: 8, fill: 'var(--turf-n)' }, ground);
 }
