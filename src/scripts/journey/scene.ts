@@ -50,7 +50,7 @@ export function initJourney(root: HTMLElement): void {
     lastBottom = tops.at(-1)! + last.offsetHeight + 200;
   };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-  let target = 0, cam = 0, phase = 0, age = chapters[0].age as number, active = -1, running = false;
+  let target = 0, cam = 0, cycle = 0, gait = 0, age = chapters[0].age as number, active = -1, running = false;
 
   const read = () => {
     const h = stage.offsetHeight + stage.getBoundingClientRect().top;
@@ -72,15 +72,21 @@ export function initJourney(root: HTMLElement): void {
     if (Math.abs(target - cam) < 0.05) cam = target;
     if (Math.abs(goalAge - age) < 0.005) age = goalAge;
     const v = cam - prev;
-    const moving = !reduce.matches && Math.abs(v) > 0.3;
-    phase += v * 0.06;
+    // Stride: one cycle per ~95 world units travelled, but never faster than a real gallop
+    // (~2.7 strides a second), so a fast fling reads as a sprint rather than a blur of legs
+    const step = Math.sign(v) * Math.min(Math.abs(v) / 95, 0.045);
+    const goalGait = reduce.matches ? 0 : Math.min(1, Math.abs(v) / 6);
+    gait += (goalGait - gait) * (goalGait > gait ? 0.2 : 0.06);
+    if (gait < 0.01) gait = 0;
+    cycle += step;
+    const moving = gait > 0;
 
     layers.far.setAttribute('transform', `translate(${-cam * 0.3},0)`);
     layers.mid.setAttribute('transform', `translate(${-cam * 0.6},0)`);
     layers.ground.setAttribute('transform', `translate(${-cam},0)`);
     const s = AGE_SCALE[Math.floor(age)] + (AGE_SCALE[Math.min(3, Math.floor(age) + 1)] - AGE_SCALE[Math.floor(age)]) * (age - Math.floor(age));
     wolfG.setAttribute('transform', `translate(${WOLF_X},${GROUND_Y}) scale(${s})`);
-    poseWolf(wolf, phase, moving, age);
+    poseWolf(wolf, cycle, gait, age);
     for (const p of props) {
       const dx = p.x - cam * p.layer - WOLF_X;
       p.el.classList.toggle('in', p.kind === 'draw' ? dx <= 0 && dx > -GAP * 2 : Math.abs(dx) < NEAR);

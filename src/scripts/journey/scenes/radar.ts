@@ -70,13 +70,35 @@ export const drawRadar: DrawScene = ({ mid, ground }, { x0, x1 }) => {
     props.push({ el: hyp, x: t.x, layer: 1, kind: 'draw' });
   }
 
-  // --- The radar cart, parked on the surface where the scene starts
-  const cart = el('g', {}, ground), cx = x0 + 70;
-  el('path', { d: path([[cx - 26, GROUND_Y - 34], [cx - 12, GROUND_Y - 12]], false), stroke: 'var(--stone-l)', 'stroke-width': 2.5, 'stroke-linecap': 'round' }, cart);
-  el('rect', { x: cx - 14, y: GROUND_Y - 16, width: 30, height: 10, rx: 2, fill: 'var(--stone)' }, cart);
-  el('rect', { x: cx - 14, y: GROUND_Y - 16, width: 30, height: 3, fill: 'var(--stone-l)' }, cart);
-  for (const wx of [cx - 9, cx + 11]) el('circle', { cx: wx, cy: GROUND_Y - 4, r: 4.5, fill: 'var(--stone-d)', stroke: 'var(--stone-l)', 'stroke-width': 1 }, cart);
-  props.push({ el: cart, x: cx, layer: 1 });
+  // --- The radar cart (a four-wheeled GPR cart): yellow antenna box slung low between big wheels,
+  // a dark frame, and a tall handle raked back with the console at the top
+  const cartProp = el('g', {}, ground), cx = x0 + 110, gy = GROUND_Y;
+  // Drawn at a nominal size, then scaled up so the handle stands about level with the adult wolf's head
+  const cart = el('g', { transform: `translate(${cx},${gy}) scale(1.75) translate(${-cx},${-gy})` }, cartProp);
+  const frame = { fill: 'none', stroke: 'var(--jr-frame)', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+  const wheel = (wx: number, r: number, far: boolean) => {
+    el('circle', { cx: wx, cy: gy - r, r, fill: far ? 'var(--jr-frame)' : 'var(--jr-tire)' }, cart);
+    if (!far) {
+      el('circle', { cx: wx, cy: gy - r, r: r * 0.55, fill: 'none', stroke: 'var(--jr-rimlight)', 'stroke-width': 1.6 }, cart);
+      el('circle', { cx: wx, cy: gy - r, r: 2.2, fill: 'var(--jr-rimlight)' }, cart);
+    }
+  };
+  // Far-side wheels peek out behind
+  wheel(cx - 24, 11, true); wheel(cx + 22, 11, true);
+  // Chassis and the handle: two rails rising back to a crossbar, with the console on top
+  el('path', { d: path([[cx - 28, gy - 20], [cx + 26, gy - 20]], false), ...frame }, cart);
+  el('path', { d: path([[cx + 14, gy - 22], [cx - 18, gy - 62], [cx - 34, gy - 86]], false), ...frame }, cart);
+  el('path', { d: path([[cx + 4, gy - 22], [cx - 24, gy - 58], [cx - 40, gy - 80]], false), ...frame, 'stroke-width': 3, opacity: 0.8 }, cart);
+  el('path', { d: path([[cx - 46, gy - 84], [cx - 28, gy - 90]], false), ...frame, 'stroke-width': 5 }, cart);
+  el('rect', { x: cx - 30, y: gy - 74, width: 14, height: 9, rx: 1.5, fill: 'var(--jr-frame)', transform: `rotate(-38 ${cx - 23} ${gy - 70})` }, cart);
+  el('rect', { x: cx - 48, y: gy - 96, width: 10, height: 7, rx: 3, fill: 'var(--jr-gpr-lit)', transform: `rotate(-20 ${cx - 43} ${gy - 92})` }, cart);
+  // The yellow antenna box, with a lit top facet and a small label plate
+  el('path', { d: path([[cx - 22, gy - 24], [cx + 20, gy - 24], [cx + 24, gy - 8], [cx - 24, gy - 8]]), fill: 'var(--jr-gpr)' }, cart);
+  el('path', { d: path([[cx - 22, gy - 24], [cx + 20, gy - 24], [cx + 21, gy - 20], [cx - 22, gy - 20]]), fill: 'var(--jr-gpr-lit)' }, cart);
+  el('rect', { x: cx - 10, y: gy - 19, width: 12, height: 6, rx: 1, fill: 'var(--jr-frame)', opacity: 0.85 }, cart);
+  // Near-side wheels in front
+  wheel(cx - 26, 12, false); wheel(cx + 24, 12, false);
+  props.push({ el: cartProp, x: cx, layer: 1 });
 
   // --- Pulses rippling down from the wolf's feet while it crosses the cutaway
   const pulses = document.createElementNS('http://www.w3.org/2000/svg', 'g');
