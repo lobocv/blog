@@ -113,7 +113,7 @@ export function skeleton(b: Build, cycle: number, gait: number): Pose {
   const T = frame(ribs), P = frame(pelvis), W = frame((ribs + pelvis) / 2);
 
   // --- Neck and head. The head is carried low and forward at a run, and holds its height while the body moves under it.
-  const neckBase = T(44, -6), neckLen = 33 * lerp(b.len, b.head, 0.5);
+  const neckBase = T(44, -6), neckLen = 26 * lerp(b.len, b.head, 0.5);
   const neckAngle = lerp(34 * RAD, RUN_NECK + 5 * RAD * arch + 0.4 * ribs, gait);
   const reach: Pt = [neckBase[0] + neckLen * Math.cos(neckAngle), neckBase[1] + neckLen * Math.sin(neckAngle)];
   const still = rot([44 * b.len, -6 * b.depth], 0);
@@ -126,8 +126,8 @@ export function skeleton(b: Build, cycle: number, gait: number): Pose {
   const pts: Record<string, Pt> = {
     mid, skull,
     hip: P(HIP[0], HIP[1]), shoulder: T(SHOULDER[0], SHOULDER[1]),
-    tailBase: P(-50, -3), croup: P(-32, 3), backRear: P(-12, 4), backFront: T(12, 4), withers: T(28, 5), neckTop: T(40, 4),
-    chestFront: T(52, -20), brisket: T(45, -40), chestBottom: T(22, -46), tuck: W(-4, -33), flank: P(-20, -32), seat: P(-46, -30), buttock: P(-55, -14),
+    tailBase: P(-50, -3), croup: P(-32, 3), backRear: P(-12, 4), backFront: T(12, 4), withers: T(28, 6), neckTop: T(40, 4),
+    chestFront: T(52, -20), brisket: T(46, -42), chestBottom: T(22, -49), tuck: W(-4, -39), flank: P(-20, -36), seat: P(-46, -30), buttock: P(-55, -14),
   };
 
   // --- Legs

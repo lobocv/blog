@@ -62,7 +62,7 @@ function axes(a: Pt, b: Pt): [Pt, Pt] {
 
 /** Shapes for one leg: a muscled upper part, a tapering lower part, the long foot bone and the paw */
 function legShapes(l: LegPose, p: Pose, out: Record<string, Pt[]>): void {
-  const [a, b, c, d] = l.joints, w = 1.12 * p.build.thick * (0.45 + 0.55 * p.build.leg), id = l.id;
+  const [a, b, c, d] = l.joints, w = 1.32 * p.build.thick * (0.45 + 0.55 * p.build.leg), id = l.id;
   const [u1, n1] = axes(a, b), [u2, n2] = axes(b, c), [u3, n3] = axes(c, d);
   if (l.hind) {
     // Thigh: wide at the hip, with the knee as a cap at the front
@@ -103,19 +103,23 @@ function shapes(p: Pose, gait: number): Record<string, Pt[]> {
   out.bodyBack = [q.tailBase, q.croup, q.backRear, q.backFront, q.withers, blade, rib, loin];
   out.bodyTop = [q.backFront, q.withers, q.neckTop, blade, T(18, -5)];
   out.bodyShoulder = [blade, q.neckTop, q.chestFront, T(46, -29), T(33, -27)];
-  out.bodyBelly = [q.brisket, q.chestBottom, q.tuck, q.flank, P(-25, -26), W(-3, -26), T(22, -37), T(40, -33)];
+  out.bodyBelly = [q.brisket, q.chestBottom, q.tuck, q.flank, P(-25, -29), W(-3, -31), T(22, -40), T(40, -35)];
   out.bodyHaunch = [q.croup, loin, P(-40, -20), P(-50, -10), q.tailBase];
-  out.backRim = [q.croup, q.backRear, q.backFront, q.withers];
+  out.backRim = [q.croup, q.backRear, q.backFront, T(18, 5)];
 
   // --- Neck: spans from the ribcage to the skull, so it stretches and bends with both
   const nape = H(-8, 7), cheek = H(-9, -7), throat = H(0, -13);
   const lift = (a: Pt, c: Pt, f: number, by: number): Pt => { const m = mix(a, c, f), [, n] = axes(a, c); return add(m, n, by); };
-  const mane = lift(q.withers, nape, 0.5, 1 + 3.5 * b.ruff), bib = lift(throat, q.chestFront, 0.5, 1 + 4.5 * b.ruff);
-  out.neck = [q.withers, mane, nape, cheek, throat, bib, q.chestFront, T(40, -12)];
-  const neckMid = mix(mix(q.withers, nape, 0.5), mix(q.chestFront, throat, 0.5), 0.45);
-  out.neckLit = [q.withers, mane, nape, cheek, neckMid, T(40, -12)];
-  out.neckTop = [q.withers, mane, nape, mix(nape, neckMid, 0.45), mix(q.withers, neckMid, 0.4)];
-  out.neckChest = [throat, bib, q.chestFront, mix(q.chestFront, neckMid, 0.5), mix(throat, neckMid, 0.5)];
+  // The mane: a thick ruff from behind the ears over the shoulders and down the chest, in ragged tufts
+  const r = b.ruff, start = T(18, 5);
+  const crest1 = lift(q.withers, nape, 0.2, 3 + 5 * r), crest2 = lift(q.withers, nape, 0.65, 3 + 5 * r);
+  const bib1 = lift(throat, q.chestFront, 0.35, 3 + 7 * r), bib2 = lift(throat, q.chestFront, 0.8, 3 + 8 * r), mane = crest2;
+  /** A point on the neck: `along` runs head to body, `across` runs top to underside */
+  const on = (along: number, across: number) => mix(mix(nape, q.withers, along), mix(throat, q.chestFront, along), across);
+  out.neck = [start, crest1, crest2, nape, cheek, throat, bib1, bib2, T(54, -27), q.brisket, T(38, -14)];
+  out.neckLit = [start, crest1, crest2, nape, cheek, on(0.12, 0.78), on(0.28, 0.5), on(0.45, 0.85), on(0.6, 0.52), on(0.8, 0.82), on(0.95, 0.45), T(34, -6)];
+  out.neckTop = [start, crest1, crest2, nape, on(0.08, 0.3), on(0.28, 0.12), on(0.42, 0.36), on(0.62, 0.12), on(0.8, 0.34), on(1, 0.1)];
+  out.neckChest = [throat, bib1, bib2, T(54, -27), q.brisket, on(0.9, 0.95), on(0.7, 0.8), on(0.5, 1.02), on(0.3, 0.82)];
 
   // --- Head. Ears lie back at a run.
   const m = b.muzzle, e = b.ear, back = 5 * gait;
@@ -134,7 +138,7 @@ function shapes(p: Pose, gait: number): Record<string, Pt[]> {
   out.earLit = [mix(earB, earF, 0.45), earTip, earF];
   out.earIn = [mix(earB, earF, 0.55), mix(earTip, earF, 0.3), mix(earB, earF, 0.9)];
   out.earFar = [H(6, 13), H(8 - back, 13 + 12 * e - 1.5 * gait), H(14, 12.5)];
-  out.headRim = [q.withers, mane, nape, occ, earB, earTip, earF, brow, stop, bridge, nose];
+  out.headRim = [start, crest1, crest2, nape, occ, earB, earTip, earF, brow, stop, bridge, nose];
 
   // --- Tail: bushy in the middle, tapering to the tip
   const t = p.tail, tw = [5, 8.5, 7].map(n => n * (0.4 + 0.6 * b.tail));
