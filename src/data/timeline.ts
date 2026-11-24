@@ -40,7 +40,7 @@ export interface SideItem {
 }
 
 export const TIMELINE: { draft: boolean; chapters: Chapter[]; side: SideItem[] } = {
-  draft: true,
+  draft: false,
   chapters: [
     { id: 'mcmaster', kind: 'work', start: '2008-09', end: '2013-04', when: '2008 – 2013', era: 'University',
       title: 'McMaster University', role: 'Honours BSc Physics (co-op)', scene: 'sky', age: 0, paragraphs: [
