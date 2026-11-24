@@ -124,8 +124,8 @@ function shapes(p: Pose, gait: number): Record<string, Pt[]> {
   // --- Head. Ears lie back at a run.
   const m = b.muzzle, e = b.ear, back = 5 * gait, k = b.baby;
   const occ = H(-3, 11 + 2 * k), earB = H(-2, 12 + 2 * k), earF = H(6 + k, 13.5 + 2.5 * k), earTip = H(-1 - back, 12.5 + 2 * k + 10 * e - 1.5 * gait);
-  const brow = H(15, 12 + 3 * k), stop = H(22 - k, 8 + 1.5 * k), bridge = H(22 + 12 * m, 5.2 + 1.5 * k), nose = H(22 + 17.5 * m, 3.4 + k), noseU = H(22 + 18 * m, -1.6);
-  const lip = H(22 + 14.5 * m, -5 - k), chin = H(22 + 8 * m, -7.5 - k), corner = H(17, -5.5), jaw = H(8, -13);
+  const brow = H(15, 12 + 1.5 * k), stop = H(22, 8 + 0.8 * k), bridge = H(22 + 12 * m, 5.2 + 0.6 * k), nose = H(22 + 17.5 * m, 3.4 + 0.3 * k), noseU = H(22 + 18 * m, -1.6);
+  const lip = H(22 + 14.5 * m, -5 - 0.3 * k), chin = H(22 + 8 * m, -7.5 - 0.3 * k), corner = H(17, -5.5), jaw = H(8, -13);
   out.head = [nape, occ, earB, earF, brow, stop, bridge, nose, noseU, lip, chin, jaw, throat, cheek];
   out.headTop = [occ, earF, brow, stop, bridge, nose, H(22 + 10 * m, 1.4), H(17, 4), H(3, 6)];
   out.headCheek = [H(-6, 3), H(3, 6), H(17, 4), H(22 + 10 * m, 1.4), noseU, lip, corner, H(8, -5), cheek];
@@ -133,7 +133,7 @@ function shapes(p: Pose, gait: number): Record<string, Pt[]> {
   out.headJaw = [corner, lip, chin, jaw, throat, H(6, -8)];
   out.nose = [H(22 + 15 * m, 4.2), nose, noseU, H(22 + 15.5 * m, -0.8)];
   out.mouth = [H(22 + 13.5 * m, -4.4), H(22 + 5 * m, -4), corner];
-  const ey = 1 + 0.7 * k;
+  const ey = 1 + 0.4 * k;
   out.eye = [H(17.5 - 2.5 * ey, 7 + k - 0.4 * ey), H(17.5 + 0.5 * ey, 7 + k + 1.2 * ey), H(17.5 + 2.5 * ey, 7 + k), H(17.5, 7 + k - 1.2 * ey)];
   out.ear = [earB, earTip, earF];
   out.earLit = [mix(earB, earF, 0.45), earTip, earF];

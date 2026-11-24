@@ -22,7 +22,7 @@ export interface Build {
   tail: number; /** neck fur */ ruff: number; /** puppy head: domed skull, blunt muzzle, big eyes */ baby: number; /** grey muzzle, 0 to 1 */ grey: number;
 }
 const BUILDS: Build[] = [
-  { len: 0.62, depth: 0.72, leg: 0.56, thick: 0.86, head: 0.95, muzzle: 0.5, ear: 0.8, paw: 1.4, tail: 0.5, ruff: 0, baby: 1, grey: 0 },    // pup
+  { len: 0.62, depth: 0.72, leg: 0.56, thick: 0.86, head: 0.74, muzzle: 0.74, ear: 0.95, paw: 1.4, tail: 0.5, ruff: 0, baby: 1, grey: 0 },    // pup
   { len: 0.9, depth: 0.8, leg: 0.96, thick: 0.8, head: 0.9, muzzle: 0.92, ear: 1.1, paw: 1.1, tail: 0.85, ruff: 0.3, baby: 0.15, grey: 0 },   // yearling
   { len: 1, depth: 1, leg: 1, thick: 1, head: 1, muzzle: 1, ear: 1, paw: 1, tail: 1, ruff: 1, baby: 0, grey: 0 },                          // adult
   { len: 1, depth: 1, leg: 1, thick: 1, head: 1, muzzle: 1, ear: 1, paw: 1, tail: 1, ruff: 1, baby: 0, grey: 1 },                          // grey muzzle
@@ -58,7 +58,7 @@ const HIP_H = 64;                                   // standing hip height
 const HIP: Pt = [-42, -18], SHOULDER: Pt = [40, -26]; // joints, relative to the middle of the back
 const HIND_BONES = [24, 30, 22], FRONT_BONES = [22, 27, 14];  // thigh, shank, foot; upper arm, forearm, foot
 const PAD = 2.5;                                    // height of the paw's joint above the ground when planted
-const RUN_NECK = 30 * RAD;                           // how far above level the neck reaches at a run
+const RUN_NECK = 17 * RAD;                           // how far above level the neck reaches at a run
 const FAR_DX = 5;                                   // the far legs sit a little forward, so both of a pair show
 
 export interface LegPose {
@@ -121,7 +121,7 @@ export function skeleton(b: Build, cycle: number, gait: number): Pose {
   const still = rot([44 * b.len, -6 * b.depth], 0);
   const steady: Pt = [still[0] + neckLen * Math.cos(RUN_NECK), HIP_H * b.leg - HIP[1] * b.depth + still[1] + neckLen * Math.sin(RUN_NECK)];
   const skull: Pt = [lerp(reach[0], steady[0], 0.15 * gait), lerp(reach[1], steady[1], 0.15 * gait)];
-  const headAngle = lerp(-4 * RAD, -7 * RAD + 0.3 * ribs + 4 * RAD * Math.cos(TAU * (c - 0.2)), gait);
+  const headAngle = lerp(-4 * RAD, -10 * RAD + 0.3 * ribs + 4 * RAD * Math.cos(TAU * (c - 0.2)), gait);
   const hs = 1.12 * b.head;
   const H = (x: number, y: number): Pt => { const p = rot([x * hs, y * hs], headAngle); return [skull[0] + p[0], skull[1] + p[1]]; };
 
