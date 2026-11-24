@@ -78,3 +78,15 @@ export function inlineLinks(text: string): (string | { label: string; href: stri
   if (last < text.length) out.push(text.slice(last));
   return out;
 }
+
+/**
+ * The document y the reader is reading at. It sits 35% of the way down the space below the scene,
+ * then over the last screenful of scroll it slides down to the bottom of the window, so the last
+ * chapter finishes as the page ends without blank space after it.
+ * `sceneBottom` is the scene's bottom edge in the window; `maxScroll` is the furthest the page scrolls.
+ */
+export function readingLine(scrollY: number, viewH: number, sceneBottom: number, maxScroll: number): number {
+  const below = viewH - sceneBottom;
+  const t = Math.min(1, Math.max(0, (scrollY - (maxScroll - viewH)) / viewH));
+  return scrollY + sceneBottom + below * (0.35 + 0.65 * t * t * (3 - 2 * t));
+}

@@ -2,7 +2,7 @@
 // Chapter i spans world x = START + i * GAP to the next chapter, the same stretch the wolf covers while it is read. Layers move at 0.3 (far), 0.6 (mid) and 1 (ground);
 // the wolf stays at WOLF_X and its stride follows the distance scrolled (backwards when scrolling up).
 import { TIMELINE } from '../../data/timeline';
-import { ageAt, cameraPos } from '../../lib/timeline';
+import { ageAt, cameraPos, readingLine } from '../../lib/timeline';
 import { el, GROUND_Y, layerX, WOLF_X } from './kit';
 import { SCENES, type Follow, type Prop, type SceneLayers } from './scenes';
 import { drawWolf, poseWolf, strideLength } from './wolf';
@@ -56,11 +56,12 @@ export function initJourney(root: HTMLElement): void {
 
   // --- Scroll → camera
   // Layout is read here only, never per scroll event, so scrolling doesn't force the browser to re-lay out the page
-  let tops: number[] = [], lastBottom = 0, stageW = 0, stageH = 0, stageTop = 0, stickTop = 0, scale = 1;
+  let tops: number[] = [], lastBottom = 0, maxScroll = 0, stageW = 0, stageH = 0, stageTop = 0, stickTop = 0, scale = 1;
   const measure = () => {
     tops = rows.map(r => r.getBoundingClientRect().top + scrollY);
     const last = rows.at(-1)!;
-    lastBottom = tops.at(-1)! + last.offsetHeight + 200;
+    lastBottom = tops.at(-1)! + last.offsetHeight;
+    maxScroll = document.documentElement.scrollHeight - innerHeight;
     stageW = stage.offsetWidth; stageH = stage.offsetHeight;
     stickTop = parseFloat(getComputedStyle(stage).top) || 0;
     // Where the stage would sit in the document if it never stuck
@@ -79,7 +80,7 @@ export function initJourney(root: HTMLElement): void {
 
   const read = () => {
     const h = stageH + Math.max(stickTop, stageTop - scrollY);
-    const r = cameraPos(tops, scrollY + h + (innerHeight - h) * 0.35, lastBottom);
+    const r = cameraPos(tops, readingLine(scrollY, innerHeight, h, maxScroll), lastBottom);
     pos = r.pos;
     target = START + pos * GAP - WOLF_X;
     if (r.index !== active) {

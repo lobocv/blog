@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TIMELINE, type Chapter, type SideItem } from '../data/timeline';
-import { ageAt, attachSideItems, cameraPos, inlineLinks, validateTimeline } from './timeline';
+import { ageAt, attachSideItems, cameraPos, inlineLinks, readingLine, validateTimeline } from './timeline';
 
 const ch = (over: Partial<Chapter>): Chapter => ({
   id: 'a', kind: 'work', start: '2020-01', when: '', era: '', title: 'T', scene: 'sky', age: 0, paragraphs: [], ...over,
@@ -126,5 +126,21 @@ describe('inlineLinks', () => {
   });
   it('leaves ordinary brackets alone', () => {
     expect(inlineLinks('radar (GPR) and [sic] text')).toEqual(['radar (GPR) and [sic] text']);
+  });
+});
+
+describe('readingLine', () => {
+  // A 1000px page in an 800px window: the scene covers the top 200px, and the page can scroll 2000px
+  const at = (scrollY: number) => readingLine(scrollY, 800, 200, 2000);
+  it('sits 35% of the way down the space below the scene for most of the page', () => {
+    expect(at(0)).toBe(200 + 0.35 * 600);
+    expect(at(1200)).toBe(1200 + 200 + 0.35 * 600);
+  });
+  it('reaches the bottom of the page at the end of the scroll, so the last chapter finishes there', () => {
+    expect(at(2000)).toBe(2000 + 800);
+  });
+  it('never moves backwards as the page scrolls down', () => {
+    let prev = -Infinity;
+    for (let y = 0; y <= 2000; y += 10) { expect(at(y)).toBeGreaterThanOrEqual(prev); prev = at(y); }
   });
 });
