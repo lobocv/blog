@@ -81,9 +81,9 @@ export const TIMELINE: { draft: boolean; chapters: Chapter[]; side: SideItem[] }
       ] },
     { id: 'pulley', kind: 'work', start: '2025-09', end: '2026-08', when: 'Sep 2025 – Aug 2026', era: 'Pulley',
       title: 'Pulley', role: 'Staff Software Engineer (Architect / Tech Lead)', scene: 'ridge', age: 3, paragraphs: [
-        "Pulley makes equity management software (cap tables, the record of who owns what in a company). I joined as a Staff Engineer with two jobs: tech lead of a product team, and architect for the core product.",
-        "The team (five developers, a product manager and a designer) builds the core cap table calculations and reporting, on a Go backend with a TypeScript and React front end. As architect I brought in Clean Architecture and Domain Driven Design so the codebase stays testable and flexible as it grows, and I advised the sibling product team and the AI teams.",
-        "A lot of my time went into how engineers work with AI agents: a graph-based knowledge base, shared skills and workflows, and MCP tools, together with the mentoring and documentation a team needs to adopt them. I also led the Go and Architecture guilds.",
+        "Pulley makes equity management software (cap tables, the record of who owns what in a company). I joined as a Staff Engineer with two jobs: team lead for the core product, and architect for the engineering org.",
+        "The core product is the cap table calculations and reporting. I led the team that builds it (five developers, a product manager and a designer), on a Go backend with a TypeScript and React front end.",
+        "As architect I brought in Clean Architecture and Domain Driven Design so the codebase stays testable and flexible as it grows, advised the sibling product team and the AI teams, and led the Go and Architecture guilds. I also helped the org adopt AI agents in its engineering work (eg a graph-based knowledge base, shared skills and workflows, and MCP tools).",
       ] },
     { id: 'infisical', kind: 'work', start: '2026-08', end: '2026-10', when: 'Aug 2026 – Oct 2026', era: 'Infisical',
       title: 'Infisical', role: 'Architect', scene: 'ridge', age: 3, paragraphs: [
