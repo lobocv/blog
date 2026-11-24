@@ -2,7 +2,7 @@
 // The same request answered two ways, side by side around one file tree. File system tools (grep, glob) find files
 // that use the prompt's words, related or not; the topic graph knows every file behind each concept.
 // Arrows are drawn by the script from each side into the files it finds; files the search misses turn red.
-// Loops while in view. Used on the concept_index post. Without JS it shows the final colours without arrows.
+// Loops while in view. Used on the communicating_effectively_with_agents post. Without JS it shows the final colours without arrows.
 type Topic = 'transfers' | 'schedules';
 type Row = { name: string; d: number; dir?: boolean; hit?: boolean; topics?: Topic[] };
 const rows: Row[] = [

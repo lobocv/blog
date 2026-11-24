@@ -1,7 +1,7 @@
 ---
 // What a topic graph links to: topics form trees, and each topic
 // links to the resources behind it, from any source. Links run many-to-many.
-// Tap a topic to see its resources, or a resource to see its topics. Used on the concept_index post.
+// Tap a topic to see its resources, or a resource to see its topics. Used on the communicating_effectively_with_agents post.
 // The lines are drawn by the script from the rendered rows; without JS it shows the two lists.
 interface Topic { id: string; root?: boolean; parent?: string; anchors: string[] }
 interface Resource { id: string; source: string; dir?: string; name: string }
