@@ -19,9 +19,10 @@ export function pine(parent: Element, x: number, y: number, h: number, snow = fa
 
 /** A faceted cloud: flat underside, lumpy top, lit from the upper right */
 export function cloud(parent: Element, x: number, y: number, w: number, h: number, opacity = 1): SVGGElement {
-  const g = el('g', { opacity }, parent);
-  shape(g, [[x, y], [x + w * 0.08, y - h * 0.45], [x + w * 0.24, y - h * 0.6], [x + w * 0.36, y - h], [x + w * 0.56, y - h * 0.92], [x + w * 0.68, y - h * 0.6], [x + w * 0.86, y - h * 0.5], [x + w, y]], 'var(--jr-cloud-2)');
-  shape(g, [[x + w * 0.36, y - h], [x + w * 0.56, y - h * 0.92], [x + w * 0.68, y - h * 0.6], [x + w * 0.86, y - h * 0.5], [x + w, y], [x + w * 0.5, y - h * 0.3]], 'var(--jr-cloud)');
+  // Opacity goes on each facet: a see-through group makes the browser paint it off-screen first
+  const g = el('g', {}, parent), o = { 'fill-opacity': opacity };
+  shape(g, [[x, y], [x + w * 0.08, y - h * 0.45], [x + w * 0.24, y - h * 0.6], [x + w * 0.36, y - h], [x + w * 0.56, y - h * 0.92], [x + w * 0.68, y - h * 0.6], [x + w * 0.86, y - h * 0.5], [x + w, y]], 'var(--jr-cloud-2)', o);
+  shape(g, [[x + w * 0.36, y - h], [x + w * 0.56, y - h * 0.92], [x + w * 0.68, y - h * 0.6], [x + w * 0.86, y - h * 0.5], [x + w, y], [x + w * 0.5, y - h * 0.3]], 'var(--jr-cloud)', o);
   return g;
 }
 
