@@ -1,7 +1,13 @@
 // One draw function per scene. Each draws into the shared layers over its own world span.
-// Every scene but the radar one is a labelled placeholder until its art is drawn.
+// The two scenes that have no chapter yet (fork, overlook) are labelled placeholders.
 import type { SceneId } from '../../data/timeline';
+import { drawAvalanche } from './scenes/avalanche';
+import { drawClouds } from './scenes/clouds';
 import { drawRadar } from './scenes/radar';
+import { drawRidge } from './scenes/ridge';
+import { drawSky } from './scenes/sky';
+import { drawSummit } from './scenes/summit';
+import { drawSweep } from './scenes/sweep';
 
 export type { DrawScene, Follow, Prop, SceneCtx, SceneLayers } from './kit';
 export { el, GROUND_Y } from './kit';
@@ -15,12 +21,12 @@ const placeholder = (name: string): DrawScene => ({ ground }, { x0, x1 }) => {
 
 export const SCENES: Record<SceneId, DrawScene> = {
   'fork': placeholder('fork in the trail'),
-  'sky': placeholder('night sky, constellations'),
+  'sky': drawSky,
   'radar-ground': drawRadar,
-  'radar-sweep': placeholder('radar sweep'),
-  'clouds': placeholder('low clouds in the valley'),
-  'avalanche': placeholder('snowy pass, avalanche'),
-  'summit': placeholder('summit view'),
-  'ridge': placeholder('ridge climb'),
+  'radar-sweep': drawSweep,
+  'clouds': drawClouds,
+  'avalanche': drawAvalanche,
+  'summit': drawSummit,
+  'ridge': drawRidge,
   'overlook': placeholder('the rock over the valley'),
 };

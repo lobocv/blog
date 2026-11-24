@@ -17,6 +17,13 @@
 /* Draw-in strokes (paths use pathLength="1") */
 .jr-draw path { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.1s ease-out; }
 .jr-draw.in path { stroke-dashoffset: 0; }
+/* Slides down into place (the avalanche) once the wolf arrives */
+.jr-slide { opacity: 0; transform: translate(-150px, -95px); transition: opacity .5s, transform 1.5s cubic-bezier(.45,0,.85,.55); }
+.jr-slide.in { opacity: 1; transform: none; }
+/* The radar beam swings about its bottom-left corner, only while the scene is moving */
+.jr-sweep { transform-box: fill-box; transform-origin: 0% 100%; animation: jr-sweep 3.2s ease-in-out infinite alternate; }
+.jr-stage:not(.moving) .jr-sweep { animation-play-state: paused; }
+@keyframes jr-sweep { from { transform: rotate(0deg); } to { transform: rotate(-164deg); } }
 /* Effects at the wolf's feet, only while it is in their scene */
 .jr-follow { opacity: 0; transition: opacity .6s; }
 .jr-follow.in { opacity: 1; }
@@ -57,7 +64,8 @@
   .jr-aside:empty { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .jr-entry, .jr-aside, .jr-prop, .jr-draw path, .jr-follow { transition: none; }
+  .jr-entry, .jr-aside, .jr-prop, .jr-slide, .jr-draw path, .jr-follow { transition: none; }
   .jr-pulse { animation: none; opacity: 0; }
+  .jr-sweep { animation: none; transform: rotate(-60deg); }
   .jr-on .jr-row:not(.seen) .jr-entry { transform: none; }
 }

@@ -19,6 +19,7 @@
   --soil: #0c0f18; --soil-2: #090c13; --path: #1a2136; --path-edge: #191f31; --path-near: #1c2439; --path-lt: #2a3350; --turf-n: #0a111f; --turf-n2: #080e1a; --stone: #1b2338; --stone-d: #121829; --stone-l: #283250; --grass1: #101a30; --grass2: #1c2c4a;
   --jr-wolf-1: #050912; --jr-wolf-2: #0b1222; --jr-wolf-3: #1a2747; --jr-wolf-4: #2e4274; --jr-rim: #c9d6fa; --jr-muzzle: #8a97bd;
   --jr-soil-1: #1d2539; --jr-soil-2: #161d30; --jr-soil-3: #111727; --jr-soil-4: #0c111d; --jr-pulse: #9fb6ff; --jr-target: #c9d6fa;
+  --jr-snow: #b9c4e6; --jr-snow-2: #7f8cb8; --jr-sky-ink: #dfe6ff; --jr-cloud: #8a9dd0; --jr-cloud-2: #55659a; --jr-wood: #3a2f3d; --jr-glow: #ffd27a;
   --jr-gpr: #c49a22; --jr-gpr-lit: #e3bd45; --jr-frame: #04060b; --jr-tire: #0b0e16; --jr-rimlight: #6b7aa6;
   --fol-sh: #070c16; --fol1: #0b1222; --fol1b: #111b30; --fol2: #18243f; --fol3: #22325a; --fol4: #2a3d6c; --side-fol: #9fb6ff; --side-op: .07; --topo: rgba(159, 182, 255, .05);
   color-scheme: dark;
@@ -42,6 +43,7 @@
   --soil: #5a4632; --soil-2: #4a3828; --path: #c2ad85; --path-edge: #bfae8b; --path-near: #cfbd9a; --path-lt: #e6dcc3; --turf-n: #3d6430; --turf-n2: #36592b; --stone: #8f877a; --stone-d: #6b645a; --stone-l: #b3ab9b; --grass1: #3f6534; --grass2: #6f9a50;
   --jr-wolf-1: #3a3631; --jr-wolf-2: #57514a; --jr-wolf-3: #756d62; --jr-wolf-4: #9a9080; --jr-rim: #fff6e0; --jr-muzzle: #e4ddcf;
   --jr-soil-1: #6e5843; --jr-soil-2: #5d4836; --jr-soil-3: #4c3a2b; --jr-soil-4: #3c2d21; --jr-pulse: #fff1c9; --jr-target: #efe4cc;
+  --jr-snow: #f6f9fc; --jr-snow-2: #cdd9e4; --jr-sky-ink: #ffffff; --jr-cloud: #ffffff; --jr-cloud-2: #d5e2ec; --jr-wood: #7a5a3a; --jr-glow: #ffb84a;
   --jr-gpr: #f0c419; --jr-gpr-lit: #ffe066; --jr-frame: #1b1b1d; --jr-tire: #2a2a2d; --jr-rimlight: #8c8c90;
   --fol-sh: #2f4f27; --fol1: #2c4529; --fol1b: #365232; --fol2: #46693d; --fol3: #64894b; --fol4: #7fa35a; --side-fol: #2d6a4c; --side-op: .10; --topo: rgba(45, 106, 76, .06);
   color-scheme: light;

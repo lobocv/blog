@@ -36,7 +36,7 @@ export function initJourney(root: HTMLElement): void {
     follow.push(...(drawn.follow ?? []));
     i = j + 1;
   }
-  for (const p of props) p.el.classList.add(p.kind === 'draw' ? 'jr-draw' : 'jr-prop');
+  for (const p of props) p.el.classList.add(p.kind === 'draw' ? 'jr-draw' : p.kind === 'slide' ? 'jr-slide' : 'jr-prop');
   const followG = el('g', { transform: `translate(${WOLF_X},${GROUND_Y})` }, svg);
   for (const f of follow) { followG.appendChild(f.el); f.el.classList.add('jr-follow'); }
   const wolfG = el('g', {}, svg);
@@ -84,7 +84,7 @@ export function initJourney(root: HTMLElement): void {
     poseWolf(wolf, cycle, reduce.matches ? 0 : 1, age);
     for (const p of props) {
       const dx = p.x - cam * p.layer - WOLF_X;
-      p.el.classList.toggle('in', p.kind === 'draw' ? dx <= 0 && dx > -GAP * 2 : Math.abs(dx) < NEAR);
+      p.el.classList.toggle('in', p.kind === 'draw' || p.kind === 'slide' ? dx <= 0 && dx > -GAP * 2 : Math.abs(dx) < NEAR);
     }
     const wx = cam + WOLF_X;
     for (const f of follow) f.el.classList.toggle('in', wx >= f.x0 && wx <= f.x1);

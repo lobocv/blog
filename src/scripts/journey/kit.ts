@@ -6,9 +6,10 @@ export interface SceneCtx { x0: number; x1: number; chapterX: number[] }
 /**
  * An element that reacts to the wolf. `x` is in its own layer's coordinates.
  * rise (default): rises in while the wolf is within reach. draw: its strokes draw in once the wolf
- * has reached x, and undraw on rewind (paths need pathLength="1").
+ * has reached x, and undraw on rewind (paths need pathLength="1"). slide: slides into place once the
+ * wolf has reached x, and back on rewind.
  */
-export interface Prop { el: SVGGElement; x: number; layer: 0.3 | 0.6 | 1; kind?: 'rise' | 'draw' }
+export interface Prop { el: SVGGElement; x: number; layer: 0.3 | 0.6 | 1; kind?: 'rise' | 'draw' | 'slide' }
 /** Drawn at the wolf's feet (not scaled with it) and shown while the wolf is between x0 and x1 in world x */
 export interface Follow { el: SVGGElement; x0: number; x1: number }
 export type DrawScene = (layers: SceneLayers, ctx: SceneCtx) => { props?: Prop[]; follow?: Follow[] };
