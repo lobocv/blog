@@ -38,6 +38,7 @@
 .jr-entry p + p, .jr-entry p + ul { margin-top: 12px; }
 .jr-entry ul { padding-left: 18px; margin-top: 8px; }
 .jr-link a { color: var(--accent); }
+.jr-entry p:not(.jr-link) a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 
 .jr-aside { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; transition: opacity .5s; }
 .jr-side { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; font-size: 14px; }

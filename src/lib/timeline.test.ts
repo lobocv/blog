@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TIMELINE, type Chapter, type SideItem } from '../data/timeline';
-import { ageAt, attachSideItems, cameraPos, validateTimeline } from './timeline';
+import { ageAt, attachSideItems, cameraPos, inlineLinks, validateTimeline } from './timeline';
 
 const ch = (over: Partial<Chapter>): Chapter => ({
   id: 'a', kind: 'work', start: '2020-01', when: '', era: '', title: 'T', scene: 'sky', age: 0, paragraphs: [], ...over,
@@ -111,5 +111,20 @@ describe('ageAt', () => {
   });
   it('holds the last age past the end', () => {
     expect(ageAt(ages, 9)).toBe(3);
+  });
+});
+
+describe('inlineLinks', () => {
+  it('leaves plain text as one piece', () => {
+    expect(inlineLinks('no links here')).toEqual(['no links here']);
+  });
+  it('splits out [label](url) links, keeping the text around them', () => {
+    expect(inlineLinks('I wrote [crashreporter](https://github.com/lobocv/crashreporter) and [pyperform](https://github.com/lobocv/pyperform).')).toEqual([
+      'I wrote ', { label: 'crashreporter', href: 'https://github.com/lobocv/crashreporter' },
+      ' and ', { label: 'pyperform', href: 'https://github.com/lobocv/pyperform' }, '.',
+    ]);
+  });
+  it('leaves ordinary brackets alone', () => {
+    expect(inlineLinks('radar (GPR) and [sic] text')).toEqual(['radar (GPR) and [sic] text']);
   });
 });

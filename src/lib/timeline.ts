@@ -65,3 +65,16 @@ export function ageAt(ages: number[], pos: number): number {
   if (prev === undefined || f >= AGE_BLEND) return ages[i];
   return prev + (ages[i] - prev) * Math.max(0, f) / AGE_BLEND;
 }
+
+/** Chapter text split into plain pieces and `[label](url)` links, in order */
+export function inlineLinks(text: string): (string | { label: string; href: string })[] {
+  const out: (string | { label: string; href: string })[] = [];
+  let last = 0;
+  for (const m of text.matchAll(/\[([^\]]+)\]\(([^)\s]+)\)/g)) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push({ label: m[1], href: m[2] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}

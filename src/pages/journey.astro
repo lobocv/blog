@@ -2,7 +2,7 @@
 import '../styles/journey.css';
 import Base from '../layouts/Base.astro';
 import { TIMELINE } from '../data/timeline';
-import { attachSideItems, validateTimeline } from '../lib/timeline';
+import { attachSideItems, validateTimeline, inlineLinks } from '../lib/timeline';
 
 const errs = validateTimeline(TIMELINE);
 if (errs.length) throw new Error(`src/data/timeline.ts:\n  ${errs.join('\n  ')}`);
@@ -28,7 +28,7 @@ const sideLabel = { renovation: 'Renovation', hobby: 'Hobby', project: 'Project'
           <div class="jr-when">{c.when}</div>
           <h2>{c.title}</h2>
           {c.role && <p class="jr-role">{c.role}</p>}
-          {c.paragraphs.map(p => <p>{p}</p>)}
+          {c.paragraphs.map(p => <p>{inlineLinks(p).map(x => typeof x === 'string' ? x : <a href={x.href}>{x.label}</a>)}</p>)}
           {c.bullets && <ul>{c.bullets.map(b => <li>{b}</li>)}</ul>}
           {c.link && <p class="jr-link"><a href={c.link.href}>{c.link.label} →</a></p>}
         </section>
