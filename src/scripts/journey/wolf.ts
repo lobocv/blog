@@ -1,181 +1,174 @@
 // The journey wolf, side-on and running right, in the hero wolf's faceted style: a dark base,
-// a few flat facets lit from the upper right, and a rim light along the back.
-// One parametric drawing grows through four ages; ground is y = 0, the body centre is x = 0.
-// Legs have two jointed segments driven by a gallop cycle (see GAIT).
+// flat facets lit from the upper right (the way it is facing), and a rim light along the back.
+// Every shape is rebuilt each frame from the skeleton in rig.ts, so the body bends and the legs
+// fold as one animal rather than as rigid parts turning on pins. Ground is y = 0.
+import { buildAt, skeleton, type LegPose, type Pose, type Pt } from './rig';
+export { strideLength } from './rig';
+
 const NS = 'http://www.w3.org/2000/svg';
+export interface Wolf { parts: Map<string, SVGElement>; shadow: SVGElement }
 
-interface Leg { upper: SVGGElement; lower: SVGGElement; hind: boolean; offset: number }
-interface AgeRig { g: SVGGElement; legs: Leg[]; torso: SVGGElement; head: SVGGElement; tail: SVGGElement; neck: Pt; rump: Pt }
-export interface Wolf { ages: AgeRig[]; body: SVGGElement }
+type Style = { fill?: string; stroke?: string; opacity?: number; open?: boolean; width?: number };
+const T1 = 'var(--jr-wolf-1)', T2 = 'var(--jr-wolf-2)', T3 = 'var(--jr-wolf-3)', T4 = 'var(--jr-wolf-4)', RIM = 'var(--jr-rim)';
+const rim: Style = { stroke: RIM, open: true, width: 1.7, opacity: 0.75 };
 
-interface Build {
-  /** torso length and depth */ len: number; depth: number;
-  /** leg length (ground to belly) and thickness */ leg: number; thick: number;
-  /** head size, muzzle length, ear size */ head: number; muzzle: number; ear: number;
-  /** mane at the neck (0 to 1), tail length */ ruff: number; tail: number;
-  paw: number; grey: boolean;
-}
-const BUILDS: Build[] = [
-  { len: 64, depth: 34, leg: 22, thick: 11, head: 1.25, muzzle: 0.6, ear: 1.25, ruff: 0, tail: 0.55, paw: 1.5, grey: false },  // pup
-  { len: 98, depth: 38, leg: 36, thick: 10, head: 1.05, muzzle: 0.9, ear: 1.1, ruff: 0.3, tail: 0.85, paw: 1.1, grey: false }, // yearling
-  { len: 116, depth: 48, leg: 35, thick: 12.5, head: 1.15, muzzle: 1, ear: 1, ruff: 1, tail: 1, paw: 1.05, grey: false },      // adult
-  { len: 116, depth: 48, leg: 35, thick: 12.5, head: 1.15, muzzle: 1, ear: 1, ruff: 1, tail: 1, paw: 1.05, grey: true },       // grey muzzle
+const legParts = (id: string, far: boolean): [string, Style][] => far
+  ? [[`${id}-upper`, { fill: T1 }], [`${id}-lower`, { fill: T1 }], [`${id}-foot`, { fill: T1 }], [`${id}-paw`, { fill: T1 }]]
+  : [[`${id}-upper`, { fill: T2 }], [`${id}-upperLit`, { fill: T3 }], [`${id}-lower`, { fill: T2 }], [`${id}-lowerLit`, { fill: T3, opacity: 0.7 }],
+    [`${id}-foot`, { fill: T2 }], [`${id}-footLit`, { fill: T3, opacity: 0.55 }], [`${id}-paw`, { fill: T2 }], [`${id}-pawLit`, { fill: T3, opacity: 0.7 }]];
+
+/** Every shape, back to front */
+const PARTS: [string, Style][] = [
+  ...legParts('hindFar', true), ...legParts('frontFar', true),
+  ['tail', { fill: T2 }], ['tailLit', { fill: T3 }], ['tailRim', rim],
+  ['earFar', { fill: T1 }],
+  ['body', { fill: T2 }], ['bodyBack', { fill: T3 }], ['bodyShoulder', { fill: T3 }], ['bodyTop', { fill: T4 }], ['bodyBelly', { fill: T1, opacity: 0.45 }], ['bodyHaunch', { fill: T3, opacity: 0.5 }],
+  ['neck', { fill: T2 }], ['neckLit', { fill: T3 }], ['neckTop', { fill: T4, opacity: 0.8 }], ['neckChest', { fill: T1, opacity: 0.5 }],
+  ['backRim', rim],
+  ['head', { fill: T2 }], ['headCheek', { fill: T3 }], ['headTop', { fill: T4 }], ['headGrey', { fill: 'var(--jr-muzzle)' }], ['headJaw', { fill: T1, opacity: 0.55 }],
+  ['ear', { fill: T3 }], ['earLit', { fill: T4 }], ['earIn', { fill: T1, opacity: 0.7 }],
+  ['nose', { fill: T1 }], ['mouth', { stroke: T1, open: true, width: 1.1, opacity: 0.8 }], ['eye', { fill: RIM, opacity: 0.9 }],
+  ['headRim', rim],
+  ...legParts('hindNear', false), ...legParts('frontNear', false),
 ];
 
-/**
- * A rotary gallop, as [phase, upper angle, lower angle] keyframes per leg type. Angles are degrees;
- * positive swings the foot backward (the wolf faces right). Front legs fold at the wrist on the way
- * forward; hind legs fold at the hock and reach under the body.
- */
-type Key = [number, number, number];
-const GAIT: Record<'front' | 'hind', Key[]> = {
-  front: [[0, -38, 0], [0.38, 32, 8], [0.52, 30, 88], [0.78, -26, 46], [1, -38, 0]],
-  hind: [[0, -30, 4], [0.36, 34, 2], [0.5, 42, -40], [0.78, -6, -72], [1, -30, 4]],
-};
-/**
- * When each leg's cycle starts, in a gallop's footfall order (back-far, back-near, front-near, front-far).
- * Each pair is split by a quarter stride so the near and far legs read as two legs, not one.
- */
-const OFFSETS = { hindFar: 0, hindNear: 0.24, frontNear: 0.5, frontFar: 0.74 };
-/** Head angle (degrees, positive is nose down) when standing and the extra drop at full gallop */
-const HEAD_REST = 10, HEAD_RUN = 16;
-
-type Pt = [number, number];
-const d = (pts: Pt[]) => 'M' + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L') + 'Z';
-const open = (pts: Pt[]) => 'M' + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L');
-
-function svg(tag: string, attrs: Record<string, string | number>, parent: Element): SVGElement {
-  const n = document.createElementNS(NS, tag) as SVGElement;
-  for (const k in attrs) n.setAttribute(k, String(attrs[k]));
-  parent.appendChild(n);
-  return n;
-}
-const group = (parent: Element, attrs: Record<string, string | number> = {}) => svg('g', attrs, parent) as SVGGElement;
-
-/** Two-segment leg hanging from the hip. The lower group pivots at the knee (front) or hock (hind). */
-function drawLeg(parent: SVGGElement, hip: Pt, b: Build, hind: boolean, fill: string, offset: number): Leg {
-  const len = -hip[1], w = b.thick, p = 5 * b.paw;
-  const up = hind ? len * 0.5 : len * 0.48, low = len - up;
-  const root = group(parent, { transform: `translate(${hip[0]},${hip[1]})` });
-  const upper = group(root);
-  svg('path', { d: hind
-    ? d([[-w * 1.05, -8], [w * 0.85, -8], [w * 0.45, up], [-w * 0.45, up]])
-    : d([[-w * 0.6, -6], [w * 0.6, -6], [w * 0.38, up], [-w * 0.4, up]]), fill }, upper);
-  const knee = group(upper, { transform: `translate(0,${up})` });
-  svg('circle', { r: w * 0.43, fill }, knee);
-  const lower = group(knee);
-  svg('path', { d: d([[-w * 0.4, 0], [w * 0.4, 0], [w * 0.3, low - p], [w * 0.3 + p * 1.3, low - p * 0.3], [w * 0.3 + p * 1.1, low], [-w * 0.4, low], [-w * 0.42, low - p]]), fill }, lower);
-  return { upper, lower, hind, offset };
-}
-
-function drawAge(b: Build, parent: SVGGElement): AgeRig {
-  const { len: L, depth: H, leg } = b;
-  const top = -(leg + H), belly = -leg;
-  const hipF: Pt = [L / 2 - 14, belly - 6], hipB: Pt = [-L / 2 + 14, belly - 8];
-  const legs: Leg[] = [];
-  // Far legs sit behind the body in the darkest tone
-  legs.push(drawLeg(parent, [hipF[0] + 6, hipF[1]], b, false, 'var(--jr-wolf-1)', OFFSETS.frontFar));
-  legs.push(drawLeg(parent, [hipB[0] + 6, hipB[1]], b, true, 'var(--jr-wolf-1)', OFFSETS.hindFar));
-
-  const torso = group(parent);
-  // Tail, sweeping back and down from the rump; it pivots at the rump
-  const t = b.tail, rx = -L / 2;
-  const rumpPivot: Pt = [rx + 2, top + H * 0.3];
-  const tail = group(torso);
-  svg('path', { d: d([[rx + 2, top + H * 0.12], [rx - 26 * t, top + H * 0.2], [rx - 50 * t, top + H * 0.55], [rx - 38 * t, top + H * 0.62], [rx - 22 * t, top + H * 0.48], [rx - 2, top + H * 0.5]]), fill: 'var(--jr-wolf-2)' }, tail);
-  svg('path', { d: d([[rx + 2, top + H * 0.12], [rx - 26 * t, top + H * 0.2], [rx - 50 * t, top + H * 0.55], [rx - 24 * t, top + H * 0.34]]), fill: 'var(--jr-wolf-3)' }, tail);
-
-  // Torso: base, then facets
-  const rump: Pt = [rx - 4, top + H * 0.45], rumpTop: Pt = [rx + 4, top + 3], back: Pt = [0, top + 2], wither: Pt = [L / 2 - 8, top - 2];
-  const chest: Pt = [L / 2 + 10, top + H * 0.5], chestLow: Pt = [L / 2 - 2, belly + 2], tuck: Pt = [-L * 0.1, belly - H * 0.12], haunch: Pt = [rx + 8, belly];
-  svg('path', { d: d([rumpTop, back, wither, chest, chestLow, tuck, haunch, rump]), fill: 'var(--jr-wolf-2)' }, torso);
-  const mid: Pt = [L * 0.05, top + H * 0.5];
-  svg('path', { d: d([rumpTop, back, wither, [L / 2 - 4, top + H * 0.35], mid, [rx + 4, top + H * 0.4]]), fill: 'var(--jr-wolf-3)' }, torso);
-  svg('path', { d: d([back, wither, [L * 0.25, top + H * 0.3]]), fill: 'var(--jr-wolf-4)' }, torso);
-  svg('path', { d: d([wither, chest, chestLow, [L * 0.28, top + H * 0.55]]), fill: 'var(--jr-wolf-3)' }, torso);
-  svg('path', { d: d([[rx + 4, top + H * 0.4], mid, tuck, haunch, rump]), fill: 'var(--jr-wolf-1)', opacity: 0.55 }, torso);
-  svg('path', { d: open([rumpTop, back]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, torso);
-
-  // Neck: a solid wedge from the withers and chest up into the head, so the head can tilt without
-  // opening a gap. Adults carry a soft ruff along its back edge.
-  const hx = L / 2 + 2, hy = top + 6, s = b.head, r = b.ruff;
-  const nape: Pt = [hx - 4 * s, hy - 15 * s], throat: Pt = [hx + 14 * s, hy + 14 * s];
-  svg('path', { d: d([[wither[0] - 18, top + 4], [wither[0] - 10 - 4 * r, top - 4 - 3 * r], nape, [hx + 10 * s, hy - 6 * s], throat, chest, [L / 2 - 6, top + H * 0.45]]), fill: 'var(--jr-wolf-2)' }, torso);
-  svg('path', { d: d([[wither[0] - 10 - 4 * r, top - 4 - 3 * r], nape, [hx + 6 * s, hy + 2 * s], [L / 2 - 4, top + H * 0.3]]), fill: 'var(--jr-wolf-3)' }, torso);
-  svg('path', { d: open([back, [wither[0] - 10 - 4 * r, top - 4 - 3 * r], nape]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, torso);
-
-  // Head, in its own group so it can tilt about the neck
-  const neck: Pt = [hx - 6, hy + 6];
-  const head = group(torso);
-  const m = b.muzzle, e = b.ear;
-  const H_: Pt[] = [[-10, 10], [-9, -4], [-4, -14], [-2, -16], [10, -20], [18, -19], [18 + 16 * m, -12], [18 + 22 * m, -8], [18 + 19 * m, -2], [16 + 8 * m, 2], [14, 12], [6, 22]];
-  const at = (p: Pt): Pt => [hx + p[0] * s, hy + p[1] * s];
-  svg('path', { d: d(H_.map(at)), fill: 'var(--jr-wolf-2)' }, head);
-  svg('path', { d: d(([[-2, -16], [10, -20], [18, -19], [18 + 16 * m, -12], [14, -7], [2, -6]] as Pt[]).map(at)), fill: 'var(--jr-wolf-4)' }, head);
-  svg('path', { d: d(([[18 + 16 * m, -12], [18 + 22 * m, -8], [18 + 19 * m, -2], [16 + 8 * m, 2], [14, -7]] as Pt[]).map(at)), fill: b.grey ? 'var(--jr-muzzle)' : 'var(--jr-wolf-3)' }, head);
-  if (b.grey) svg('path', { d: d(([[6, 22], [14, 12], [16, 4], [8, 8]] as Pt[]).map(at)), fill: 'var(--jr-muzzle)', opacity: 0.7 }, head);
-  // Ears laid slightly back, as when running
-  svg('path', { d: d(([[0, -16], [-2 * e, -33 * e], [12, -19]] as Pt[]).map(at)), fill: 'var(--jr-wolf-3)' }, head);
-  svg('path', { d: d(([[3, -18], [0, -28 * e], [9, -19]] as Pt[]).map(at)), fill: 'var(--jr-wolf-4)' }, head);
-  const [ex, ey] = at([17, -12]);
-  svg('circle', { cx: ex, cy: ey, r: 1.6 * s, fill: 'var(--jr-rim)', opacity: 0.85 }, head);
-  svg('path', { d: open([at([-4, -15]), at([-2, -16]), at([-2 * e, -33 * e]), at([12, -19]), at([18, -19]), at([18 + 16 * m, -12]), at([18 + 22 * m, -8])]), fill: 'none', stroke: 'var(--jr-rim)', 'stroke-width': 1.8, 'stroke-linejoin': 'round', opacity: 0.75 }, head);
-
-  // Near legs in front of the body
-  legs.push(drawLeg(parent, hipF, b, false, 'var(--jr-wolf-2)', OFFSETS.frontNear));
-  legs.push(drawLeg(parent, hipB, b, true, 'var(--jr-wolf-2)', OFFSETS.hindNear));
-  return { g: parent, legs, torso, head, tail, neck, rump: rumpPivot };
-}
-
 export function drawWolf(parent: SVGGElement): Wolf {
-  const body = group(parent);
-  const ages = BUILDS.map((b, i) => drawAge(b, group(body, { opacity: i === 0 ? 1 : 0 })));
-  return { ages, body };
+  const shadow = document.createElementNS(NS, 'ellipse');
+  shadow.setAttribute('fill', '#000');
+  parent.appendChild(shadow);
+  const parts = new Map<string, SVGElement>();
+  for (const [name, s] of PARTS) {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('fill', s.fill ?? 'none');
+    p.setAttribute('stroke-linejoin', 'round');
+    if (s.stroke) { p.setAttribute('stroke', s.stroke); p.setAttribute('stroke-width', String(s.width)); p.setAttribute('stroke-linecap', 'round'); }
+    // A hairline in the fill colour rounds the facets' corners and closes seams between moving shapes
+    else if (s.opacity === undefined) { p.setAttribute('stroke', s.fill!); p.setAttribute('stroke-width', '1.2'); }
+    if (s.opacity !== undefined) p.setAttribute('opacity', String(s.opacity));
+    if (s.open) p.dataset.open = '1';
+    parent.appendChild(p);
+    parts.set(name, p);
+  }
+  return { parts, shadow };
+}
+
+const add = (p: Pt, a: Pt, s: number, b: Pt = [0, 0], t = 0): Pt => [p[0] + a[0] * s + b[0] * t, p[1] + a[1] * s + b[1] * t];
+const mix = (a: Pt, b: Pt, f: number): Pt => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+/** Unit vector along a bone, and the one square to it (towards the wolf's front for a bone pointing down) */
+function axes(a: Pt, b: Pt): [Pt, Pt] {
+  const dx = b[0] - a[0], dy = b[1] - a[1], n = Math.hypot(dx, dy) || 1;
+  return [[dx / n, dy / n], [-dy / n, dx / n]];
+}
+
+/** Shapes for one leg: a muscled upper part, a tapering lower part, the long foot bone and the paw */
+function legShapes(l: LegPose, p: Pose, out: Record<string, Pt[]>): void {
+  const [a, b, c, d] = l.joints, w = 1.12 * p.build.thick * (0.45 + 0.55 * p.build.leg), id = l.id;
+  const [u1, n1] = axes(a, b), [u2, n2] = axes(b, c), [u3, n3] = axes(c, d);
+  if (l.hind) {
+    // Thigh: wide at the hip, with the knee as a cap at the front
+    const front = add(a, n1, 11 * w, u1, 3 * w), cap = add(b, n1, 4.6 * w, u1, 3 * w);
+    out[`${id}-upper`] = [add(a, u1, -10 * w), front, cap, add(b, n1, -4.6 * w, u1, 2 * w), add(a, n1, -14 * w, u1, 8 * w), add(a, n1, -12 * w, u1, -6 * w)];
+    out[`${id}-upperLit`] = [front, cap, add(b, n1, -1 * w), add(a, n1, 2 * w, u1, -3 * w)];
+    // Shank: the calf bulges at the top of the back edge and the hock comes to a point
+    const shin = add(b, n2, 4.6 * w, u2, -3 * w), ankle = add(c, n2, 2.2 * w);
+    out[`${id}-lower`] = [shin, ankle, add(c, u2, 2 * w), add(c, n2, -4.2 * w, u2, -2.5 * w), add(b, n2, -6.8 * w, u2, 7 * w), add(b, n2, -4.6 * w, u2, -2 * w)];
+    out[`${id}-lowerLit`] = [shin, ankle, add(c, n2, 0.4 * w), add(b, n2, 1 * w)];
+  } else {
+    // Upper arm lies against the chest; the elbow juts out behind
+    const front = add(a, n1, 8 * w, u1, 2 * w), fore = add(b, n1, 5 * w, u1, 2 * w);
+    out[`${id}-upper`] = [add(a, u1, -8 * w), front, fore, add(b, n1, -6 * w, u1, 3 * w), add(a, n1, -9 * w)];
+    out[`${id}-upperLit`] = [front, fore, add(b, n1, 0.5 * w), add(a, n1, 1 * w, u1, -2 * w)];
+    const top = add(b, n2, 5 * w, u2, -2 * w), wrist = add(c, n2, 2.7 * w);
+    out[`${id}-lower`] = [top, wrist, add(c, u2, 2 * w), add(c, n2, -2.7 * w), add(b, n2, -5.6 * w, u2, 6 * w), add(b, n2, -6.4 * w, u2, -3 * w)];
+    out[`${id}-lowerLit`] = [top, wrist, add(c, n2, 0.6 * w), add(b, n2, 1 * w)];
+  }
+  const f0 = add(c, n3, 2.5 * w, u3, -2 * w), f1 = add(d, n3, 2.1 * w);
+  out[`${id}-foot`] = [f0, f1, add(d, n3, -2.1 * w), add(c, n3, -2.6 * w, u3, -2 * w)];
+  out[`${id}-footLit`] = [f0, f1, add(d, n3, 0.4 * w), add(c, n3, 0.4 * w, u3, -2 * w)];
+  // Paw, flat on the ground when planted and trailing from the foot in the swing
+  const s = p.build.leg * p.build.paw, fw: Pt = [Math.cos(l.paw), Math.sin(l.paw)], up: Pt = [-fw[1], fw[0]];
+  const heel = add(d, fw, -3.2 * s, up, 2 * s), knuckle = add(d, fw, 3.5 * s, up, 3 * s), toe = add(d, fw, 8 * s, up, 0.4 * s);
+  out[`${id}-paw`] = [heel, knuckle, toe, add(d, fw, 7.4 * s, up, -2.5 * s), add(d, fw, -2.6 * s, up, -2.5 * s)];
+  out[`${id}-pawLit`] = [knuckle, toe, add(d, fw, 3 * s, up, 0.4 * s)];
+}
+
+/** Every shape for a pose, as points in skeleton coordinates */
+function shapes(p: Pose, gait: number): Record<string, Pt[]> {
+  const { pts: q, T, P, W, H, build: b } = p, out: Record<string, Pt[]> = {};
+  for (const l of p.legs) legShapes(l, p, out);
+
+  // --- Trunk: one silhouette across both halves of the spine, then planes of light and shade
+  out.body = [q.tailBase, q.croup, q.backRear, q.backFront, q.withers, q.neckTop, q.chestFront, q.brisket, q.chestBottom, q.tuck, q.flank, q.seat, q.buttock];
+  const blade = T(37, -9), rib = W(2, -13), loin = P(-30, -11);
+  out.bodyBack = [q.tailBase, q.croup, q.backRear, q.backFront, q.withers, blade, rib, loin];
+  out.bodyTop = [q.backFront, q.withers, q.neckTop, blade, T(18, -5)];
+  out.bodyShoulder = [blade, q.neckTop, q.chestFront, T(46, -29), T(33, -27)];
+  out.bodyBelly = [q.brisket, q.chestBottom, q.tuck, q.flank, P(-25, -26), W(-3, -26), T(22, -37), T(40, -33)];
+  out.bodyHaunch = [q.croup, loin, P(-40, -20), P(-50, -10), q.tailBase];
+  out.backRim = [q.croup, q.backRear, q.backFront, q.withers];
+
+  // --- Neck: spans from the ribcage to the skull, so it stretches and bends with both
+  const nape = H(-8, 7), cheek = H(-9, -7), throat = H(0, -13);
+  const lift = (a: Pt, c: Pt, f: number, by: number): Pt => { const m = mix(a, c, f), [, n] = axes(a, c); return add(m, n, by); };
+  const mane = lift(q.withers, nape, 0.5, 1 + 3.5 * b.ruff), bib = lift(throat, q.chestFront, 0.5, 1 + 4.5 * b.ruff);
+  out.neck = [q.withers, mane, nape, cheek, throat, bib, q.chestFront, T(40, -12)];
+  const neckMid = mix(mix(q.withers, nape, 0.5), mix(q.chestFront, throat, 0.5), 0.45);
+  out.neckLit = [q.withers, mane, nape, cheek, neckMid, T(40, -12)];
+  out.neckTop = [q.withers, mane, nape, mix(nape, neckMid, 0.45), mix(q.withers, neckMid, 0.4)];
+  out.neckChest = [throat, bib, q.chestFront, mix(q.chestFront, neckMid, 0.5), mix(throat, neckMid, 0.5)];
+
+  // --- Head. Ears lie back at a run.
+  const m = b.muzzle, e = b.ear, back = 5 * gait;
+  const occ = H(-3, 11), earB = H(1, 12.5), earF = H(10, 13.5), earTip = H(3 - back, 12.5 + 13 * e - 1.5 * gait);
+  const brow = H(16, 11.5), stop = H(22, 7.5), bridge = H(22 + 14 * m, 4.6), nose = H(22 + 20 * m, 2.8), noseU = H(22 + 20.5 * m, -1.8);
+  const lip = H(22 + 16.5 * m, -5), chin = H(22 + 9 * m, -7.5), corner = H(17, -5.5), jaw = H(9, -12);
+  out.head = [nape, occ, earB, earF, brow, stop, bridge, nose, noseU, lip, chin, jaw, throat, cheek];
+  out.headTop = [occ, earF, brow, stop, bridge, nose, H(22 + 12 * m, 1), H(17, 4), H(3, 6)];
+  out.headCheek = [H(-6, 3), H(3, 6), H(17, 4), H(22 + 12 * m, 1), noseU, lip, corner, H(8, -5), cheek];
+  out.headGrey = [stop, bridge, nose, noseU, lip, chin, corner, H(17, 4)];
+  out.headJaw = [corner, lip, chin, jaw, throat, H(6, -8)];
+  out.nose = [H(22 + 17.5 * m, 3.7), nose, noseU, H(22 + 18 * m, -1)];
+  out.mouth = [H(22 + 15.5 * m, -4.4), H(22 + 6 * m, -4), corner];
+  out.eye = [H(15, 6.6), H(18, 8.2), H(20, 7), H(17.5, 5.8)];
+  out.ear = [earB, earTip, earF];
+  out.earLit = [mix(earB, earF, 0.45), earTip, earF];
+  out.earIn = [mix(earB, earF, 0.55), mix(earTip, earF, 0.3), mix(earB, earF, 0.9)];
+  out.earFar = [H(6, 13), H(8 - back, 13 + 12 * e - 1.5 * gait), H(14, 12.5)];
+  out.headRim = [q.withers, mane, nape, occ, earB, earTip, earF, brow, stop, bridge, nose];
+
+  // --- Tail: bushy in the middle, tapering to the tip
+  const t = p.tail, tw = [5, 8.5, 7].map(n => n * (0.4 + 0.6 * b.tail));
+  const upper: Pt[] = [], lower: Pt[] = [];
+  for (let i = 0; i < 3; i++) {
+    const [, n] = axes(t[i], t[Math.min(3, i + 1)]);
+    // Square to a tail that points backwards, "up" is the negative side
+    upper.push(add(t[i], n, -tw[i]));
+    lower.push(add(t[i], n, tw[i]));
+  }
+  upper[0] = q.croup;
+  out.tail = [...upper, t[3], ...lower.reverse(), q.buttock];
+  out.tailLit = [...upper, t[3], t[2], t[1], t[0]];
+  out.tailRim = [...upper, t[3]];
+  return out;
 }
 
 /**
- * World distance covered by one stride at an age (in drawing units, before display scale), so the
- * legs keep pace with the ground: a planted front paw sweeps exactly the ground that scrolls past.
- */
-export function strideLength(age: number): number {
-  const [[, u0], [t1, u1]] = GAIT.front;
-  const rad = Math.PI / 180;
-  const at = (b: Build) => (b.leg + 6) * (Math.sin(Math.abs(u0) * rad) + Math.sin(Math.abs(u1) * rad)) / t1;
-  const lo = Math.max(0, Math.min(3, Math.floor(age))), hi = Math.min(3, lo + 1), f = age - lo;
-  return at(BUILDS[lo]) + (at(BUILDS[hi]) - at(BUILDS[lo])) * f;
-}
-
-/** Upper and lower leg angles at a point in the cycle, eased between keyframes */
-export function gaitAngles(keys: Key[], t: number): [number, number] {
-  t = ((t % 1) + 1) % 1;
-  let i = 0; while (i < keys.length - 2 && t >= keys[i + 1][0]) i++;
-  const [t0, u0, l0] = keys[i], [t1, u1, l1] = keys[i + 1];
-  const f = (1 - Math.cos(Math.PI * (t - t0) / (t1 - t0))) / 2;
-  return [u0 + (u1 - u0) * f, l0 + (l1 - l0) * f];
-}
-
-/**
- * Pose for one frame. `cycle` is the stride position (1 = one full stride; it runs backwards on rewind),
- * `gait` blends from standing (0) to a full gallop (1), and `age` is fractional while cross-fading.
+ * Pose for one frame. `cycle` is the stride position (1 = one full stride; it runs backwards on a rewind),
+ * `gait` is 1 for the gallop and 0 for standing, and `age` is fractional while the wolf grows.
  */
 export function poseWolf(w: Wolf, cycle: number, gait: number, age: number): void {
-  const lo = Math.floor(age), hi = Math.min(3, lo + 1), f = age - lo;
-  const wave = Math.sin(cycle * Math.PI * 2);
-  w.ages.forEach((rig, i) => {
-    const op = i === lo ? 1 - f : i === hi ? f : 0;
-    rig.g.setAttribute('opacity', String(op));
-    if (op === 0) return;
-    for (const l of rig.legs) {
-      const [u, lw] = gaitAngles(l.hind ? GAIT.hind : GAIT.front, cycle + l.offset);
-      l.upper.setAttribute('transform', `rotate(${(u * gait).toFixed(1)})`);
-      l.lower.setAttribute('transform', `rotate(${(lw * gait).toFixed(1)})`);
-    }
-    // The spine rocks with the stride; the head dips and the tail streams out behind
-    const pitch = wave * 3 * gait;
-    rig.torso.setAttribute('transform', `rotate(${pitch.toFixed(2)})`);
-    rig.head.setAttribute('transform', `rotate(${(HEAD_REST + HEAD_RUN * gait - pitch * 1.5).toFixed(1)},${rig.neck[0]},${rig.neck[1]})`);
-    rig.tail.setAttribute('transform', `rotate(${(-14 * gait + wave * 6 * gait).toFixed(1)},${rig.rump[0]},${rig.rump[1]})`);
-  });
-  // Lowest when the legs gather under the body, highest in the stretch after push-off
-  w.body.setAttribute('transform', `translate(0,${(-5 * gait * (1 + Math.cos(cycle * Math.PI * 4)) / 2).toFixed(1)})`);
+  const p = skeleton(buildAt(age), cycle, gait), all = shapes(p, gait);
+  for (const [name, el] of w.parts) {
+    const s = all[name];
+    if (!s?.length) continue;
+    el.setAttribute('d', 'M' + s.map(([x, y]) => `${x.toFixed(1)},${(-y).toFixed(1)}`).join('L') + (el.dataset.open ? '' : 'Z'));
+  }
+  w.parts.get('headGrey')!.setAttribute('opacity', (p.build.grey * 0.9).toFixed(2));
+  // The shadow on the ground shrinks and fades while all four paws are in the air
+  const sh = w.shadow, b = p.build;
+  sh.setAttribute('cx', (2 * b.len).toFixed(1));
+  sh.setAttribute('cy', '1');
+  sh.setAttribute('rx', (56 * b.len * (1 - 0.18 * p.air)).toFixed(1));
+  sh.setAttribute('ry', (3.2 * (1 - 0.25 * p.air)).toFixed(1));
+  sh.setAttribute('opacity', (0.3 - 0.12 * p.air).toFixed(2));
 }
