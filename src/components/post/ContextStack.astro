@@ -1,0 +1,299 @@
+---
+// Requests, run over and over. Each run passes through the layers of the system the agent has to
+// work out, one at a time. A poorly defined layer makes it bounce around and deflect before it gets through;
+// a well defined one lets it pass almost straight. Every run lands on a human effort axis (the work of filling
+// gaps and checking claims): high and scattered when layers are unclear, low and tight when they are clear.
+// Tap a layer to define it. Used on the concept_index post. Canvas; with reduced motion it shows results only.
+const layers = ['Architecture', 'Constraints', 'Terminology', 'User experience', 'Product vision'];
+// one way each layer confuses the agent, shown on hover (or tap) over its column
+const tips = [
+  'Unclear ownership boundaries make the agent guess where logic belongs.',
+  'Unstated limits (eg latency budgets, compliance rules) lead the agent to solutions that can’t ship.',
+  'Ambiguous, inconsistent language confuses both agents and readers.',
+  'The agent proposes changes that make the product harder to use.',
+  'The agent builds things no one asked for, or that add little value.',
+];
+---
+<figure class="cs" data-layers={JSON.stringify(layers)} data-tips={JSON.stringify(tips)}>
+  <div class="cs-stage">
+  <canvas class="cs-canvas" role="img" aria-label="Requests from you pass through five layers the agent has to work out: architecture, constraints, terminology, user experience and product vision. Poorly defined layers make it bounce around before it gets through, and the human effort needed to fill gaps and check the result is high and unpredictable. Well defined layers let it pass almost straight, and the effort is low and consistent."></canvas>
+  <div class="cs-tip" hidden><strong></strong><span></span></div>
+  </div>
+  <div class="cs-controls" role="group" aria-label="How well the layers are defined">
+    <button type="button" class="chip" data-all="0" aria-pressed="true">Poorly defined</button>
+    <button type="button" class="chip" data-all="1" aria-pressed="false">Well defined</button>
+  </div>
+  <figcaption>Each dot is a request through the system, placed by how much effort it takes to fill the gaps and check the result.</figcaption>
+</figure>
+
+<script>
+  type Pt = [number, number];
+  type Run = { pts: Pt[]; cum: number[]; t: number; good: number };
+  type Dot = { x: number; y: number; good: number; old: boolean };
+
+  function gauss() {
+    let u = 0, v = 0;
+    while (!u) u = Math.random();
+    while (!v) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function setup(fig: HTMLElement) {
+    const names = JSON.parse(fig.dataset.layers!) as string[];
+    const tips = JSON.parse(fig.dataset.tips!) as string[];
+    const tip = fig.querySelector<HTMLElement>('.cs-tip')!;
+    let tipTimer = 0;
+    const n = names.length;
+    const clear = names.map(() => false);
+    const canvas = fig.querySelector('canvas') as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d')!;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let W = 0, H = 0, runs: Run[] = [], dots: Dot[] = [], last = 0, spawnIn = 0, visible = false, raf = 0;
+    // fixed scribbles inside each poorly defined layer, in layer-relative units
+    const clutter = names.map(() => Array.from({ length: 3 }, () => [Math.random(), Math.random(), Math.random(), Math.random()]));
+
+    const geo = () => {
+      const top = 34, bottom = H - 22, x0 = W * 0.075, x1 = W * 0.74, gap = W < 500 ? 4 : 8;
+      const colW = (x1 - x0 - gap * (n - 1)) / n;
+      return {
+        top, bottom, mid: (top + bottom) / 2, srcX: Math.max(12, W * 0.025),
+        cols: names.map((_, i) => ({ x: x0 + i * (colW + gap), w: colW })),
+        end: x1, axisX: W - 8,
+      };
+    };
+    const qToY = (q: number) => { const g = geo(); return g.bottom - q * (g.bottom - g.top); };
+    const colors = () => {
+      const cs = getComputedStyle(fig);
+      const v = (k: string) => cs.getPropertyValue(k).trim();
+      return { ink3: v('--ink-3'), line: v('--line'), accent: v('--accent'), soft: v('--accent-soft'), bad: v('--tok-num'), sheet: v('--sheet') };
+    };
+    const good = () => clear.filter(Boolean).length;
+    const tint = (k: number, c: ReturnType<typeof colors>) => (k / n >= 0.6 ? c.accent : k / n >= 0.4 ? c.ink3 : c.bad);
+
+    const makeRun = (): Run => {
+      const g = geo(), r = Math.random, pad = 6, span = g.bottom - g.top;
+      let y = g.mid;
+      const pts: Pt[] = [[g.srcX, y]];
+      g.cols.forEach((col, i) => {
+        pts.push([col.x, y]);
+        if (clear[i]) {
+          // a clear layer: straight through with a small nudge
+          y += (r() - 0.5) * span * 0.08;
+        } else {
+          // an unclear layer: bounce wall to wall, deflecting hard each time
+          const bounces = 3 + Math.floor(r() * 4);
+          for (let b = 0; b < bounces; b++) {
+            y = g.top + pad + r() * (span - 2 * pad);
+            pts.push([b % 2 ? col.x + pad : col.x + col.w - pad, y]);
+          }
+          y = g.top + pad + r() * (span - 2 * pad);
+        }
+        y = Math.min(g.bottom - pad, Math.max(g.top + pad, y));
+        pts.push([col.x + col.w, y]);
+      });
+      const k = good();
+      const q = Math.min(0.97, Math.max(0.03, 0.33 + 0.52 * (k / n) + gauss() * (0.21 - 0.16 * (k / n))));
+      // effort is the inverse of how well the agent understood: high when it guessed
+      const landY = qToY(1 - q);
+      pts.push([g.axisX - 12 - r() * W * 0.13, landY]);
+      const cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      return { pts, cum, t: 0, good: k };
+    };
+
+    const at = (run: Run, d: number): Pt => {
+      d = Math.max(0, Math.min(d, run.cum[run.cum.length - 1]));
+      let i = 1;
+      while (i < run.cum.length - 1 && run.cum[i] < d) i++;
+      const a = run.pts[i - 1], b = run.pts[i];
+      const f = (d - run.cum[i - 1]) / (run.cum[i] - run.cum[i - 1] || 1);
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+    };
+
+    const land = (run: Run) => {
+      const end = run.pts[run.pts.length - 1];
+      dots.push({ x: end[0], y: end[1], good: run.good, old: false });
+      const cur = dots.filter(d => !d.old);
+      if (cur.length > 32) dots.splice(dots.indexOf(cur[0]), 1);
+      const old = dots.filter(d => d.old);
+      if (old.length && (cur.length > 6 || old.length > 32)) dots.splice(dots.indexOf(old[0]), 1);
+    };
+
+    const prefill = () => {
+      runs = [];
+      for (let i = 0; i < 28; i++) land(makeRun());
+      runs = [makeRun()];
+      runs[0].t = runs[0].cum[runs[0].cum.length - 1];
+    };
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      W = canvas.clientWidth; H = W < 500 ? 260 : 290;
+      canvas.style.height = H + 'px';
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      runs = []; dots = [];
+      if (reduce) prefill();
+      draw();
+    };
+
+    const draw = () => {
+      const c = colors(), g = geo(), small = W < 500;
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = '10.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = c.ink3;
+      ctx.textAlign = 'right'; ctx.fillText('HUMAN EFFORT ↑', g.axisX, g.top - 12);
+
+      ctx.fillStyle = c.accent;
+      ctx.beginPath(); ctx.arc(g.srcX, g.mid, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.textAlign = 'center'; ctx.fillText('YOU', Math.max(g.srcX, 11), g.mid - 13);
+
+      // one column per layer
+      g.cols.forEach((col, i) => {
+        const ok = clear[i], h = g.bottom - g.top;
+        ctx.fillStyle = ok ? c.soft : c.sheet;
+        ctx.strokeStyle = ok ? c.accent : c.bad; ctx.lineWidth = 1.5;
+        ctx.setLineDash(ok ? [] : [4, 4]);
+        ctx.beginPath(); ctx.roundRect(col.x, g.top, col.w, h, 7);
+        if (ok) { ctx.fillStyle = c.sheet; ctx.fill(); ctx.fillStyle = c.soft; }
+        ctx.fill(); ctx.stroke();
+        ctx.setLineDash([]);
+        if (!ok) {
+          ctx.strokeStyle = c.bad; ctx.globalAlpha = 0.2; ctx.lineWidth = 1;
+          for (const [a, b2, cc, d] of clutter[i]) {
+            ctx.beginPath(); ctx.moveTo(col.x + 4 + a * (col.w - 8), g.top + 6 + b2 * (h - 12)); ctx.lineTo(col.x + 4 + cc * (col.w - 8), g.top + 6 + d * (h - 12)); ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+        }
+        // layer name, written up the column
+        ctx.save();
+        ctx.translate(col.x + col.w / 2 + 4, g.bottom - 10);
+        ctx.rotate(-Math.PI / 2);
+        ctx.font = `${small ? 10 : 11.5}px "JetBrains Mono", monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = ok ? c.accent : c.ink3;
+        ctx.fillText(names[i], 0, 0);
+        ctx.restore();
+      });
+
+      // effort axis
+      ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(g.axisX, g.top); ctx.lineTo(g.axisX, g.bottom); ctx.stroke();
+      for (const d of dots) {
+        ctx.fillStyle = tint(d.good, c); ctx.globalAlpha = d.old ? 0.2 : 0.85;
+        ctx.beginPath(); ctx.arc(d.x, d.y, 3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // runs in flight, each with a short fading trail
+      for (const run of runs) {
+        const col = tint(run.good, c), tail = reduce ? run.t : 90;
+        ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+        for (let s = 0; s < tail; s += 6) {
+          const p1 = at(run, run.t - s), p2 = at(run, run.t - s - 6);
+          ctx.globalAlpha = reduce ? 0.4 : 0.75 * (1 - s / tail);
+          ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        if (!reduce) {
+          const p = at(run, run.t);
+          ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    };
+
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - (last || now)) / 1000);
+      last = now;
+      spawnIn -= dt;
+      if (spawnIn <= 0 && runs.length < 10) { runs.push(makeRun()); spawnIn = 0.4; }
+      const speed = Math.max(420, W * 1.1);
+      for (const run of runs) run.t += speed * dt;
+      runs = runs.filter(run => {
+        if (run.t < run.cum[run.cum.length - 1]) return true;
+        land(run); return false;
+      });
+      draw();
+      raf = visible ? requestAnimationFrame(tick) : 0;
+    };
+    const start = () => { cancelAnimationFrame(raf); last = 0; raf = requestAnimationFrame(tick); };
+
+    const update = () => {
+      const k = good();
+      fig.querySelectorAll<HTMLElement>('[data-all]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.all === '1' ? k === n : k === 0)));
+    };
+
+    const changed = () => {
+      dots.forEach(d => (d.old = true));
+      update();
+      if (reduce) { dots = []; prefill(); }
+      draw();
+      if (!reduce && visible) start();
+    };
+
+    fig.addEventListener('click', e => {
+      const b = (e.target as Element).closest<HTMLElement>('[data-all]');
+      if (!b) return;
+      clear.fill(b.dataset.all === '1');
+      changed();
+    });
+    const colAt = (e: MouseEvent) => {
+      const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, g = geo();
+      if (y < g.top || y > g.bottom) return -1;
+      return g.cols.findIndex(c => x >= c.x && x <= c.x + c.w);
+    };
+    canvas.addEventListener('click', e => {
+      const i = colAt(e);
+      if (i < 0) return;
+      clear[i] = !clear[i];
+      changed();
+    });
+    const showTip = (i: number) => {
+      if (i < 0) { tip.hidden = true; return; }
+      const g = geo(), col = g.cols[i];
+      tip.querySelector('strong')!.textContent = names[i];
+      tip.querySelector('span')!.textContent = tips[i];
+      tip.hidden = false;
+      const w = tip.offsetWidth;
+      tip.style.left = Math.max(0, Math.min(W - w, col.x + col.w / 2 - w / 2)) + 'px';
+      tip.style.top = g.top + 10 + 'px';
+    };
+    canvas.addEventListener('mousemove', e => { const i = colAt(e); canvas.style.cursor = i >= 0 ? 'pointer' : ''; showTip(i); });
+    canvas.addEventListener('mouseleave', () => showTip(-1));
+    // touch has no hover, so a tap also shows the layer's tip for a moment
+    canvas.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') return;
+      showTip(colAt(e));
+      clearTimeout(tipTimer);
+      tipTimer = window.setTimeout(() => showTip(-1), 3000);
+    });
+
+    update();
+    new ResizeObserver(resize).observe(canvas);
+    document.fonts?.ready.then(draw);
+    new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-time'] });
+    if (reduce) return;
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) start();
+    }).observe(canvas);
+  }
+
+  document.querySelectorAll<HTMLElement>('.cs').forEach(setup);
+</script>
+
+<style>
+  .cs { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
+  .cs-stage { position: relative; }
+  .cs-tip { position: absolute; z-index: 1; max-width: 240px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); box-shadow: 0 4px 14px rgb(0 0 0 / .18); font-size: 13.5px; line-height: 1.4; color: var(--ink-2); pointer-events: none; }
+  .cs-tip[hidden] { display: none; }
+  .cs-tip strong { display: block; margin-bottom: 2px; font: 600 11px "JetBrains Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .cs-canvas { display: block; width: 100%; height: 290px; }
+  .cs-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+  .cs figcaption { margin-top: 12px; }
+
+  @media (max-width: 560px) {
+    .cs { padding: 16px 10px; margin-left: -4px; margin-right: -4px; }
+    .cs-canvas { height: 260px; }
+  }
+</style>

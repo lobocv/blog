@@ -1,0 +1,273 @@
+---
+// The same request answered two ways, side by side around one file tree. File system tools (grep, glob) find files
+// that use the prompt's words, related or not; the topic graph knows every file behind each concept.
+// Arrows are drawn by the script from each side into the files it finds; files the search misses turn red.
+// Loops while in view. Used on the concept_index post. Without JS it shows the final colours without arrows.
+type Topic = 'transfers' | 'schedules';
+type Row = { name: string; d: number; dir?: boolean; hit?: boolean; topics?: Topic[] };
+const rows: Row[] = [
+  { name: 'web/', d: 0, dir: true },
+  { name: 'VestingTimeline.tsx', d: 1, hit: true, topics: ['schedules'] },
+  { name: 'EquityDashboard.tsx', d: 1, topics: ['schedules'] },
+  { name: 'api/', d: 0, dir: true },
+  { name: 'handlers/', d: 1, dir: true },
+  { name: 'transfers.go', d: 2, hit: true, topics: ['transfers'] },
+  { name: 'app/', d: 0, dir: true },
+  { name: 'vesting.go', d: 1, hit: true, topics: ['schedules'] },
+  { name: 'transfer_service.go', d: 1, hit: true, topics: ['transfers'] },
+  { name: 'vest_cliff.go', d: 1, topics: ['schedules'] },
+  { name: 'domain/', d: 0, dir: true },
+  { name: 'grant.go', d: 1, topics: ['transfers', 'schedules'] },
+  { name: 'holder.go', d: 1 },
+  { name: 'vested_shares.go', d: 1, topics: ['transfers', 'schedules'] },
+  { name: 'billing/', d: 0, dir: true },
+  { name: 'transfer_fee.go', d: 1, hit: true },
+  { name: 'reports/', d: 0, dir: true },
+  { name: 'vesting_summary.go', d: 1, hit: true },
+  { name: 'db/', d: 0, dir: true },
+  { name: 'migrations/', d: 1, dir: true },
+  { name: '0042_grant_tranches.sql', d: 2, topics: ['schedules'] },
+  { name: 'vesting_events.sql', d: 1, hit: true, topics: ['schedules'] },
+];
+const need = rows.filter(r => r.topics).length;
+const found = rows.filter(r => r.hit && r.topics).length;
+---
+<figure class="gvg fs-on graph-on">
+  <p class="gvg-prompt"><span class="gvg-who">prompt</span>After a partial share transfer, the recipient's shares start vesting from the transfer date instead of keeping the original start date and cliff. Find where that happens and fix it.</p>
+  <div class="gvg-stage">
+    <svg class="gvg-arrows" aria-hidden="true"></svg>
+    <div class="gvg-panel fs">
+      <div class="p-head">
+        <span class="p-name">File system tools</span>
+        <button type="button" class="gvg-info" aria-label="How file system tools search" aria-expanded="false">?</button>
+        <p class="gvg-pop" role="tooltip">Search tools match words, not meaning. They find every file that uses the prompt's words, related or not, and miss files that use another form of the word or another word for the same thing (eg vested, vest_cliff, tranche).</p>
+      </div>
+      <code>grep -ril "vesting"</code>
+      <code>glob "**/*transfer*"</code>
+      <p class="p-tally"><strong>{found} of {need}</strong> found</p>
+    </div>
+    <ul class="gvg-tree" aria-label="Files in the repository">
+      {rows.map(r => (
+        <li class={r.dir ? 'dir' : 'file'} style={`--d:${r.d}`} data-hit={r.hit ? '' : undefined} data-need={r.topics ? '' : undefined} data-topics={r.topics?.join(' ')}>
+          <span class="nm">{r.name}</span>{r.hit && !r.topics && <span class="tag">unrelated</span>}
+        </li>
+      ))}
+    </ul>
+    <div class="gvg-panel graph">
+      <div class="p-head">
+        <span class="p-name">Topic graph</span>
+        <button type="button" class="gvg-info" aria-label="How the topic graph finds files" aria-expanded="false">?</button>
+        <p class="gvg-pop" role="tooltip">Each topic links a concept to every file behind it, whatever those files are called. The agent looks up the topics the prompt is about and gets the whole set in one step.</p>
+      </div>
+      <div class="topics">
+        <code class="topic root">vesting</code>
+        <ul>
+          <li><code class="topic" data-topic="transfers">transfers</code></li>
+          <li><code class="topic" data-topic="schedules">schedules</code></li>
+        </ul>
+      </div>
+      <p class="p-tally"><strong>{need} of {need}</strong> found</p>
+    </div>
+  </div>
+  <p class="gvg-legend"><span class="both">found by both</span><span class="miss">missed by file search</span><span class="off">off target</span></p>
+</figure>
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('.gvg').forEach(fig => {
+    const stage = fig.querySelector<HTMLElement>('.gvg-stage')!;
+    const svg = fig.querySelector<SVGSVGElement>('.gvg-arrows')!;
+    const tree = fig.querySelector<HTMLElement>('.gvg-tree')!;
+    const fsPanel = fig.querySelector<HTMLElement>('.gvg-panel.fs')!;
+    const graphPanel = fig.querySelector<HTMLElement>('.gvg-panel.graph')!;
+    const files = [...fig.querySelectorAll<HTMLElement>('.gvg-tree .file')];
+
+    const curve = (cls: string, d: string, ex: number, ey: number, i: number, front: boolean) => {
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('pathLength', '1');
+      path.setAttribute('class', `a ${cls}`);
+      path.style.transitionDelay = `${i * 0.12}s`;
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', String(ex)); dot.setAttribute('cy', String(ey)); dot.setAttribute('r', '2.5');
+      dot.setAttribute('class', `d ${cls}`);
+      dot.style.transitionDelay = `${0.5 + i * 0.12}s`;
+      // off-target curves go underneath, so the grey trunk they share stays grey
+      if (front) svg.append(path, dot); else svg.prepend(path, dot);
+    };
+
+    // Wide: curves from the panel (or topic) beside the tree. Narrow: down the edge from the panel above.
+    const draw = () => {
+      svg.replaceChildren();
+      const s = stage.getBoundingClientRect();
+      svg.setAttribute('viewBox', `0 0 ${s.width} ${s.height}`);
+      const narrow = getComputedStyle(stage).getPropertyValue('--narrow').trim() === '1';
+      const t = tree.getBoundingClientRect();
+      // the right-hand arrows run clear of the longest row, "unrelated" tags included
+      const ends = files.map(f => (f.querySelector('.tag') ?? f.querySelector('.nm'))!.getBoundingClientRect());
+      const treeRight = Math.max(...ends.map(n => n.right)) - s.left;
+      const into = (f: HTMLElement, left: boolean) => {
+        const n = f.querySelector('.nm')!.getBoundingClientRect();
+        return { ex: left ? n.left - s.left - 5 : n.right - s.left + 5, ey: n.top + n.height / 2 - s.top };
+      };
+      const narrowPath = (panel: DOMRect, left: boolean, ex: number, ey: number) => {
+        const gx = left ? t.left - s.left - 12 : treeRight + 14, sy = panel.bottom - s.top + 4, r = 7;
+        return `M${gx} ${sy}V${ey - r}Q${gx} ${ey} ${gx + (left ? r : -r)} ${ey}H${ex}`;
+      };
+      const widePath = (sx: number, sy: number, left: boolean, ex: number, ey: number) => {
+        const cx = left ? t.left - s.left - 18 : treeRight + 22, bx = left ? t.left - s.left - 6 : treeRight + 10;
+        return `M${sx} ${sy}C${cx} ${sy} ${cx} ${ey} ${bx} ${ey}L${ex} ${ey}`;
+      };
+
+      const p = fsPanel.getBoundingClientRect();
+      files.filter(f => f.hasAttribute('data-hit')).forEach((f, i) => {
+        const { ex, ey } = into(f, true), off = !f.hasAttribute('data-need');
+        const d = narrow ? narrowPath(p, true, ex, ey) : widePath(p.right - s.left + 6, p.top + p.height / 2 - s.top, true, ex, ey);
+        curve(`fs${off ? ' off' : ''}`, d, ex, ey, i, !off);
+      });
+
+      // graph side: one curve from each topic to each of its files (a file under both topics gets two)
+      const g = graphPanel.getBoundingClientRect();
+      let i = 0;
+      files.filter(f => f.hasAttribute('data-need')).forEach(f => {
+        const { ex, ey } = into(f, false);
+        const topics = narrow ? ['x'] : f.dataset.topics!.split(' ');
+        topics.forEach(tp => {
+          let d: string;
+          if (narrow) d = narrowPath(g, false, ex, ey);
+          else {
+            const c = graphPanel.querySelector(`[data-topic="${tp}"]`)!.getBoundingClientRect();
+            d = widePath(c.left - s.left - 4, c.top + c.height / 2 - s.top, false, ex, ey);
+          }
+          curve('graph', d, ex, ey, i++, true);
+        });
+      });
+    };
+
+    // tooltips: hover on mouse, tap or keyboard to toggle
+    const closeAll = (except?: Element) => fig.querySelectorAll('.gvg-panel').forEach(pn => {
+      if (pn === except) return;
+      pn.classList.remove('open');
+      pn.querySelector('.gvg-info')!.setAttribute('aria-expanded', 'false');
+    });
+    fig.addEventListener('click', e => {
+      const btn = (e.target as Element).closest('.gvg-info');
+      if (!btn) { closeAll(); return; }
+      const pn = btn.closest('.gvg-panel')!;
+      closeAll(pn);
+      const open = pn.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', e => { if (!fig.contains(e.target as Node)) closeAll(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+    new ResizeObserver(draw).observe(stage);
+    document.fonts?.ready.then(draw);
+    if (reduce || !('IntersectionObserver' in window)) { fig.classList.add('drawn'); return; }
+
+    // loop while visible: file search, then the graph, hold, clear, repeat
+    fig.classList.remove('fs-on', 'graph-on');
+    let visible = false, timer = 0;
+    const steps: [number, () => void][] = [
+      [0, () => fig.classList.add('drawn', 'fs-on')],
+      [1800, () => fig.classList.add('graph-on')],
+      [9000, () => fig.classList.remove('drawn', 'fs-on', 'graph-on')],
+      [11000, () => {}],
+    ];
+    const cycle = (k = 0) => {
+      steps[k][1]();
+      const next = k + 1;
+      if (next >= steps.length) { timer = 0; if (visible) cycle(0); return; }
+      timer = window.setTimeout(() => cycle(next), steps[next][0] - steps[k][0]);
+    };
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !timer) cycle();
+    }, { threshold: 0.4 }).observe(fig);
+  });
+</script>
+
+<style>
+  .gvg { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
+  .gvg-prompt { margin: 0 0 18px; font-size: 16px; line-height: 1.5; color: var(--ink); }
+  .gvg-who { display: inline-block; margin-right: 10px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: 11px "JetBrains Mono", monospace; letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
+
+  /* tree in the middle, one approach on each side, arrows drawn over the gaps */
+  .gvg-stage { --narrow: 0; position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 56px; }
+  .gvg-arrows { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+
+  .gvg-panel { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); }
+  .gvg-panel.graph { border-color: var(--accent); }
+  .gvg-panel.open, .gvg-panel:has(.gvg-info:hover) { z-index: 2; }
+  .p-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .p-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .gvg-info { flex: none; width: 20px; height: 20px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: none; color: var(--ink-3); font: 600 11px "JetBrains Mono", monospace; cursor: pointer; }
+  .gvg-info:hover, .gvg-panel.open .gvg-info { color: var(--accent); border-color: var(--accent); }
+  .gvg-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .gvg-pop { position: absolute; top: calc(100% + 8px); left: -4px; right: -4px; z-index: 3; display: none; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); box-shadow: 0 6px 18px rgb(0 0 0 / .2); font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+  .gvg-panel.open .gvg-pop { display: block; }
+  @media (hover: hover) { .p-head:has(.gvg-info:hover) .gvg-pop { display: block; } }
+
+  .gvg-panel code { align-self: flex-start; padding: 2px 6px; border-radius: 5px; background: var(--raise); font: 11.5px "JetBrains Mono", monospace; color: var(--ink-2); white-space: nowrap; }
+  .p-tally { margin: 2px 0 0; font: 11px/1.45 "JetBrains Mono", monospace; color: var(--ink-3); opacity: 0; transition: opacity .4s; }
+  .p-tally strong { color: var(--ink); font-weight: 600; }
+  .fs-on .fs .p-tally, .graph-on .graph .p-tally { opacity: 1; }
+
+  /* the topic tree: a root topic with its children */
+  .topics { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 2px 0; }
+  .gvg-panel .topic { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .gvg-panel .topic.root { padding: 3px 8px; font-size: 12.5px; }
+  .topics ul { list-style: none; margin: 0 0 0 10px; padding: 0 0 0 14px; border-left: 1.5px solid var(--accent); display: flex; flex-direction: column; gap: 6px; }
+  .topics li { position: relative; margin: 0; }
+  .topics li::before { content: ""; position: absolute; left: -14px; top: 50%; width: 10px; border-top: 1.5px solid var(--accent); }
+  .topics li:last-child::after { content: ""; position: absolute; left: -16px; top: calc(50% + 1px); bottom: -4px; width: 4px; background: var(--sheet); }
+
+  /* a nested file tree with guide lines, one line per level */
+  .gvg-tree { list-style: none; margin: 0; padding: 0; font: 12px/20px "JetBrains Mono", monospace; }
+  .gvg-tree li { margin: 0; padding-left: calc(var(--d) * 16px); white-space: nowrap; background: repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 16px) 5px 0 / calc(var(--d) * 16px) 100% no-repeat; }
+  .gvg-tree .dir .nm { color: var(--ink-3); }
+  .gvg-tree .file .nm { color: var(--ink-2); transition: color .4s; }
+  .gvg-tree .tag { margin-left: 8px; font-size: 10.5px; color: var(--tok-type); opacity: 0; transition: opacity .4s; }
+  .fs-on .file[data-hit][data-need] .nm { color: var(--accent); font-weight: 600; }
+  .fs-on .file[data-hit]:not([data-need]) .nm { color: var(--tok-type); }
+  .fs-on .file[data-hit]:not([data-need]) .tag { opacity: 1; }
+  .graph-on .file[data-need]:not([data-hit]) .nm { color: var(--tok-num); font-weight: 600; }
+  .gvg-tree .file:not([data-hit]):not([data-need]) .nm { color: var(--ink-3); }
+
+  /* arrows draw themselves in as each step plays */
+  .gvg :global(.a) { fill: none; stroke-width: 1.3; stroke-dasharray: 1 2; stroke-dashoffset: 1; transition: stroke-dashoffset .7s ease; }
+  .gvg :global(.a.fs) { stroke: var(--ink-3); }
+  .gvg :global(.a.off) { stroke: var(--tok-type); stroke-dasharray: none; opacity: 0; transition: opacity .5s; }
+  .gvg :global(.a.graph) { stroke: var(--accent); }
+  .gvg :global(.d) { opacity: 0; transition: opacity .3s; }
+  .gvg :global(.d.fs) { fill: var(--ink-3); }
+  .gvg :global(.d.off) { fill: var(--tok-type); }
+  .gvg :global(.d.graph) { fill: var(--accent); }
+  .gvg.drawn.fs-on :global(.a.fs), .gvg.drawn.graph-on :global(.a.graph) { stroke-dashoffset: 0; }
+  .gvg.drawn.fs-on :global(.a.off), .gvg.drawn.fs-on :global(.d.fs), .gvg.drawn.graph-on :global(.d.graph) { opacity: 1; }
+
+  .gvg-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; margin: 18px 0 0; font: 11px "JetBrains Mono", monospace; color: var(--ink-3); }
+  .gvg-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; }
+  .gvg-legend .both::before { background: var(--accent); }
+  .gvg-legend .miss::before { background: var(--tok-num); }
+  .gvg-legend .off::before { background: var(--tok-type); }
+
+  @media (max-width: 640px) {
+    .gvg { padding: 16px 12px; margin-left: -4px; margin-right: -4px; }
+    /* both approaches above the tree; their arrows run down the left and right edges */
+    .gvg-stage { --narrow: 1; grid-template-columns: 1fr 1fr; grid-template-areas: "fs graph" "tree tree"; gap: 26px 10px; align-items: stretch; }
+    .gvg-panel.fs { grid-area: fs; }
+    .gvg-panel.graph { grid-area: graph; }
+    .gvg-tree { grid-area: tree; justify-self: center; font-size: 11.5px; }
+    .gvg-panel { padding: 10px; }
+    .gvg-panel code { font-size: 10.5px; }
+    .gvg-pop { width: min(260px, 78vw); }
+    .gvg-panel.fs .gvg-pop { right: auto; }
+    .gvg-panel.graph .gvg-pop { left: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gvg :global(.a), .gvg :global(.d), .gvg-tree .nm, .p-tally { transition: none !important; }
+  }
+</style>

@@ -20,7 +20,8 @@ export async function getPosts(): Promise<Post[]> {
 
 export function readingMinutes(markdown: string): number {
   // Like Hugo, code counts as reading; fence markers, tags and punctuation-only tokens don't.
-  const text = markdown.replace(/^```.*$/gm, ' ').replace(/<[^>]+>/g, ' ');
+  // MDX import lines and {/* comments */} aren't reading either.
+  const text = markdown.replace(/^```.*$/gm, ' ').replace(/^import .*$/gm, ' ').replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ').replace(/<[^>]+>/g, ' ');
   const words = text.split(/\s+/).filter(w => /[\p{L}\p{N}]/u.test(w)).length;
   return Math.max(1, Math.ceil(words / 213));
 }

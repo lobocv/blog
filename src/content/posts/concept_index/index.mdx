@@ -1,0 +1,68 @@
+---
+title: "Communicating Effectively With Agents"
+summary: "Bridging prompts and code with a topic graph."
+draft: false
+date: 2026-11-24
+categories: ["AI", "Architecture"]
+---
+
+import GrepVsGraph from '../../../components/post/GrepVsGraph.astro';
+import GraphExplorer from '../../../components/post/GraphExplorer.astro';
+import TopicTrees from '../../../components/post/TopicTrees.astro';
+import CurationLoop from '../../../components/post/CurationLoop.astro';
+import ContextStack from '../../../components/post/ContextStack.astro';
+import DocsDrift from '../../../components/post/DocsDrift.astro';
+import SeriesNote from '../../../components/post/SeriesNote.astro';
+
+<SeriesNote>
+
+This is the first post in a series on agentic harness development where I share my approach to sustainable agentic development that doesn't compromise speed for quality and leaves you in complete control over your codebase.
+
+</SeriesNote>
+
+Regardless of how you feel about it, software engineering has shifted to communicating with agents while they do the heavy lifting of researching, planning, debugging and implementing the software. Weeks of work can now be done in a matter of minutes but many developers are reporting that they're feeling even more exhausted than before because their energy is being spent deconstructing, correcting and reasoning through someone else's thought process rather than their own.
+
+I've felt this exhaustion myself, and while AI development is here to stay, there are ways we can reduce friction, make it less taxing on our mental health and also get better results in the process. One major contributor to the exhaustion is that humans and agents don't always speak the same language. Agents are biased to thinking in terms of files, folders, classes, functions and variables, while humans naturally think in terms of concepts. To be fair, humans don't always speak the same language (in both the literal and metaphorical sense). Human language can carry so much hidden meaning that can be interpreted differently based on the context in which it is used and their own experiences. In fact, it's the reason why the core design principle of Domain-Driven Design is agreeing on a Ubiquitous Language in order to remove communication friction.
+
+Communicating effectively with agents means understanding the whole engineering life cycle and the wider system agents work in: the architecture, constraints, terminology, user experience and product vision. When these are confusing, our conversations with the agent are confusing too. The agent has to work them out on every task, and we spend our time filling in the gaps it guessed at and verifying the claims it makes. That is where the exhaustion comes from.
+
+<ContextStack />
+
+### The challenge of maintaining system understanding
+
+Back in the time when developers wrote code by hand, it was realistic that someone could think about a change to the system in terms of what services, classes, functions, files and database schemas needed changing. Even then, spending years ramping up employees, only to have them leave is not a viable long-term strategy. Agents know only what your instructions and code tell them. What's worse is that they won't tell you when they are confused and will often find localized solutions to deep-rooted problems. They, just as much as any developer, need a holistic understanding of the system and cannot rely on tribal knowledge.
+
+Organizations mitigate this (in reality, not nearly enough) by writing documentation, but the first rule of writing documentation is that it is almost immediately out of date. It also creates a second source of truth that lives separately and can contradict the code.
+
+I've thought a lot about how to write documentation in a way that ages well, but like all battles with time, you end up losing. The only viable path is to keep your documentation up to date as the system changes, but this takes a level of discipline and commitment that most organizations do not have appetite for. Telling agents to update the docs in the same commit doesn't solve this either. They have no concrete way to find the docs and the code those docs rely on, so they only sometimes do it.
+
+<DocsDrift />
+
+Some organizations have the philosophy that the "code is documentation" but I've never seen that as a realistic alternative to writing prose. Code can tell you what something does but it doesn't explain the intent behind it. Code is often messy and business logic is not cohesive, requiring traversal of many files and the piecing together of information on-demand. This approach relies heavily on a high-quality codebase and incredible amounts of engineering discipline.
+
+What we need is a way for agents to reliably translate to and from the product domain and the files which implement it. It would allow humans and agents to communicate in a way that's natural to us and to provide code details as supporting information instead of the main focus. We also need a strategy that meets the reality of the situation: we often work in messy, imperfect systems. We need to understand both how the system currently works, as well as how it is intended to work. It needs to be comprehensive, accurate and navigable without relying on or duplicating the imperfect system it is describing.
+
+### A map from concepts to code
+
+A topic graph is an index of domain concepts to the underlying resources (often files) that support them. A single topic can link to many files in different directories. Conversely, a single file can link to multiple topics. Generalizing beyond just files, resources can come from sources such as HTML pages, database schemas, or apps such as Notion and Obsidian.
+
+<GraphExplorer />
+
+The topic graph provides a more natural index into the code than `grep`, `rg` and `glob` tooling, but doesn't replace them. This alternative index into the system is a translation layer from domain language to code that puts no constraints on how that code is structured, organized or represented on the file system. By using agents to build and maintain the topic graph, we can keep an up-to-date understanding of the codebase that explains it in product language we are familiar with, while still holding references to the implementation details that underpin it. While the two language domains are different, friction in this translation, such as ambiguous terms, contradictory claims and distributed logic can be identified and cleaned up over time.
+
+<GrepVsGraph />
+
+The graph data structure allows us to link related topics using reference edges that contain context on the relationship. Topics naturally start to form distinct trees of concepts with root topics being broad domain areas of the product, breaking down into more granular sub-domains.
+
+<TopicTrees />
+
+The topic graph becomes the foundation on which many agent workflows can be built. These workflows maintain the graph and also improve the source files themselves, restructuring them to more naturally fit the domain.
+
+<CurationLoop />
+
+The graph relies on nothing but the sources it indexes, so it can be deleted and regenerated from scratch at any time. Unlike documentation, it never becomes a second source of truth.
+
+### Investing in language
+
+A topic graph bridges the gap between product thinking and implementation details, but at its core, it relies on the fundamental principle that words should have a single meaning. This is challenging, especially as systems grow in size. When the word "grant" appears under both equity and access control topics, the graph makes the problem clear, and we address it. The topic graph is just one of the many tools I've used to reduce my cognitive overhead while developing with agents. The language we use lives in more than just the conversations we have: it's also in the code we write and the products we ship.
+

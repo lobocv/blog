@@ -1,0 +1,187 @@
+---
+// The workflows around the topic graph as one loop: curate (source → graph), generate (graph →
+// explanations), read (explanations → agents and humans) and fix (back into the source). Readers step
+// through with the previous/next arrows or the step dots; the caption follows and a dot runs the edge. The replay
+// button deletes the graph and explanations and regrows them from source alone. Used on the
+// concept_index post. Without JS all four captions show as a list.
+const W = 150, H = 56;
+const nodes = [
+  { id: 'source', x: 10, y: 40, label: 'Source', sub: 'code · docs · schemas' },
+  { id: 'graph', x: 280, y: 40, label: 'Topic graph', sub: 'derived' },
+  { id: 'explain', x: 280, y: 214, label: 'Explanations', sub: 'generated' },
+  { id: 'people', x: 10, y: 214, label: 'Agents & humans', sub: 'read and plan' },
+];
+const steps = [
+  { id: 'curate', text: 'With each commit, agents attach the changed files to their topics. Every so often they split, rename or merge topics that no longer hold together.' },
+  { id: 'generate', text: 'Each root topic and its children are written up as a markdown explanation. Nobody edits these by hand.' },
+  { id: 'read', text: 'Agents and humans plan from the explanations, and spot where the code is ambiguous, inconsistent or has gaps.' },
+  { id: 'fix', text: 'The fixes land in the source. The next commit carries them into the graph, so the codebase improves over time.' },
+];
+---
+<figure class="cl" data-step="0">
+  <button type="button" class="cl-rebuild" aria-label="Delete the graph and rebuild it from source" title="Delete the graph and rebuild it">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <svg class="cl-map" viewBox="0 0 440 290" role="img" aria-label="A loop. Agents curate the topic graph from the source, the graph generates explanations, agents and humans read them, and their fixes go back into the source.">
+    <defs>
+      <marker id="cl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" /></marker>
+      <marker id="cl-arrow-on" class="on" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10.5" markerHeight="10.5" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" /></marker>
+    </defs>
+    <g class="cl-edge" data-s="0"><path d="M162,68 H276" marker-end="url(#cl-arrow)" /><path class="cl-self" d="M330,38 C330,4 380,4 380,36" marker-end="url(#cl-arrow)" /><text x="219" y="56">curate</text></g>
+    <g class="cl-edge" data-s="1"><path d="M355,98 V210" marker-end="url(#cl-arrow)" /><text class="start" x="366" y="158">generate</text></g>
+    <g class="cl-edge" data-s="2"><path d="M278,242 H164" marker-end="url(#cl-arrow)" /><text x="221" y="232">read</text></g>
+    <g class="cl-edge" data-s="3"><path d="M85,212 V100" marker-end="url(#cl-arrow)" /><text class="start" x="96" y="158">fix</text></g>
+    <circle class="cl-dot" r="5" cx="85" cy="68" />
+
+    {nodes.map(n => (
+      <g class:list={['cl-node', `n-${n.id}`]}>
+        <rect x={n.x} y={n.y} width={W} height={H} rx="10" />
+        <text class="cl-label" x={n.x + W / 2} y={n.y + 25}>{n.label}</text>
+        <text class="cl-sub" x={n.x + W / 2} y={n.y + 43}>{n.sub}</text>
+      </g>
+    ))}
+  </svg>
+  <div class="cl-caption" aria-live="polite">
+    {steps.map((s, i) => <p class="cl-step" data-s={i}><span class="cl-kind">{s.id}</span>{s.text}</p>)}
+    <p class="cl-step cl-rebuilding"><span class="cl-kind">rebuild</span><span class="cl-rb-text"></span></p>
+  </div>
+  <div class="cl-nav">
+    <button type="button" class="cl-arrow-btn cl-prev" aria-label="Previous step"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="cl-dots" role="group" aria-label="Steps">
+      {steps.map((s, i) => <button type="button" data-s={i} aria-label={s.id} aria-pressed={i === 0 ? 'true' : 'false'}></button>)}
+    </div>
+    <button type="button" class="cl-arrow-btn cl-next" aria-label="Next step"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+</figure>
+
+<script>
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = (ms: number) => new Promise(r => setTimeout(r, reduce() ? 0 : ms));
+  // the loop runs through the box centres; step i travels from corner i to corner i + 1
+  const corners = [[85, 68], [355, 68], [355, 242], [85, 242]];
+  const MOVE = 700;
+  const ease = (t: number) => t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+
+  document.querySelectorAll<HTMLElement>('.cl').forEach(fig => {
+    fig.classList.add('js');
+    const dot = fig.querySelector<SVGCircleElement>('.cl-dot')!;
+    const dots = [...fig.querySelectorAll<HTMLButtonElement>('.cl-dots button')];
+    const rbText = fig.querySelector<HTMLElement>('.cl-rb-text')!;
+    let step = 0, raf = 0;
+
+    const place = (x: number, y: number) => { dot.setAttribute('cx', String(x)); dot.setAttribute('cy', String(y)); };
+    // show step s and send the dot along its edge
+    const go = (s: number) => {
+      if (fig.dataset.phase) return;
+      step = (s + 4) % 4; fig.dataset.step = String(step);
+      dots.forEach((d, i) => d.setAttribute('aria-pressed', String(i === step)));
+      cancelAnimationFrame(raf);
+      const [ax, ay] = corners[step], [bx, by] = corners[(step + 1) % 4];
+      if (reduce()) { place(bx, by); return; }
+      const start = performance.now();
+      const tick = (now: number) => {
+        const k = ease(Math.min(1, (now - start) / MOVE));
+        place(ax + (bx - ax) * k, ay + (by - ay) * k);
+        if (k < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    fig.querySelector('.cl-prev')!.addEventListener('click', () => go(step - 1));
+    fig.querySelector('.cl-next')!.addEventListener('click', () => go(step + 1));
+    fig.querySelector('.cl-dots')!.addEventListener('click', e => {
+      const b = (e.target as Element).closest<HTMLButtonElement>('button');
+      if (b) go(Number(b.dataset.s));
+    });
+
+    // delete the derived boxes, then bring back the graph, then the explanations
+    fig.querySelector('.cl-rebuild')!.addEventListener('click', async () => {
+      if (fig.dataset.phase) return;
+      fig.dataset.phase = 'gone'; rbText.textContent = 'The graph and explanations are deleted. Only the source is left.';
+      await wait(900);
+      fig.dataset.phase = 'graph'; rbText.textContent = 'Agents rebuild the graph from the source alone…';
+      await wait(800);
+      fig.dataset.phase = 'explain'; rbText.textContent = '…and the explanations are generated again. Nothing is lost.';
+      await wait(1600);
+      delete fig.dataset.phase;
+    });
+  });
+</script>
+
+<style>
+  .cl { position: relative; margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
+  .cl-map { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; overflow: visible; }
+  .cl-dot { fill: var(--accent); transition: opacity .3s; }
+  .cl-node rect { fill: var(--sheet); stroke: var(--line); stroke-width: 1.5; transition: opacity .35s, stroke .3s; }
+  .cl-node text { transition: opacity .35s; }
+  .cl-label { font: 600 14px "JetBrains Mono", monospace; fill: var(--ink); text-anchor: middle; }
+  .cl-sub { font: 11px "JetBrains Mono", monospace; fill: var(--ink-3); text-anchor: middle; }
+  .cl-edge path { fill: none; stroke: var(--ink-3); stroke-width: 1.5; transition: stroke .3s, stroke-width .3s, opacity .35s; }
+  .cl-edge text { font: 12px "JetBrains Mono", monospace; fill: var(--ink-3); text-anchor: middle; transition: fill .3s; }
+  .cl-edge .start { text-anchor: start; }
+  marker path { fill: var(--ink-3); }
+  marker.on path { fill: var(--accent); }
+
+  /* the current step's edge lights up */
+  .cl.js:not([data-phase])[data-step="0"] [data-s="0"] path,
+  .cl.js:not([data-phase])[data-step="1"] [data-s="1"] path,
+  .cl.js:not([data-phase])[data-step="2"] [data-s="2"] path,
+  .cl.js:not([data-phase])[data-step="3"] [data-s="3"] path { stroke: var(--accent); stroke-width: 2.25; marker-end: url(#cl-arrow-on); }
+  .cl.js:not([data-phase])[data-step="0"] [data-s="0"] text,
+  .cl.js:not([data-phase])[data-step="1"] [data-s="1"] text,
+  .cl.js:not([data-phase])[data-step="2"] [data-s="2"] text,
+  .cl.js:not([data-phase])[data-step="3"] [data-s="3"] text { fill: var(--accent); font-weight: 600; }
+
+  /* caption: one step at a time, all stacked in one cell so the height never jumps */
+  .cl-caption { display: grid; max-width: 520px; margin: 14px auto 0; }
+  .cl-step { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+  .cl-kind { margin-right: 8px; font: 600 10.5px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .cl-rebuilding { display: none; }
+  .cl:not(.js) .cl-step + .cl-step { margin-top: 8px; }
+  .cl.js .cl-step { grid-area: 1 / 1; display: block; opacity: 0; visibility: hidden; transition: opacity .3s, visibility 0s .3s; }
+  .cl.js:not([data-phase])[data-step="0"] .cl-step[data-s="0"],
+  .cl.js:not([data-phase])[data-step="1"] .cl-step[data-s="1"],
+  .cl.js:not([data-phase])[data-step="2"] .cl-step[data-s="2"],
+  .cl.js:not([data-phase])[data-step="3"] .cl-step[data-s="3"],
+  .cl.js[data-phase] .cl-rebuilding { opacity: 1; visibility: visible; transition: opacity .3s .1s; }
+
+  .cl-nav { display: none; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; }
+  .cl.js .cl-nav { display: flex; }
+  .cl-dots { display: flex; gap: 2px; }
+  .cl-dots button { width: 22px; height: 22px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .cl-dots button::before { content: ""; display: block; width: 7px; height: 7px; margin: auto; border-radius: 50%; background: var(--line); transition: background .3s, transform .3s; }
+  .cl-dots button[aria-pressed="true"]::before { background: var(--accent); transform: scale(1.3); }
+  .cl-dots button:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-radius: 50%; }
+  .cl-arrow-btn { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--sheet); color: var(--ink-2); cursor: pointer; transition: color .2s, border-color .2s; }
+  .cl-arrow-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .cl-arrow-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* wide enough: the arrows sit either side of the diagram, level with its middle (svg is 480 wide, 290/440 tall) */
+  @media (min-width: 760px) {
+    .cl-arrow-btn { position: absolute; top: calc(20px + 480px * 145 / 440 - 18px); }
+    .cl-prev { left: 16px; }
+    .cl-next { right: 16px; }
+  }
+  .cl[data-phase] :is(.cl-dots, .cl-arrow-btn) { opacity: .35; }
+
+  .cl-rebuild { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--sheet); color: var(--ink-3); cursor: pointer; transition: color .2s, border-color .2s; }
+  .cl-rebuild:hover { color: var(--accent); border-color: var(--accent); }
+  .cl-rebuild:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* rebuild: the derived boxes go dashed and faint, then come back in order, outlined as they return */
+  .cl[data-phase="gone"] :is(.n-graph, .n-explain) rect,
+  .cl[data-phase="graph"] .n-explain rect { opacity: .5; stroke-dasharray: 4 4; }
+  .cl[data-phase="gone"] :is(.n-graph, .n-explain) text,
+  .cl[data-phase="graph"] .n-explain text,
+  .cl[data-phase="gone"] :is([data-s="1"], [data-s="2"], .cl-self),
+  .cl[data-phase="graph"] [data-s="1"] { opacity: .15; }
+  .cl[data-phase="graph"] .n-graph rect, .cl[data-phase="explain"] .n-explain rect { stroke: var(--accent); }
+  .cl[data-phase="graph"] [data-s="0"] path:not(.cl-self), .cl[data-phase="explain"] [data-s="1"] path { stroke: var(--accent); }
+  .cl[data-phase] .cl-dot { opacity: 0; }
+
+  @media (max-width: 560px) {
+    .cl { padding: 40px 10px 14px; margin-left: -4px; margin-right: -4px; }
+    .cl-rebuild { top: 8px; right: 8px; }
+    .cl-caption { padding: 0 4px; }
+    .cl-step { font-size: 14px; }
+  }
+</style>

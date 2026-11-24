@@ -1,0 +1,235 @@
+---
+// One doc kept three ways while commits land. Lines stand for text, the box in the middle for a system
+// diagram; red means that part no longer matches the code. Hand-written docs drift and stay wrong. An agent
+// told to "update the docs" fixes the parts it happens to find. The graph maps changed files to topics to the
+// sections that cite them, so every stale part goes back to accurate. Plays once in view; the commit nodes
+// scrub. Used on the concept_index post. Without JS (or with reduced motion) it shows the end state.
+type Block = { id: string; w?: number };
+// text lines above and below the diagram; w is the width of a paragraph's last, shorter line
+const above: Block[] = [{ id: 'b1' }, { id: 'b2' }, { id: 'b3' }, { id: 'b4', w: 58 }];
+const below: Block[] = [{ id: 'b5' }, { id: 'b6' }, { id: 'b7', w: 44 }, { id: 'b8' }, { id: 'b9' }, { id: 'b10', w: 70 }];
+// breaks: parts this commit makes wrong. found: the ones an agent told to update the docs happens to find.
+const commits = [
+  { hash: '1a2b', msg: 'Write the vesting docs', files: [], topics: [], breaks: [], found: [] },
+  { hash: '9c41', msg: 'Rename tranche to vesting event', files: ['domain/grant.go'], topics: ['vesting-schedules'], breaks: ['b2', 'b6'], found: ['b2'] },
+  { hash: 'e7d0', msg: 'Move transfer logic to app/', files: ['app/transfer_service.go'], topics: ['share-transfers'], breaks: ['b3', 'd1'], found: ['b3'] },
+  { hash: '3b2a', msg: 'Invoice a fee on each transfer', files: ['billing/transfer_fee.go'], topics: ['share-transfers', 'invoices'], breaks: ['b8'], found: ['b8'] },
+  { hash: 'f81c', msg: 'Replace the vesting_v1 table', files: ['db/vesting_events.sql'], topics: ['vesting-schedules'], breaks: ['b5'], found: [] },
+  { hash: '0d9e', msg: 'Add a one-year cliff to new grants', files: ['domain/grant.go'], topics: ['vesting-schedules'], breaks: ['b1', 'b10'], found: ['b10'] },
+];
+const last = commits.length - 1;
+const lanes = [
+  { id: 'hand', name: 'Hand-written', short: 'Hand-written', sub: 'no one updates it' },
+  { id: 'mid', name: 'Agent told to update docs', short: 'Agent told to update', sub: 'fixes what it finds' },
+  { id: 'graph', name: 'Rebuilt from the graph', short: 'From the graph', sub: 'changed files → topics → sections' },
+];
+---
+<figure class="dd" data-commits={JSON.stringify(commits)}>
+  <button type="button" class="dd-replay" aria-label="Replay">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="dd-log" role="group" aria-label="Commits" style="--p:1">
+    <div class="dd-rail"><div class="dd-fill"></div></div>
+    {commits.map((c, i) => (
+      <button type="button" class="dd-node done" data-i={i} aria-label={`Commit ${c.hash}: ${c.msg}`} aria-pressed={i === last ? 'true' : 'false'}>
+        <span class="dd-dot"></span><span class="dd-h">{c.hash}</span>
+      </button>
+    ))}
+  </div>
+  <p class="dd-msg" aria-live="polite"><span class="dd-hash">{commits[last].hash}</span><span class="dd-text">{commits[last].msg}</span></p>
+  <div class="dd-lanes">
+    {lanes.map(l => (
+      <div class="dd-lane" data-lane={l.id}>
+        <div class="dd-name"><span class="long">{l.name}</span><span class="short">{l.short}</span></div>
+        {l.id === 'graph'
+          ? <p class="dd-sub dd-trace"><span class="t-files">changed files</span><span class="t-arrow">→</span><span class="t-topics">topics</span><span class="t-arrow">→</span><span class="t-sections">sections</span></p>
+          : <p class="dd-sub">{l.sub}</p>}
+        <div class="dd-doc">
+          {above.map(b => <span class="dd-b line" data-id={b.id} style={b.w ? `width:${b.w}%` : undefined}></span>)}
+          <span class="dd-b fig" data-id="d1">
+            {/* a small system diagram: client → service → database */}
+            <svg viewBox="0 0 120 44" aria-hidden="true">
+              <rect x="2" y="12" width="26" height="20" rx="3" />
+              <rect x="46" y="12" width="28" height="20" rx="3" />
+              <path d="M28 22h14M38 18l4 4-4 4M74 22h14M84 18l4 4-4 4" />
+              <path d="M92 13c0-3 26-3 26 0v18c0 3-26 3-26 0zM92 13c0 3 26 3 26 0" />
+              <path class="ink" d="M7 19h16M7 25h10M51 19h18M51 25h12" />
+            </svg>
+          </span>
+          {below.map(b => <span class="dd-b line" data-id={b.id} style={b.w ? `width:${b.w}%` : undefined}></span>)}
+        </div>
+      </div>
+    ))}
+  </div>
+  {/* on phones the docs sit side by side, too narrow for the graph's trace, so it gets its own line */}
+  <p class="dd-sub dd-trace dd-trace-m"><span class="t-files">changed files</span><span class="t-arrow">→</span><span class="t-topics">topics</span><span class="t-arrow">→</span><span class="t-sections">sections</span></p>
+  <p class="dd-legend"><span class="ok">Accurate</span><span class="bad">Outdated</span></p>
+</figure>
+
+<script>
+  type Commit = { hash: string; msg: string; files: string[]; topics: string[]; breaks: string[]; found: string[] };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('.dd').forEach(fig => {
+    const commits = JSON.parse(fig.dataset.commits!) as Commit[];
+    const last = commits.length - 1;
+    const breakAt = new Map<string, number>(), found = new Set<string>();
+    commits.forEach((c, i) => { c.breaks.forEach(id => breakAt.set(id, i)); c.found.forEach(id => found.add(id)); });
+    const traces = fig.querySelectorAll<HTMLElement>('.dd-trace');
+    let timers: number[] = [], run = 0;
+
+    // is this part wrong in this lane at commit c? (midDone/graphDone: has that lane caught up with commit c yet)
+    const stale = (lane: string, id: string, c: number, midDone: boolean, graphDone: boolean) => {
+      const at = breakAt.get(id);
+      if (at === undefined || at > c) return false;
+      if (lane === 'hand') return true;
+      if (lane === 'mid') return !found.has(id) || (at === c && !midDone);
+      return at === c && !graphDone;
+    };
+
+    const paint = (c: number, midDone: boolean, graphDone: boolean, anim: boolean) => {
+      fig.querySelectorAll<HTMLElement>('.dd-lane').forEach(el => {
+        el.querySelectorAll<HTMLElement>('.dd-b').forEach(b => {
+          const s = stale(el.dataset.lane!, b.dataset.id!, c, midDone, graphDone);
+          const was = b.classList.contains('stale');
+          b.classList.toggle('stale', s);
+          if (anim && s !== was) { b.classList.remove('hit', 'fix'); void b.offsetWidth; b.classList.add(s ? 'hit' : 'fix'); }
+        });
+      });
+    };
+
+    // the graph lane's subtitle doubles as its trace: generic until a commit gives it real files and topics
+    const setTrace = (cm: Commit | null) => {
+      traces.forEach(t => {
+        t.querySelector('.t-files')!.textContent = cm ? cm.files.join(', ') : 'changed files';
+        t.querySelector('.t-topics')!.textContent = cm ? cm.topics.join(', ') : 'topics';
+        t.querySelector('.t-sections')!.textContent = cm ? `${cm.breaks.length} section${cm.breaks.length === 1 ? '' : 's'}` : 'sections';
+        t.classList.toggle('live', !!cm);
+      });
+    };
+
+    const show = (c: number, anim: boolean) => {
+      timers.forEach(clearTimeout); timers = [];
+      const cm = commits[c];
+      fig.querySelector<HTMLElement>('.dd-log')!.style.setProperty('--p', String(c / last));
+      fig.querySelectorAll('.dd-node').forEach((d, i) => {
+        d.setAttribute('aria-pressed', i === c ? 'true' : 'false');
+        d.classList.toggle('done', i <= c);
+      });
+      fig.querySelector('.dd-hash')!.textContent = cm.hash;
+      fig.querySelector('.dd-text')!.textContent = cm.msg;
+      setTrace(c > 0 ? cm : null);
+      traces.forEach(t => t.classList.remove('run'));
+      if (!anim) { paint(c, true, true, false); return; }
+      // the commit lands: its parts go wrong everywhere, then each lane catches up (or doesn't)
+      traces.forEach(t => { void t.offsetWidth; t.classList.add('run'); });
+      paint(c, false, false, true);
+      timers.push(window.setTimeout(() => paint(c, true, false, true), 1000));
+      timers.push(window.setTimeout(() => paint(c, true, true, true), 1700));
+    };
+
+    const play = () => {
+      const id = ++run;
+      show(0, false);
+      for (let i = 1; i <= last; i++) {
+        window.setTimeout(() => { if (id === run) show(i, true); }, i * 2600);
+      }
+    };
+
+    fig.addEventListener('click', e => {
+      const t = e.target as Element;
+      const node = t.closest<HTMLElement>('.dd-node');
+      if (node) { run++; show(Number(node.dataset.i), !reduce); }
+      else if (t.closest('.dd-replay')) reduce ? show(last, false) : play();
+    });
+
+    show(last, false);
+    if (reduce || !('IntersectionObserver' in window)) return;
+    show(0, false);
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      play();
+    }, { threshold: 0.4 });
+    io.observe(fig);
+  });
+</script>
+
+<style>
+  .dd { position: relative; margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
+  .dd-replay { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--sheet); color: var(--ink-3); cursor: pointer; transition: color .2s, border-color .2s; }
+  .dd-replay:hover { color: var(--accent); border-color: var(--accent); }
+  .dd-replay:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* commit log: a line of commits with short hashes, filled up to the current one */
+  .dd-log { position: relative; display: flex; justify-content: space-between; max-width: 440px; margin: 0 auto; }
+  .dd-rail { position: absolute; left: 22px; right: 22px; top: 10px; height: 2px; background: var(--line); }
+  .dd-fill { height: 100%; width: calc(var(--p) * 100%); background: var(--accent); transition: width .5s ease; }
+  .dd-node { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 44px; padding: 3px 0; border: 0; background: none; cursor: pointer; }
+  .dd-dot { width: 14px; height: 14px; border: 2px solid var(--line); border-radius: 50%; background: var(--sheet); transition: border-color .3s, background .3s, transform .3s; }
+  .dd-h { font: 10.5px "JetBrains Mono", monospace; color: var(--ink-3); }
+  .dd-node.done .dd-dot { border-color: var(--accent); }
+  .dd-node[aria-pressed="true"] .dd-dot { background: var(--accent); transform: scale(1.2); }
+  .dd-node[aria-pressed="true"] .dd-h { color: var(--accent); }
+  .dd-node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .dd-msg { margin: 8px 0 18px; text-align: center; font: 13px "JetBrains Mono", monospace; color: var(--ink); }
+  .dd-hash { margin-right: 8px; color: var(--accent); }
+
+  /* three copies of the same doc, side by side */
+  .dd-lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .dd-lane { display: grid; grid-template-rows: auto auto 1fr; min-width: 0; }
+  .dd-name { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--ink); }
+  /* room for the graph trace's three lines, so the docs stay level as it changes */
+  .dd-sub { min-height: 4.35em; margin: 2px 0 8px; font: 11px/1.45 "JetBrains Mono", monospace; color: var(--ink-3); }
+  .dd-doc { display: flex; flex-direction: column; gap: 7px; padding: 14px 14px 16px; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); box-shadow: 0 1px 0 var(--line), 0 3px 0 -1px var(--sheet), 0 3px 0 0 var(--line); }
+
+  .dd-b { --c: var(--accent); color: var(--c); transition: color .35s, opacity .35s; }
+  .dd-b.stale { --c: var(--tok-num); }
+  .dd-b.line { height: 6px; border-radius: 3px; background: currentColor; opacity: .5; }
+  .dd-b.line.stale { opacity: .85; }
+  .dd-b.fig { display: block; margin: 6px auto; width: 82%; }
+  .dd-b.fig svg { display: block; width: 100%; height: auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .dd-b.fig .ink { opacity: .5; }
+  .dd-b.hit { animation: dd-hit .6s ease; }
+  .dd-b.fix { animation: dd-fix .9s ease; }
+  @keyframes dd-hit { 30% { transform: scale(1.04); filter: brightness(1.3); } }
+  @keyframes dd-fix { 40% { transform: scale(1.04); filter: drop-shadow(0 0 4px var(--accent)); } }
+
+  /* the graph lane's trace: files, then topics, then the sections it rebuilds */
+  .dd-trace.live { color: var(--ink-2); }
+  .dd-trace.live .t-topics, .dd-trace.live .t-sections { color: var(--accent); }
+  .dd-trace .t-arrow { margin: 0 5px; color: var(--ink-3); }
+  /* wrap between the parts, never inside a file or topic name */
+  .dd-lane .dd-trace { display: flex; flex-wrap: wrap; align-items: baseline; align-content: flex-start; }
+  .dd-trace > * { white-space: nowrap; }
+  .dd-trace.run > * { animation: dd-in .3s ease both; }
+  .dd-trace.run > :nth-child(2), .dd-trace.run > :nth-child(3) { animation-delay: .35s; }
+  .dd-trace.run > :nth-child(4), .dd-trace.run > :nth-child(5) { animation-delay: .9s; }
+  @keyframes dd-in { from { opacity: 0; } }
+
+  .dd-name .short, .dd-trace-m { display: none; }
+  .dd-legend { display: flex; justify-content: center; gap: 18px; margin: 14px 0 0; font: 11px "JetBrains Mono", monospace; color: var(--ink-3); }
+  .dd-legend span::before { content: ""; display: inline-block; width: 14px; height: 6px; margin-right: 6px; border-radius: 3px; vertical-align: 1px; }
+  .dd-legend .ok::before { background: var(--accent); opacity: .6; }
+  .dd-legend .bad::before { background: var(--tok-num); opacity: .85; }
+
+  @media (max-width: 640px) {
+    .dd { padding: 16px 12px; margin-left: -4px; margin-right: -4px; }
+    .dd-lanes { gap: 8px; }
+    .dd-name { font-size: 12px; min-height: 2.6em; margin-bottom: 6px; }
+    .dd-name .long, .dd-lane .dd-sub { display: none; }
+    .dd-name .short { display: inline; }
+    .dd-doc { gap: 5px; padding: 9px 8px 11px; }
+    .dd-b.line { height: 4px; }
+    .dd-b.fig { width: 100%; margin: 4px auto; }
+    .dd-trace-m { display: block; min-height: 0; margin: 12px 0 0; text-align: center; }
+    .dd-trace-m::before { content: "graph: "; color: var(--ink-3); }
+    .dd-node { width: 38px; }
+    .dd-rail { left: 19px; right: 19px; }
+    .dd-log { margin-right: 34px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dd-fill, .dd-dot, .dd-b { transition: none; }
+    .dd-b.hit, .dd-b.fix, .dd-trace.run > * { animation: none; }
+  }
+</style>

@@ -4,7 +4,7 @@ import { z } from 'astro/zod';
 
 const posts = defineCollection({
   loader: glob({
-    pattern: '*/index.md',
+    pattern: '*/index.{md,mdx}',
     base: './src/content/posts',
     // The folder name is the URL slug, as in Hugo.
     generateId: ({ entry }) => entry.split('/')[0],

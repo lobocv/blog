@@ -1,0 +1,15 @@
+---
+// A small boxed note for the line that introduces a series. Wraps Calvin's own sentence unchanged.
+interface Props { label?: string }
+const { label = 'Series' } = Astro.props;
+---
+<aside class="series">
+  <span class="series-tag">{label}</span>
+  <slot />
+</aside>
+
+<style>
+  .series { margin: 0 0 2em; padding: 14px 18px 2px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; background: var(--raise); color: var(--ink-2); }
+  .series-tag { display: inline-block; margin-bottom: 4px; font: 11px "JetBrains Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .series :global(p) { margin: 0 0 12px; font-size: .95em; }
+</style>

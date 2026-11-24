@@ -44,7 +44,7 @@ BANNED_RE = re.compile(r"\b(" + "|".join(BANNED) + r")\b", re.IGNORECASE)
 
 def drafts():
     found = []
-    for index in POSTS.glob("*/index.md"):
+    for index in [*POSTS.glob("*/index.md"), *POSTS.glob("*/index.mdx")]:
         fm, _ = split_front_matter(index.read_text())
         if re.search(r"^draft:\s*true\s*$", fm, re.MULTILINE):
             found.append(index)
@@ -67,6 +67,8 @@ def resolve(arg):
         p = PROJECTS / arg.split("/", 1)[1] / "index.mdx"
     if not p.exists():
         p = POSTS / arg / "index.md"
+    if not p.exists():
+        p = POSTS / arg / "index.mdx"
     if not p.exists():
         sys.exit(f"Post not found: {arg}")
     return p.resolve()

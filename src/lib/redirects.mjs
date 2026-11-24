@@ -7,8 +7,8 @@ import { parseFrontmatter } from '@astrojs/markdown-remark';
 export function legacyRedirects(postsDir) {
   const names = new Set();
   for (const slug of fs.readdirSync(postsDir)) {
-    const file = path.join(postsDir, slug, 'index.md');
-    if (!fs.existsSync(file)) continue;
+    const file = ['index.md', 'index.mdx'].map(f => path.join(postsDir, slug, f)).find(f => fs.existsSync(f));
+    if (!file) continue;
     const { frontmatter } = parseFrontmatter(fs.readFileSync(file, 'utf8'));
     if (frontmatter.draft === true) continue;
     for (const c of frontmatter.categories ?? []) names.add(String(c));

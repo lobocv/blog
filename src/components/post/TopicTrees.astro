@@ -1,0 +1,103 @@
+---
+// The shape of a topic graph on its own: separate trees of topics (root domains breaking down into
+// sub-domains), with labelled reference edges between topics in different trees. Static. Wide screens
+// lay the trees out side by side with references across the gaps; phones stack them, with references
+// down the right edge. Used on the concept_index post.
+type Tree = { root: string; kids: string[] };
+type Chip = { id: string; x: number; y: number; w: number; cy: number; root: boolean };
+type Ref = { from: string; to: string; label: string[] };
+
+const CH = 7.8, PAD = 18, H = 28, GAP = 40, INDENT = 24;
+const width = (t: string) => Math.round(t.length * CH + PAD);
+
+const trees: Record<string, Tree> = {
+  billing: { root: 'billing', kids: ['invoices', 'payment-methods'] },
+  equity: { root: 'equity', kids: ['vesting-schedules', 'share-transfers', 'cap-table'] },
+  access: { root: 'access', kids: ['roles', 'permissions'] },
+};
+const refs: Ref[] = [
+  { from: 'invoices', to: 'share-transfers', label: ['charges a fee', 'on each transfer'] },
+  { from: 'permissions', to: 'cap-table', label: ['decides who', 'can see it'] },
+];
+
+// place one tree with its root's top-left corner at (x, y)
+const place = (t: Tree, x: number, y: number) => {
+  const chips: Chip[] = [{ id: t.root, x, y, w: width(t.root), cy: y + H / 2, root: true }];
+  t.kids.forEach((k, i) => chips.push({ id: k, x: x + INDENT, y: y + (i + 1) * GAP, w: width(k), cy: y + (i + 1) * GAP + H / 2, root: false }));
+  const last = chips[chips.length - 1];
+  const guide = `M${x + 12},${y + H} V${last.cy}` + chips.slice(1).map(c => ` M${x + 12},${c.cy} H${c.x}`).join('');
+  return { chips, guide };
+};
+const build = (spots: Record<string, [number, number]>) => {
+  const placed = Object.entries(spots).map(([k, [x, y]]) => place(trees[k], x, y));
+  const chips = placed.flatMap(p => p.chips);
+  const at = (id: string) => chips.find(c => c.id === id)!;
+  return { chips, guides: placed.map(p => p.guide), at };
+};
+
+// wide: billing | equity | access, references curve across the gaps with the label below
+const wide = build({ billing: [10, 16], equity: [300, 16], access: [600, 16] });
+const wideRefs = refs.map(r => {
+  const a = wide.at(r.from), b = wide.at(r.to);
+  const right = b.x > a.x;
+  const x1 = right ? a.x + a.w + 4 : a.x - 4, x2 = right ? b.x - 6 : b.x + b.w + 6;
+  const m = (x1 + x2) / 2;
+  return { d: `M${x1},${a.cy} C${m},${a.cy} ${m},${b.cy} ${x2},${b.cy}`, lx: m + (right ? 10 : 0), ly: Math.max(a.cy, b.cy) + 18, anchor: 'middle', label: r.label };
+});
+
+// narrow: trees stacked, references run down the right edge, each in its own lane
+const narrow = build({ billing: [10, 6], equity: [10, 136], access: [10, 306] });
+const narrowRefs = refs.map((r, i) => {
+  const a = narrow.at(r.from), b = narrow.at(r.to), lane = 312 + i * 24, k = 12;
+  const dir = b.cy > a.cy ? 1 : -1;
+  const d = `M${a.x + a.w + 4},${a.cy} H${lane - k} Q${lane},${a.cy} ${lane},${a.cy + dir * k} V${b.cy - dir * k} Q${lane},${b.cy} ${lane - k},${b.cy} H${b.x + b.w + 6}`;
+  const mid = (a.cy + b.cy) / 2;
+  return { d, lx: lane - 8, ly: mid - 4, anchor: 'end', label: r.label };
+});
+const views = [
+  { cls: 'wide', box: '0 0 760 192', g: wide, refs: wideRefs },
+  { cls: 'narrow', box: '0 0 360 424', g: narrow, refs: narrowRefs },
+];
+---
+<figure class="tt" role="img" aria-label="Three separate trees of topics. billing has invoices and payment-methods. equity has vesting-schedules, share-transfers and cap-table. access has roles and permissions. invoices refers to share-transfers because it charges a fee on each transfer. permissions refers to cap-table because it decides who can see it.">
+  {views.map(v => (
+    <svg class={`tt-${v.cls}`} viewBox={v.box} aria-hidden="true">
+      <defs>
+        <marker id={`tt-arrow-${v.cls}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" /></marker>
+      </defs>
+      {v.g.guides.map(d => <path class="tt-guide" d={d} />)}
+      {v.refs.map(r => (
+        <g class="tt-ref">
+          <path d={r.d} marker-end={`url(#tt-arrow-${v.cls})`} />
+          <text x={r.lx} y={r.ly} text-anchor={r.anchor}>{r.label.map((l, i) => <tspan x={r.lx} dy={i ? 13 : 0}>{l}</tspan>)}</text>
+        </g>
+      ))}
+      {v.g.chips.map(c => (
+        <g class:list={['tt-chip', { root: c.root }]}>
+          <rect x={c.x} y={c.y} width={c.w} height={H} rx="7" />
+          <text x={c.x + PAD / 2} y={c.cy + 4.5}>{c.id}</text>
+        </g>
+      ))}
+    </svg>
+  ))}
+</figure>
+
+<style>
+  .tt { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
+  .tt svg { display: block; width: 100%; height: auto; margin: 0 auto; overflow: visible; }
+  .tt-wide { max-width: 760px; }
+  .tt .tt-narrow { display: none; max-width: 360px; }
+  .tt-chip rect { fill: var(--sheet); stroke: var(--line); stroke-width: 1.25; }
+  .tt-chip text { font: 13px "JetBrains Mono", monospace; fill: var(--ink-2); }
+  .tt-chip.root text { font-weight: 600; fill: var(--ink); }
+  .tt-guide { fill: none; stroke: var(--ink-3); stroke-opacity: .5; stroke-width: 1.25; }
+  .tt-ref path { fill: none; stroke: var(--tok-type); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .tt marker path { fill: var(--tok-type); }
+  .tt-ref text { font: italic 11px "JetBrains Mono", monospace; fill: var(--tok-type); }
+
+  @media (max-width: 560px) {
+    .tt { padding: 16px 10px; margin-left: -4px; margin-right: -4px; }
+    .tt .tt-wide { display: none; }
+    .tt .tt-narrow { display: block; }
+  }
+</style>
