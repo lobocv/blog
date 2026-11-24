@@ -87,10 +87,20 @@ describe('skeleton', () => {
     expect(stretched).toBeLessThan(0.55);
   });
 
-  it('holds the head steadier than the shoulders', () => {
+  it('nods the head with the stride: up while the hind legs drive, down as the front legs take the landing', () => {
     const b = buildAt(2);
-    const range = (name: string) => { const ys = phases.map(c => skeleton(b, c, 1).pts[name][1]); return Math.max(...ys) - Math.min(...ys); };
-    expect(range('skull')).toBeLessThan(range('withers') * 0.75);
+    const ys = phases.map(c => skeleton(b, c, 1).pts.skull[1]);
+    const high = phases[ys.indexOf(Math.max(...ys))], low = phases[ys.indexOf(Math.min(...ys))];
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(6);
+    expect(high > 0.85 || high < 0.3).toBe(true);
+    expect(low).toBeGreaterThan(0.4);
+    expect(low).toBeLessThan(0.7);
+  });
+
+  it('gives the pup a rounder head than the adult', () => {
+    expect(buildAt(0).baby).toBe(1);
+    expect(buildAt(2).baby).toBe(0);
+    expect(buildAt(0).muzzle).toBeLessThan(buildAt(2).muzzle);
   });
 
   it('stands still with all four paws down when there is no gait', () => {
