@@ -105,15 +105,15 @@ function shapes(p: Pose, gait: number): Record<string, Pt[]> {
   out.bodyShoulder = [blade, q.neckTop, q.chestFront, T(46, -29), T(33, -27)];
   out.bodyBelly = [q.brisket, q.chestBottom, q.tuck, q.flank, P(-25, -29), W(-3, -31), T(22, -40), T(40, -35)];
   out.bodyHaunch = [q.croup, loin, P(-40, -20), P(-50, -10), q.tailBase];
-  out.backRim = [q.croup, q.backRear, q.backFront, T(18, 5)];
+  out.backRim = [q.croup, q.backRear, T(10, 4.5)];
 
   // --- Neck: spans from the ribcage to the skull, so it stretches and bends with both
-  const nape = H(-8, 7), cheek = H(-9, -7), throat = H(0, -13);
+  const nape = H(-7, 9), cheek = H(-10, -9), throat = H(-2, -16);
   const lift = (a: Pt, c: Pt, f: number, by: number): Pt => { const m = mix(a, c, f), [, n] = axes(a, c); return add(m, n, by); };
   // The mane: a thick ruff from behind the ears over the shoulders and down the chest, in ragged tufts
-  const r = b.ruff, start = T(18, 5);
-  const crest1 = lift(q.withers, nape, 0.2, 3 + 5 * r), crest2 = lift(q.withers, nape, 0.65, 3 + 5 * r);
-  const bib1 = lift(throat, q.chestFront, 0.35, 3 + 7 * r), bib2 = lift(throat, q.chestFront, 0.8, 3 + 8 * r), mane = crest2;
+  const r = b.ruff, start = T(10, 4.5);
+  const crest1 = lift(q.withers, nape, 0.15, 3 + 5 * r), crest2 = lift(q.withers, nape, 0.6, 4 + 7 * r);
+  const bib1 = lift(throat, q.chestFront, 0.35, 3 + 6 * r), bib2 = lift(throat, q.chestFront, 0.8, 3 + 7 * r), mane = crest2;
   /** A point on the neck: `along` runs head to body, `across` runs top to underside */
   const on = (along: number, across: number) => mix(mix(nape, q.withers, along), mix(throat, q.chestFront, along), across);
   out.neck = [start, crest1, crest2, nape, cheek, throat, bib1, bib2, T(54, -27), q.brisket, T(38, -14)];
@@ -123,21 +123,21 @@ function shapes(p: Pose, gait: number): Record<string, Pt[]> {
 
   // --- Head. Ears lie back at a run.
   const m = b.muzzle, e = b.ear, back = 5 * gait;
-  const occ = H(-3, 11), earB = H(1, 12.5), earF = H(10, 13.5), earTip = H(3 - back, 12.5 + 13 * e - 1.5 * gait);
-  const brow = H(16, 11.5), stop = H(22, 7.5), bridge = H(22 + 14 * m, 4.6), nose = H(22 + 20 * m, 2.8), noseU = H(22 + 20.5 * m, -1.8);
-  const lip = H(22 + 16.5 * m, -5), chin = H(22 + 9 * m, -7.5), corner = H(17, -5.5), jaw = H(9, -12);
+  const occ = H(-3, 11), earB = H(-2, 12), earF = H(6, 13.5), earTip = H(-1 - back, 12.5 + 10 * e - 1.5 * gait);
+  const brow = H(15, 12), stop = H(22, 8), bridge = H(22 + 12 * m, 5.2), nose = H(22 + 17.5 * m, 3.4), noseU = H(22 + 18 * m, -1.6);
+  const lip = H(22 + 14.5 * m, -5), chin = H(22 + 8 * m, -7.5), corner = H(17, -5.5), jaw = H(8, -13);
   out.head = [nape, occ, earB, earF, brow, stop, bridge, nose, noseU, lip, chin, jaw, throat, cheek];
-  out.headTop = [occ, earF, brow, stop, bridge, nose, H(22 + 12 * m, 1), H(17, 4), H(3, 6)];
-  out.headCheek = [H(-6, 3), H(3, 6), H(17, 4), H(22 + 12 * m, 1), noseU, lip, corner, H(8, -5), cheek];
+  out.headTop = [occ, earF, brow, stop, bridge, nose, H(22 + 10 * m, 1.4), H(17, 4), H(3, 6)];
+  out.headCheek = [H(-6, 3), H(3, 6), H(17, 4), H(22 + 10 * m, 1.4), noseU, lip, corner, H(8, -5), cheek];
   out.headGrey = [stop, bridge, nose, noseU, lip, chin, corner, H(17, 4)];
   out.headJaw = [corner, lip, chin, jaw, throat, H(6, -8)];
-  out.nose = [H(22 + 17.5 * m, 3.7), nose, noseU, H(22 + 18 * m, -1)];
-  out.mouth = [H(22 + 15.5 * m, -4.4), H(22 + 6 * m, -4), corner];
+  out.nose = [H(22 + 15 * m, 4.2), nose, noseU, H(22 + 15.5 * m, -0.8)];
+  out.mouth = [H(22 + 13.5 * m, -4.4), H(22 + 5 * m, -4), corner];
   out.eye = [H(15, 6.6), H(18, 8.2), H(20, 7), H(17.5, 5.8)];
   out.ear = [earB, earTip, earF];
   out.earLit = [mix(earB, earF, 0.45), earTip, earF];
   out.earIn = [mix(earB, earF, 0.55), mix(earTip, earF, 0.3), mix(earB, earF, 0.9)];
-  out.earFar = [H(6, 13), H(8 - back, 13 + 12 * e - 1.5 * gait), H(14, 12.5)];
+  out.earFar = [H(3, 13), H(4.5 - back, 13 + 9.5 * e - 1.5 * gait), H(10, 13)];
   out.headRim = [start, crest1, crest2, nape, occ, earB, earTip, earF, brow, stop, bridge, nose];
 
   // --- Tail: bushy in the middle, tapering to the tip

@@ -58,7 +58,7 @@ const HIP_H = 64;                                   // standing hip height
 const HIP: Pt = [-42, -18], SHOULDER: Pt = [40, -26]; // joints, relative to the middle of the back
 const HIND_BONES = [24, 30, 22], FRONT_BONES = [22, 27, 14];  // thigh, shank, foot; upper arm, forearm, foot
 const PAD = 2.5;                                    // height of the paw's joint above the ground when planted
-const RUN_NECK = 7 * RAD;                           // how far above level the neck reaches at a run
+const RUN_NECK = 30 * RAD;                           // how far above level the neck reaches at a run
 const FAR_DX = 5;                                   // the far legs sit a little forward, so both of a pair show
 
 export interface LegPose {
@@ -113,13 +113,13 @@ export function skeleton(b: Build, cycle: number, gait: number): Pose {
   const T = frame(ribs), P = frame(pelvis), W = frame((ribs + pelvis) / 2);
 
   // --- Neck and head. The head is carried low and forward at a run, and holds its height while the body moves under it.
-  const neckBase = T(44, -6), neckLen = 26 * lerp(b.len, b.head, 0.5);
-  const neckAngle = lerp(34 * RAD, RUN_NECK + 5 * RAD * arch + 0.4 * ribs, gait);
+  const neckBase = T(44, -6), neckLen = 25 * lerp(b.len, b.head, 0.5);
+  const neckAngle = lerp(40 * RAD, RUN_NECK + 5 * RAD * arch + 0.4 * ribs, gait);
   const reach: Pt = [neckBase[0] + neckLen * Math.cos(neckAngle), neckBase[1] + neckLen * Math.sin(neckAngle)];
   const still = rot([44 * b.len, -6 * b.depth], 0);
   const steady: Pt = [still[0] + neckLen * Math.cos(RUN_NECK), HIP_H * b.leg - HIP[1] * b.depth + still[1] + neckLen * Math.sin(RUN_NECK)];
   const skull: Pt = [lerp(reach[0], steady[0], 0.5 * gait), lerp(reach[1], steady[1], 0.8 * gait)];
-  const headAngle = lerp(-6 * RAD, -11 * RAD + 0.3 * ribs + 2 * RAD * Math.sin(TAU * (c - 0.7)), gait);
+  const headAngle = lerp(-4 * RAD, -7 * RAD + 0.3 * ribs + 2 * RAD * Math.sin(TAU * (c - 0.7)), gait);
   const hs = 1.12 * b.head;
   const H = (x: number, y: number): Pt => { const p = rot([x * hs, y * hs], headAngle); return [skull[0] + p[0], skull[1] + p[1]]; };
 
