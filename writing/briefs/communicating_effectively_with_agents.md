@@ -1,10 +1,12 @@
 # Communicating Effectively With Agents
 
-First post in the Trellis series. Opens the series broadly (agent work is exhausting because the full product engineering context isn't accounted for), then focuses on one part of that: communication, through the topic graph.
+First post in the Trellis series. Published 2026-11-24.
 
-- Thesis: Agent development is more exhausting than it should be because communicating with agents is treated as changing their response style (eg Plain English, Caveman, Humanizer). Communicating effectively means understanding the whole engineering life cycle and the wider context agents work in (architecture, tech debt, terminology, UX, product vision and strategy). Communication is one part of that, and this post covers one aspect of it: humans prompt in concepts, agents search in files. Grep and glob only bridge the two when the codebase's naming is consistent, so agents need an index from concept (the language humans prompt in) to the code that implements it.
+A direction, not a contract. `/rescope` updates it when the post changes shape.
+
+- Thesis: Working with agents is exhausting partly because humans think in concepts and agents think in files, classes and functions. Documentation can't bridge the two because it goes stale and becomes a second source of truth. A topic graph, built and kept current by agents, maps domain concepts to the code (and other sources) behind them, and it only works when each word means one thing.
 - Reader: working software engineers who use AI coding tools (default reader). Comfortable with Go and architecture
-- Takeaway: your agent instructions should include an index that maps natural language (domain concepts) to the code where it lives, kept up to date. The index only works if the names in it mean one thing (consistent, unambiguous language, the core premise of DDD)
+- Takeaway: Words in a system should have a single meaning. A topic graph maps concepts to code and shows where language is ambiguous (eg "grant" under both equity and access topics), so it can be fixed.
 - Framing: general and industry-wide, not tied to one job. Calvin felt it at work and on personal projects, and readers will recognize it without much proof. No Pulley section. At most a one-line example (eg vesting logic spread across packages)
 - Supporting points:
   - The mismatch between how humans communicate (natural language, intent, problems) and how agents search (files, structs, names)
@@ -25,3 +27,11 @@ First post in the Trellis series. Opens the series broadly (agent work is exhaus
 
 - Title: Communicating Effectively With Agents
 - Summary (shown as the lede under the title): Bridging prompts and code with a topic graph.
+
+## Changes
+
+- 2026-11-24, thesis: was framed against "response style" tools (Plain English, Caveman, Humanizer) and opened broad (the whole engineering life cycle) before narrowing. Now opens on the language gap (concepts vs files) and keeps the whole-system view as one paragraph. Why: the response-style framing was dropped while drafting the intro; not discussed further
+- 2026-11-24, new section: why documentation fails (goes stale, second source of truth, agents can't find what to update), with its own figure. Why: it sets up why an index has to be derived rather than hand-written
+- 2026-11-24, workflows: the four named workflows (explanations, depth, breadth and codebase curation) became one curation loop with no depth/breadth split. Why: Calvin found the split confusing and too detailed
+- 2026-11-24, takeaway: "put a concept-to-code index in your agent instructions" no longer appears; the post ends on "one word, one meaning". Why: not discussed. A candidate for the follow-up post on how the graph works
+- 2026-11-24, scope: topic trees and labelled references between topics got their own figure; the DDD mention moved into the intro as "Ubiquitous Language"
