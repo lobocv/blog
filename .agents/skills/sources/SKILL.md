@@ -6,8 +6,8 @@ argument-hint: "<claim, term or question>"
 
 # Find sources for the active post
 
-Find the active post (see "Where things live" in `AGENTS.md`). Follow
-"Research and links" in `AGENTS.md`.
+Find the active post (see "Where things live" in `docs/writing.md`). Follow
+"Research and links" in `docs/writing.md`.
 
 - Search for primary sources first: official docs, specs, the original paper or post
 - Check every URL resolves before suggesting it

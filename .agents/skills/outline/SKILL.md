@@ -5,7 +5,7 @@ description: Propose the section order for the active post as terse bullet fragm
 
 # Outline the active post
 
-Find the active post and read its brief (see "Where things live" in `AGENTS.md`).
+Find the active post and read its brief (see "Where things live" in `docs/writing.md`).
 If there is no brief, suggest `/scope` first.
 
 - Propose 3 to 6 sections. For each: a heading option and 1 to 3 bullet

@@ -1,13 +1,13 @@
 ---
 name: critique
-description: Critique the active post without editing its prose. Modes are structure (order, focus, length, what to cut), line (clarity, wording, AI tells) and audience. Use when Calvin says /critique or asks for feedback on a draft.
+description: Critique the active post, applying mechanical fixes and line edits directly and proposing anything bigger. Modes are structure (order, focus, length, what to cut), line (clarity, wording, AI tells) and audience. Use when Calvin says /critique or asks for feedback on a draft.
 argument-hint: "[structure|line|audience]"
 ---
 
 # Critique the active post
 
-Find the active post and read its brief (see "Where things live" in `AGENTS.md`).
-Follow the Critique protocol in `AGENTS.md`. Also read `writing/feedback.md` and
+Find the active post and read its brief (see "Where things live" in `docs/writing.md`).
+Follow the Critique protocol in `docs/writing.md`. Also read `writing/feedback.md` and
 call out any recurring pattern that shows up again.
 
 Run `python3 scripts/lint_post.py <path>` first and use its output (length, em-dashes,
@@ -29,7 +29,7 @@ Do this before line edits, so Calvin doesn't polish paragraphs that get cut.
 ## line
 
 - Unclear sentences, buried points, repetition, filler
-- AI tells from "Sounding human, not AI" in `AGENTS.md`
+- AI tells from "Sounding human, not AI" in `docs/writing.md`
 - Places where a concrete story or number would beat an abstract claim
 - Leave his informal voice alone. Plain is the goal
 
@@ -43,9 +43,9 @@ Read as the reader in the brief:
 
 ## Output
 
-- Top 3 to 5 issues first, each with: quoted original, the problem, why it
-  matters (name the principle), a direction to fix it. No rewrites unless asked
-- Then a short list of minor or mechanical fixes. Offer to apply only the
-  mechanical ones (typos, broken markdown, dead links)
-- End by asking whether any pattern here should go in `writing/feedback.md`.
-  Add it only if Calvin agrees
+Follow the Critique protocol in `docs/writing.md`: apply mechanical fixes and
+line edits, list them in one line each, then show the ranked checklist and
+present one item at a time.
+
+End by asking whether any pattern here should go in `writing/feedback.md`, and
+add it only if Calvin agrees.

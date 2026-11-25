@@ -6,7 +6,7 @@ argument-hint: "[idea or slug]"
 
 # Scope a post
 
-Read `AGENTS.md` (Workflow, Audience, Series) and `writing/ideas.md` first.
+Read `docs/writing.md` (Workflow, "Length, focus and audience", Series) and `writing/ideas.md` first.
 
 ## Interview
 
@@ -27,17 +27,23 @@ Stop when all five are answered. Don't draft any prose for the post.
 
 ## Create the files
 
-- Pick a short snake_case slug (eg `topic_anchors`) and confirm it
+- Pick a snake_case slug that matches the working title (eg `communicating_effectively_with_agents`) and confirm it. It becomes the URL, so rename it before publishing if the title changes
 - `writing/briefs/<slug>.md`, using Calvin's own words from the interview:
 
   ```markdown
   # <working title>
+
+  A direction, not a contract. `/rescope` updates it when the post changes shape.
 
   - Thesis:
   - Reader:
   - Takeaway:
   - Out of scope:
   - Budget: 1,200 to 1,800 words
+
+  ## Changes
+
+  <!-- /rescope adds dated entries here: what changed and why -->
   ```
 
 - `src/content/posts/<slug>/index.md` with only front matter, `draft: true` and

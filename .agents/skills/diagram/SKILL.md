@@ -6,7 +6,7 @@ argument-hint: "<what the diagram should show>"
 
 # Diagram for the active post
 
-Find the active post and read its brief (see "Where things live" in `AGENTS.md`).
+Find the active post and read its brief (see "Where things live" in `docs/writing.md`).
 
 ## Decide whether it earns its place
 
@@ -16,8 +16,13 @@ and ask before going ahead.
 
 ## Build it
 
-- Keep it small: the fewest boxes and arrows that make the point. Readable on a phone
-- Use the same names the post uses for things. No labels the text doesn't explain
+Read `docs/figures.md` first. It holds the design language (one idea per figure,
+reader-paced interaction, colour meanings, phone layouts) and lists the shared
+components in `src/components/figure/`.
+
+Static diagrams go in D2. Anything interactive or animated is an Astro component
+in `src/components/post/`, used from an `.mdx` post.
+
 - Write D2 source to `src/content/posts/<slug>/<name>.d2` (the source of truth, so it
   can be edited and re-rendered later)
 - Render it if `d2` is installed:
