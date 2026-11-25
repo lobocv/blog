@@ -128,7 +128,7 @@ def main():
     minutes = math.ceil(total / WORDS_PER_MINUTE)
     print(f"{post.relative_to(ROOT)}")
     print(f"  words: {total} total, {prose} prose, about {minutes} min read")
-    is_project = post.suffix == ".mdx"
+    is_project = "projects" in post.parts
     if is_project:
         pass  # project pages are layered and mostly collapsed, so the reading-time cap doesn't apply
     elif total > HARD_CAP:
@@ -143,6 +143,11 @@ def main():
             fails.append(f"line {ln}: em-dash")
         for m in BANNED_RE.finditer(line):
             warns.append(f"line {ln}: \"{m.group(0)}\"")
+
+    # Drafting notes for Claude (@@ ...), which must be resolved before publishing
+    for n, line in prose_lines(body):
+        for note in re.findall(r"@@[ \t]*(.*?)[ \t]*(?:@@|$)", line):
+            warns.append(f"line {n + offset}: note \"{note}\" (run /notes)")
 
     # Images: alt text and local files
     for n, line in prose_lines(body):

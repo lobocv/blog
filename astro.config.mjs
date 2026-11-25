@@ -8,6 +8,10 @@ import { unified, rehypeHeadingIds } from '@astrojs/markdown-remark';
 import { rehypeCaptions, rehypeHeadingAnchors } from './src/lib/rehype.mjs';
 import { shikiConfig } from './src/lib/shiki.mjs';
 import { legacyRedirects } from './src/lib/redirects.mjs';
+import { rehypeNotes } from './src/lib/notes.mjs';
+
+// `astro dev` shows drafting notes (@@ ...) on the page; a build drops or rejects them
+const dev = process.argv.includes('dev');
 
 // /projects/ stays out of the sitemap until a project is published
 const publishedProjects = fs.existsSync('src/content/projects')
@@ -24,7 +28,7 @@ export default defineConfig({
   // /about/ was folded into the journey page
   redirects: { ...legacyRedirects('src/content/posts'), '/about': '/journey/' },
   markdown: {
-    processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex, rehypeHeadingIds, rehypeHeadingAnchors, rehypeCaptions] }),
+    processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [[rehypeNotes, { dev }], rehypeKatex, rehypeHeadingIds, rehypeHeadingAnchors, rehypeCaptions] }),
     shikiConfig,
   },
 });
