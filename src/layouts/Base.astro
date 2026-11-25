@@ -12,10 +12,11 @@ interface Props {
   /** Social preview image path, eg /og/<slug>.png */
   image?: string;
 }
-const { title, description = 'Calvin Lobo on software architecture, Go, databases and developer efficiency.', page, footer = true, image = '/og/site.png' } = Astro.props;
+const { title, description = 'Calvin Lobo on software architecture, engineering efficiency and building products.', page, footer = true, image = '/og/site.png' } = Astro.props;
 const ogImage = new URL(image, Astro.site);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 import Footer from '../components/Footer.astro';
+import { xHandle } from '../data/social';
 ---
 <!doctype html>
 <html lang="en">
@@ -47,8 +48,12 @@ import Footer from '../components/Footer.astro';
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content={xHandle}>
+<meta name="twitter:creator" content={xHandle}>
 <link rel="alternate" type="application/rss+xml" title="lobocv" href="/index.xml">
-<link rel="icon" href="/favicon.ico">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-6GL7S6YEB3"></script>
 <script is:inline>
   window.dataLayer = window.dataLayer || [];

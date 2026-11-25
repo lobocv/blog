@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import PostRow from '../components/PostRow.astro';
 import { philosophy, about } from '../data/home';
 import RssLine from '../components/RssLine.astro';
+import { social } from '../data/social';
 import Footer from '../components/Footer.astro';
 import { codeToHtml } from 'shiki';
 import { shikiTheme, trimCode } from '../lib/shiki.mjs';
@@ -20,7 +21,7 @@ const topics = categoryCounts(posts);
     <div class="scene">
       <div id="scene" aria-hidden="true"></div>
       <div class="copy" id="copy">
-        <div class="kicker">Software architecture · Go · Distributed systems</div>
+        <div class="kicker">Software architecture · Engineering efficiency · Product engineering</div>
         <h1>Calvin Lobo</h1>
         <p class="sub">Backend engineer. I build systems that scale, and write about the decisions behind them.</p>
         <div class="ctas"><a class="btn primary" href="/posts/">Read the blog</a></div>
@@ -55,7 +56,7 @@ const topics = categoryCounts(posts);
           <div class="eyebrow">{about.heading}</div>
           <h2 id="about-h">Calvin Lobo</h2>
           <p>{about.text}</p>
-          <div class="links-row"><a href="/about/">More about me →</a><a href="https://github.com/lobocv">GitHub</a><a href="https://www.linkedin.com/in/lobocv/">LinkedIn</a></div>
+          <div class="links-row"><a href="/about/">More about me →</a>{social.map(s => <a href={s.href} rel="me">{s.name}</a>)}</div>
         </div>
       </section>
 

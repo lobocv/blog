@@ -6,7 +6,7 @@ import { renderOg } from '../../lib/og';
 export async function getStaticPaths() {
   const posts = await getPosts();
   return [
-    { params: { slug: 'site' }, props: { title: 'Calvin Lobo', summary: 'Software architecture, Go, databases and developer efficiency.' } },
+    { params: { slug: 'site' }, props: { title: 'Calvin Lobo', summary: 'Software architecture, engineering efficiency and building products.' } },
     ...posts.map(p => ({ params: { slug: p.id }, props: { title: p.data.title, summary: p.data.summary } })),
   ];
 }

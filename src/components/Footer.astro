@@ -1,1 +1,4 @@
-<footer class="footer"><div class="wrap"><span>© {new Date().getFullYear()} Calvin Lobo</span><nav><a href="https://github.com/lobocv">GitHub</a><a href="https://www.linkedin.com/in/lobocv/">LinkedIn</a><a href="/index.xml">RSS</a></nav></div></footer>
+---
+import { social } from '../data/social';
+---
+<footer class="footer"><div class="wrap"><span>© {new Date().getFullYear()} Calvin Lobo</span><nav>{social.map(s => <a href={s.href} rel="me">{s.name}</a>)}<a href="/index.xml">RSS</a></nav></div></footer>

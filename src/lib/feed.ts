@@ -17,6 +17,6 @@ export function buildFeed(posts: Post[], site: string): string {
       `<description>${esc(p.data.summary ?? '')}</description></item>`;
   }).join('');
   return `<?xml version="1.0" encoding="utf-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>` +
-    `<title>lobocv</title><link>${base}/</link><description>Calvin Lobo on software architecture, Go, databases and developer efficiency.</description>` +
+    `<title>lobocv</title><link>${base}/</link><description>Calvin Lobo on software architecture, engineering efficiency and building products.</description>` +
     `<language>en</language><atom:link href="${base}/index.xml" rel="self" type="application/rss+xml"/>${items}</channel></rss>\n`;
 }

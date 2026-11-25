@@ -83,6 +83,8 @@ before the scope is set). Calvin may skip steps, but you don't skip them for him
 5. `/critique structure`, then Calvin revises
 6. `/critique line` (and `/critique audience` if useful), then Calvin revises
 7. `/ship` runs the final checks before Calvin publishes
+8. `/share` after the deploy: tagged links, preview card checks and a
+   per-platform checklist. Calvin writes the social posts
 
 Structure comes before line edits so Calvin doesn't polish paragraphs that get cut.
 
