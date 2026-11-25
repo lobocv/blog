@@ -1,4 +1,7 @@
 ---
+import Figure from '../figure/Figure.astro';
+import InfoTip from '../figure/InfoTip.astro';
+import Legend from '../figure/Legend.astro';
 // The same request answered two ways, side by side around one file tree. File system tools (grep, glob) find files
 // that use the prompt's words, related or not; the topic graph knows every file behind each concept.
 // Arrows are drawn by the script from each side into the files it finds; files the search misses turn red.
@@ -32,15 +35,14 @@ const rows: Row[] = [
 const need = rows.filter(r => r.topics).length;
 const found = rows.filter(r => r.hit && r.topics).length;
 ---
-<figure class="gvg fs-on graph-on">
+<Figure class="gvg fs-on graph-on">
   <p class="gvg-prompt"><span class="gvg-who">prompt</span>After a partial share transfer, the recipient's shares start vesting from the transfer date instead of keeping the original start date and cliff. Find where that happens and fix it.</p>
   <div class="gvg-stage">
     <svg class="gvg-arrows" aria-hidden="true"></svg>
     <div class="gvg-panel fs">
       <div class="p-head">
         <span class="p-name">File system tools</span>
-        <button type="button" class="gvg-info" aria-label="How file system tools search" aria-expanded="false">?</button>
-        <p class="gvg-pop" role="tooltip">Search tools match words, not meaning. They find every file that uses the prompt's words, related or not, and miss files that use another form of the word or another word for the same thing (eg vested, vest_cliff, tranche).</p>
+        <InfoTip label="How file system tools search">Search tools match words, not meaning. They find every file that uses the prompt's words, related or not, and miss files that use another form of the word or another word for the same thing (eg vested, vest_cliff, tranche).</InfoTip>
       </div>
       <code>grep -ril "vesting"</code>
       <code>glob "**/*transfer*"</code>
@@ -56,8 +58,7 @@ const found = rows.filter(r => r.hit && r.topics).length;
     <div class="gvg-panel graph">
       <div class="p-head">
         <span class="p-name">Topic graph</span>
-        <button type="button" class="gvg-info" aria-label="How the topic graph finds files" aria-expanded="false">?</button>
-        <p class="gvg-pop" role="tooltip">Each topic links a concept to every file behind it, whatever those files are called. The agent looks up the topics the prompt is about and gets the whole set in one step.</p>
+        <InfoTip label="How the topic graph finds files">Each topic links a concept to every file behind it, whatever those files are called. The agent looks up the topics the prompt is about and gets the whole set in one step.</InfoTip>
       </div>
       <div class="topics">
         <code class="topic root">vesting</code>
@@ -69,8 +70,8 @@ const found = rows.filter(r => r.hit && r.topics).length;
       <p class="p-tally"><strong>{need} of {need}</strong> found</p>
     </div>
   </div>
-  <p class="gvg-legend"><span class="both">found by both</span><span class="miss">missed by file search</span><span class="off">off target</span></p>
-</figure>
+  <Legend items={[{ label: 'found by both', color: 'good' }, { label: 'missed by file search', color: 'miss' }, { label: 'off target', color: 'ref' }]} />
+</Figure>
 
 <script>
   const NS = 'http://www.w3.org/2000/svg';
@@ -146,23 +147,6 @@ const found = rows.filter(r => r.hit && r.topics).length;
       });
     };
 
-    // tooltips: hover on mouse, tap or keyboard to toggle
-    const closeAll = (except?: Element) => fig.querySelectorAll('.gvg-panel').forEach(pn => {
-      if (pn === except) return;
-      pn.classList.remove('open');
-      pn.querySelector('.gvg-info')!.setAttribute('aria-expanded', 'false');
-    });
-    fig.addEventListener('click', e => {
-      const btn = (e.target as Element).closest('.gvg-info');
-      if (!btn) { closeAll(); return; }
-      const pn = btn.closest('.gvg-panel')!;
-      closeAll(pn);
-      const open = pn.classList.toggle('open');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-    document.addEventListener('click', e => { if (!fig.contains(e.target as Node)) closeAll(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
-
     new ResizeObserver(draw).observe(stage);
     document.fonts?.ready.then(draw);
     if (reduce || !('IntersectionObserver' in window)) { fig.classList.add('drawn'); return; }
@@ -190,7 +174,6 @@ const found = rows.filter(r => r.hit && r.topics).length;
 </script>
 
 <style>
-  .gvg { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
   .gvg-prompt { margin: 0 0 18px; font-size: 16px; line-height: 1.5; color: var(--ink); }
   .gvg-who { display: inline-block; margin-right: 10px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: 11px "JetBrains Mono", monospace; letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
 
@@ -200,15 +183,9 @@ const found = rows.filter(r => r.hit && r.topics).length;
 
   .gvg-panel { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); }
   .gvg-panel.graph { border-color: var(--accent); }
-  .gvg-panel.open, .gvg-panel:has(.gvg-info:hover) { z-index: 2; }
+  .gvg-panel:has(:global(.fig-info[aria-expanded="true"])), .gvg-panel:has(:global(.fig-info:hover)) { z-index: 2; }
   .p-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .p-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
-  .gvg-info { flex: none; width: 20px; height: 20px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: none; color: var(--ink-3); font: 600 11px "JetBrains Mono", monospace; cursor: pointer; }
-  .gvg-info:hover, .gvg-panel.open .gvg-info { color: var(--accent); border-color: var(--accent); }
-  .gvg-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .gvg-pop { position: absolute; top: calc(100% + 8px); left: -4px; right: -4px; z-index: 3; display: none; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); box-shadow: 0 6px 18px rgb(0 0 0 / .2); font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
-  .gvg-panel.open .gvg-pop { display: block; }
-  @media (hover: hover) { .p-head:has(.gvg-info:hover) .gvg-pop { display: block; } }
 
   .gvg-panel code { align-self: flex-start; padding: 2px 6px; border-radius: 5px; background: var(--raise); font: 11.5px "JetBrains Mono", monospace; color: var(--ink-2); white-space: nowrap; }
   .p-tally { margin: 2px 0 0; font: 11px/1.45 "JetBrains Mono", monospace; color: var(--ink-3); opacity: 0; transition: opacity .4s; }
@@ -248,11 +225,6 @@ const found = rows.filter(r => r.hit && r.topics).length;
   .gvg.drawn.fs-on :global(.a.fs), .gvg.drawn.graph-on :global(.a.graph) { stroke-dashoffset: 0; }
   .gvg.drawn.fs-on :global(.a.off), .gvg.drawn.fs-on :global(.d.fs), .gvg.drawn.graph-on :global(.d.graph) { opacity: 1; }
 
-  .gvg-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; margin: 18px 0 0; font: 11px "JetBrains Mono", monospace; color: var(--ink-3); }
-  .gvg-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; }
-  .gvg-legend .both::before { background: var(--accent); }
-  .gvg-legend .miss::before { background: var(--tok-num); }
-  .gvg-legend .off::before { background: var(--tok-type); }
 
   @media (max-width: 640px) {
     .gvg { padding: 16px 12px; margin-left: -4px; margin-right: -4px; }
@@ -263,9 +235,9 @@ const found = rows.filter(r => r.hit && r.topics).length;
     .gvg-tree { grid-area: tree; justify-self: center; font-size: 11.5px; }
     .gvg-panel { padding: 10px; }
     .gvg-panel code { font-size: 10.5px; }
-    .gvg-pop { width: min(260px, 78vw); }
-    .gvg-panel.fs .gvg-pop { right: auto; }
-    .gvg-panel.graph .gvg-pop { left: auto; }
+    .gvg-panel :global(.fig-pop) { width: min(260px, 78vw); }
+    .gvg-panel.fs :global(.fig-pop) { right: auto; }
+    .gvg-panel.graph :global(.fig-pop) { left: auto; }
   }
   @media (prefers-reduced-motion: reduce) {
     .gvg :global(.a), .gvg :global(.d), .gvg-tree .nm, .p-tally { transition: none !important; }

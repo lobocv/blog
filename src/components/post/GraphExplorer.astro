@@ -1,4 +1,5 @@
 ---
+import Figure from '../figure/Figure.astro';
 // What a topic graph links to: topics form trees, and each topic
 // links to the resources behind it, from any source. Links run many-to-many.
 // Tap a topic to see its resources, or a resource to see its topics. Used on the communicating_effectively_with_agents post.
@@ -32,7 +33,7 @@ const sourceInfo: Record<string, { kind: string; icon: string; stroke?: boolean 
 };
 const data = JSON.stringify({ topics, resources });
 ---
-<figure class="gx" data-graph={data}>
+<Figure class="gx" data-graph={data}>
   <div class="gx-grid">
     <svg class="gx-lines" aria-hidden="true"></svg>
     <div class="gx-col gx-topics">
@@ -59,7 +60,7 @@ const data = JSON.stringify({ topics, resources });
       ))}
     </div>
   </div>
-</figure>
+</Figure>
 
 <script>
   type Topic = { id: string; root?: boolean; parent?: string; anchors: string[] };
@@ -144,7 +145,6 @@ const data = JSON.stringify({ topics, resources });
 </script>
 
 <style>
-  .gx { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
   .gx-grid { position: relative; display: grid; grid-template-columns: auto auto; justify-content: space-between; column-gap: 48px; }
   .gx-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
   .gx-col { position: relative; min-width: 0; }
@@ -172,7 +172,6 @@ const data = JSON.stringify({ topics, resources });
   .gx-lines :global(path.lit) { stroke: var(--accent); stroke-opacity: 1; stroke-width: 2; }
 
   @media (max-width: 560px) {
-    .gx { padding: 16px 10px; margin-left: -4px; margin-right: -4px; }
     .gx-grid { column-gap: 22px; padding-left: 20px; }
     .gx-node { font-size: 11px; padding: 3px 6px; }
     .gx-topic { margin-left: 12px; }

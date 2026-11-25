@@ -1,4 +1,6 @@
 ---
+import Figure from '../figure/Figure.astro';
+import ReplayButton from '../figure/ReplayButton.astro';
 // The workflows around the topic graph as one loop: curate (source → graph), generate (graph →
 // explanations), read (explanations → agents and humans) and fix (back into the source). Readers step
 // through with the previous/next arrows or the step dots; the caption follows and a dot runs the edge. The replay
@@ -18,10 +20,8 @@ const steps = [
   { id: 'fix', text: 'The fixes land in the source. The next commit carries them into the graph, so the codebase improves over time.' },
 ];
 ---
-<figure class="cl" data-step="0">
-  <button type="button" class="cl-rebuild" aria-label="Delete the graph and rebuild it from source" title="Delete the graph and rebuild it">
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
+<Figure class="cl" data-step="0">
+  <ReplayButton label="Delete the graph and rebuild it from source" title="Delete the graph and rebuild it" />
   <svg class="cl-map" viewBox="0 0 440 290" role="img" aria-label="A loop. Agents curate the topic graph from the source, the graph generates explanations, agents and humans read them, and their fixes go back into the source.">
     <defs>
       <marker id="cl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" /></marker>
@@ -52,7 +52,7 @@ const steps = [
     </div>
     <button type="button" class="cl-arrow-btn cl-next" aria-label="Next step"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
-</figure>
+</Figure>
 
 <script>
   const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -95,7 +95,7 @@ const steps = [
     });
 
     // delete the derived boxes, then bring back the graph, then the explanations
-    fig.querySelector('.cl-rebuild')!.addEventListener('click', async () => {
+    fig.querySelector('.fig-replay')!.addEventListener('click', async () => {
       if (fig.dataset.phase) return;
       fig.dataset.phase = 'gone'; rbText.textContent = 'The graph and explanations are deleted. Only the source is left.';
       await wait(900);
@@ -109,7 +109,6 @@ const steps = [
 </script>
 
 <style>
-  .cl { position: relative; margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
   .cl-map { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; overflow: visible; }
   .cl-dot { fill: var(--accent); transition: opacity .3s; }
   .cl-node rect { fill: var(--sheet); stroke: var(--line); stroke-width: 1.5; transition: opacity .35s, stroke .3s; }
@@ -163,9 +162,6 @@ const steps = [
   }
   .cl[data-phase] :is(.cl-dots, .cl-arrow-btn) { opacity: .35; }
 
-  .cl-rebuild { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--sheet); color: var(--ink-3); cursor: pointer; transition: color .2s, border-color .2s; }
-  .cl-rebuild:hover { color: var(--accent); border-color: var(--accent); }
-  .cl-rebuild:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* rebuild: the derived boxes go dashed and faint, then come back in order, outlined as they return */
   .cl[data-phase="gone"] :is(.n-graph, .n-explain) rect,
@@ -179,8 +175,7 @@ const steps = [
   .cl[data-phase] .cl-dot { opacity: 0; }
 
   @media (max-width: 560px) {
-    .cl { padding: 40px 10px 14px; margin-left: -4px; margin-right: -4px; }
-    .cl-rebuild { top: 8px; right: 8px; }
+    .cl { padding-bottom: 14px; }
     .cl-caption { padding: 0 4px; }
     .cl-step { font-size: 14px; }
   }

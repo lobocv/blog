@@ -1,0 +1,47 @@
+/* Shared look for post and project figures. The rules behind it are in docs/figures.md.
+   Imported by src/components/figure/Figure.astro, so any page with a figure gets it. */
+
+.fig {
+  /* what colours mean, the same in every figure */
+  --fig-good: var(--accent);        /* found, correct, current, the thing to look at */
+  --fig-good-soft: var(--accent-soft);
+  --fig-miss: var(--tok-num);       /* missed, wrong, outdated */
+  --fig-ref: var(--tok-type);       /* a reference between things, or off target */
+  --fig-muted: var(--ink-3);        /* neutral structure: guides, tree lines, labels */
+
+  position: relative;
+  margin: 2em 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--raise);
+}
+@media (max-width: 560px) {
+  .fig { padding: 16px 10px; margin-left: -4px; margin-right: -4px; }
+  /* room for the replay button above the content */
+  .fig:has(> .fig-replay) { padding-top: 44px; }
+}
+
+/* small labelled box for a topic, file or term */
+.fig-chip { display: inline-block; padding: 1px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--sheet); color: var(--ink); font: 13px/1.5 "JetBrains Mono", monospace; white-space: nowrap; }
+.fig-chip.lit { border-color: var(--fig-good); background: var(--fig-good-soft); }
+
+/* circular icon button in the top right: replay, rebuild */
+.fig-replay { position: absolute; top: 12px; right: 12px; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--sheet); color: var(--ink-3); cursor: pointer; transition: color .2s, border-color .2s; }
+.fig-replay:hover { color: var(--accent); border-color: var(--accent); }
+.fig-replay:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) { .fig-replay { top: 8px; right: 8px; } }
+
+/* "?" button with a short explanation. The popup positions against the nearest
+   positioned ancestor, so put the InfoTip inside a header with position: relative */
+.fig-info { flex: none; width: 20px; height: 20px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: none; color: var(--ink-3); font: 600 11px "JetBrains Mono", monospace; cursor: pointer; }
+.fig-info:hover, .fig-info[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.fig-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fig-pop { position: absolute; top: calc(100% + 8px); left: -4px; right: -4px; z-index: 3; display: none; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); box-shadow: 0 6px 18px rgb(0 0 0 / .2); font-size: 13.5px; line-height: 1.45; color: var(--ink-2); text-align: left; }
+.fig-info[aria-expanded="true"] + .fig-pop { display: block; }
+@media (hover: hover) { .fig-info:hover + .fig-pop { display: block; } }
+
+/* small colour key under a figure */
+.fig-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; margin: 16px 0 0; font: 11px "JetBrains Mono", monospace; color: var(--ink-3); }
+.fig-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--c); }
+.fig-legend .bar::before { width: 14px; height: 6px; border-radius: 3px; vertical-align: 1px; }

@@ -1,4 +1,7 @@
 ---
+import Figure from '../figure/Figure.astro';
+import ReplayButton from '../figure/ReplayButton.astro';
+import Legend from '../figure/Legend.astro';
 // One doc kept three ways while commits land. Lines stand for text, the box in the middle for a system
 // diagram; red means that part no longer matches the code. Hand-written docs drift and stay wrong. An agent
 // told to "update the docs" fixes the parts it happens to find. The graph maps changed files to topics to the
@@ -24,10 +27,8 @@ const lanes = [
   { id: 'graph', name: 'Rebuilt from the graph', short: 'From the graph', sub: 'changed files → topics → sections' },
 ];
 ---
-<figure class="dd" data-commits={JSON.stringify(commits)}>
-  <button type="button" class="dd-replay" aria-label="Replay">
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
+<Figure class="dd" data-commits={JSON.stringify(commits)}>
+  <ReplayButton />
   <div class="dd-log" role="group" aria-label="Commits" style="--p:1">
     <div class="dd-rail"><div class="dd-fill"></div></div>
     {commits.map((c, i) => (
@@ -63,8 +64,8 @@ const lanes = [
   </div>
   {/* on phones the docs sit side by side, too narrow for the graph's trace, so it gets its own line */}
   <p class="dd-sub dd-trace dd-trace-m"><span class="t-files">changed files</span><span class="t-arrow">→</span><span class="t-topics">topics</span><span class="t-arrow">→</span><span class="t-sections">sections</span></p>
-  <p class="dd-legend"><span class="ok">Accurate</span><span class="bad">Outdated</span></p>
-</figure>
+  <Legend bar items={[{ label: 'Accurate', color: 'good' }, { label: 'Outdated', color: 'miss' }]} />
+</Figure>
 
 <script>
   type Commit = { hash: string; msg: string; files: string[]; topics: string[]; breaks: string[]; found: string[] };
@@ -140,7 +141,7 @@ const lanes = [
       const t = e.target as Element;
       const node = t.closest<HTMLElement>('.dd-node');
       if (node) { run++; show(Number(node.dataset.i), !reduce); }
-      else if (t.closest('.dd-replay')) reduce ? show(last, false) : play();
+      else if (t.closest('.fig-replay')) reduce ? show(last, false) : play();
     });
 
     show(last, false);
@@ -156,10 +157,6 @@ const lanes = [
 </script>
 
 <style>
-  .dd { position: relative; margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
-  .dd-replay { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--sheet); color: var(--ink-3); cursor: pointer; transition: color .2s, border-color .2s; }
-  .dd-replay:hover { color: var(--accent); border-color: var(--accent); }
-  .dd-replay:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* commit log: a line of commits with short hashes, filled up to the current one */
   .dd-log { position: relative; display: flex; justify-content: space-between; max-width: 440px; margin: 0 auto; }
@@ -208,10 +205,6 @@ const lanes = [
   @keyframes dd-in { from { opacity: 0; } }
 
   .dd-name .short, .dd-trace-m { display: none; }
-  .dd-legend { display: flex; justify-content: center; gap: 18px; margin: 14px 0 0; font: 11px "JetBrains Mono", monospace; color: var(--ink-3); }
-  .dd-legend span::before { content: ""; display: inline-block; width: 14px; height: 6px; margin-right: 6px; border-radius: 3px; vertical-align: 1px; }
-  .dd-legend .ok::before { background: var(--accent); opacity: .6; }
-  .dd-legend .bad::before { background: var(--tok-num); opacity: .85; }
 
   @media (max-width: 640px) {
     .dd { padding: 16px 12px; margin-left: -4px; margin-right: -4px; }

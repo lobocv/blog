@@ -1,0 +1,8 @@
+---
+// A small colour key under a figure. `color` is a figure colour role (see docs/figures.md);
+// `bar` draws a short bar instead of a dot, for figures whose marks are lines or blocks.
+type Role = 'good' | 'miss' | 'ref' | 'muted';
+interface Props { items: { label: string; color: Role }[]; bar?: boolean }
+const { items, bar } = Astro.props;
+---
+<p class="fig-legend">{items.map(i => <span class:list={{ bar }} style={`--c: var(--fig-${i.color})`}>{i.label}</span>)}</p>

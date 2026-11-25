@@ -1,0 +1,19 @@
+---
+// A "?" button that shows a short explanation: on hover with a mouse, on tap or Enter otherwise.
+// Escape or a click elsewhere closes it. The text goes in the slot. Put it inside a header with
+// position: relative; the popup spans that header (override .fig-pop to change it).
+interface Props { label: string }
+const { label } = Astro.props;
+---
+<button type="button" class="fig-info" aria-label={label} aria-expanded="false">?</button><p class="fig-pop" role="tooltip"><slot /></p>
+
+<script>
+  const closeAll = (except?: Element) =>
+    document.querySelectorAll('.fig-info[aria-expanded="true"]').forEach(b => { if (b !== except) b.setAttribute('aria-expanded', 'false'); });
+  document.addEventListener('click', e => {
+    const btn = (e.target as Element).closest('.fig-info');
+    closeAll(btn ?? undefined);
+    if (btn) btn.setAttribute('aria-expanded', String(btn.getAttribute('aria-expanded') !== 'true'));
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+</script>

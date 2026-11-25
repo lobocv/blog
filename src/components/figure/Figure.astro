@@ -1,0 +1,9 @@
+---
+// The frame every interactive figure sits in, plus the shared figure styles (src/styles/figure.css).
+// Pass the figure's own class for its scoped styles, and `label` when the figure is one picture
+// (role="img") rather than something to interact with. See docs/figures.md.
+import '../../styles/figure.css';
+interface Props { class?: string; label?: string; [attr: string]: unknown }
+const { class: cls, label, ...rest } = Astro.props;
+---
+<figure class:list={['fig', cls]} role={label ? 'img' : undefined} aria-label={label} {...rest}><slot /></figure>

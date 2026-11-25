@@ -1,4 +1,5 @@
 ---
+import Figure from '../figure/Figure.astro';
 // Requests, run over and over. Each run passes through the layers of the system the agent has to
 // work out, one at a time. A poorly defined layer makes it bounce around and deflect before it gets through;
 // a well defined one lets it pass almost straight. Every run lands on a human effort axis (the work of filling
@@ -14,7 +15,7 @@ const tips = [
   'The agent builds things no one asked for, or that add little value.',
 ];
 ---
-<figure class="cs" data-layers={JSON.stringify(layers)} data-tips={JSON.stringify(tips)}>
+<Figure class="cs" data-layers={JSON.stringify(layers)} data-tips={JSON.stringify(tips)}>
   <div class="cs-stage">
   <canvas class="cs-canvas" role="img" aria-label="Requests from you pass through five layers the agent has to work out: architecture, constraints, terminology, user experience and product vision. Poorly defined layers make it bounce around before it gets through, and the human effort needed to fill gaps and check the result is high and unpredictable. Well defined layers let it pass almost straight, and the effort is low and consistent."></canvas>
   <div class="cs-tip" hidden><strong></strong><span></span></div>
@@ -24,7 +25,7 @@ const tips = [
     <button type="button" class="chip" data-all="1" aria-pressed="false">Well defined</button>
   </div>
   <figcaption>Each dot is a request through the system, placed by how much effort it takes to fill the gaps and check the result.</figcaption>
-</figure>
+</Figure>
 
 <script>
   type Pt = [number, number];
@@ -283,7 +284,6 @@ const tips = [
 </script>
 
 <style>
-  .cs { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
   .cs-stage { position: relative; }
   .cs-tip { position: absolute; z-index: 1; max-width: 240px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); box-shadow: 0 4px 14px rgb(0 0 0 / .18); font-size: 13.5px; line-height: 1.4; color: var(--ink-2); pointer-events: none; }
   .cs-tip[hidden] { display: none; }
@@ -293,7 +293,6 @@ const tips = [
   .cs figcaption { margin-top: 12px; }
 
   @media (max-width: 560px) {
-    .cs { padding: 16px 10px; margin-left: -4px; margin-right: -4px; }
     .cs-canvas { height: 260px; }
   }
 </style>

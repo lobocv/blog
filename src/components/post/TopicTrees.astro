@@ -3,6 +3,8 @@
 // sub-domains), with labelled reference edges between topics in different trees. Static. Wide screens
 // lay the trees out side by side with references across the gaps; phones stack them, with references
 // down the right edge. Used on the communicating_effectively_with_agents post.
+import Figure from '../figure/Figure.astro';
+
 type Tree = { root: string; kids: string[] };
 type Chip = { id: string; x: number; y: number; w: number; cy: number; root: boolean };
 type Ref = { from: string; to: string; label: string[] };
@@ -59,7 +61,7 @@ const views = [
   { cls: 'narrow', box: '0 0 360 424', g: narrow, refs: narrowRefs },
 ];
 ---
-<figure class="tt" role="img" aria-label="Three separate trees of topics. billing has invoices and payment-methods. equity has vesting-schedules, share-transfers and cap-table. access has roles and permissions. invoices refers to share-transfers because it charges a fee on each transfer. permissions refers to cap-table because it decides who can see it.">
+<Figure class="tt" label="Three separate trees of topics. billing has invoices and payment-methods. equity has vesting-schedules, share-transfers and cap-table. access has roles and permissions. invoices refers to share-transfers because it charges a fee on each transfer. permissions refers to cap-table because it decides who can see it.">
   {views.map(v => (
     <svg class={`tt-${v.cls}`} viewBox={v.box} aria-hidden="true">
       <defs>
@@ -80,10 +82,9 @@ const views = [
       ))}
     </svg>
   ))}
-</figure>
+</Figure>
 
 <style>
-  .tt { margin: 2em 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--raise); }
   .tt svg { display: block; width: 100%; height: auto; margin: 0 auto; overflow: visible; }
   .tt-wide { max-width: 760px; }
   .tt .tt-narrow { display: none; max-width: 360px; }
@@ -91,12 +92,11 @@ const views = [
   .tt-chip text { font: 13px "JetBrains Mono", monospace; fill: var(--ink-2); }
   .tt-chip.root text { font-weight: 600; fill: var(--ink); }
   .tt-guide { fill: none; stroke: var(--ink-3); stroke-opacity: .5; stroke-width: 1.25; }
-  .tt-ref path { fill: none; stroke: var(--tok-type); stroke-width: 1.5; stroke-dasharray: 5 4; }
-  .tt marker path { fill: var(--tok-type); }
-  .tt-ref text { font: italic 11px "JetBrains Mono", monospace; fill: var(--tok-type); }
+  .tt-ref path { fill: none; stroke: var(--fig-ref); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .tt marker path { fill: var(--fig-ref); }
+  .tt-ref text { font: italic 11px "JetBrains Mono", monospace; fill: var(--fig-ref); }
 
   @media (max-width: 560px) {
-    .tt { padding: 16px 10px; margin-left: -4px; margin-right: -4px; }
     .tt .tt-wide { display: none; }
     .tt .tt-narrow { display: block; }
   }
