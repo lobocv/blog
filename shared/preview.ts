@@ -111,8 +111,8 @@ export function startBridge(win: Window) {
 
   win.addEventListener('keydown', (e) => {
     const { code, metaKey, altKey, ctrlKey, shiftKey } = e;
-    // ⌥ plus a letter would type a character, and ⌘\ and ⌘K belong to the editor.
-    if (altKey || (metaKey && (code === 'Backslash' || code === 'KeyK'))) e.preventDefault();
+    // ⌥ plus a letter would type a character, and ⌘\, ⌘K and ⌘` belong to the editor.
+    if (altKey || (metaKey && ['Backslash', 'KeyK', 'Backquote'].includes(code))) e.preventDefault();
     send({ type: 'key', code, metaKey, altKey, ctrlKey, shiftKey, selection: metaKey && code === 'KeyK' ? selection() : undefined });
   });
 

@@ -169,9 +169,12 @@ split into projects: `blog`, `editor-node` and `editor-dom`.
 
 - The editor is keyboard first. In Preview an action is a bare letter; in Source,
   where Calvin is typing, it is the same letter with ⌥. The only ⌘ shortcuts are
-  ⌘\ (preview/source), ⌘K (comment on selection) and ⌘/ (shortcut sheet)
-- Don't bind shortcuts the browser keeps for itself (⌘ with T, N, W, R, L, 1-9 or
-  `) or that edit text (⌘⌫). Match keys by `event.code`, since ⌥ plus a letter
+  ⌘\ (preview/source), ⌘K (comment on selection), ⌘` (page thread) and ⌘/
+  (shortcut sheet)
+- Don't bind shortcuts the browser keeps for itself (⌘ with T, N, W, R, L or 1-9)
+  or that edit text (⌘⌫). ⌘` is the one exception, chosen for the page thread:
+  macOS uses it to cycle an app's windows, so it may not reach the editor when
+  Chrome has several windows open. Match keys by `event.code`, since ⌥ plus a letter
   types a special character on macOS
 - Key handlers read signals, not component state, and attach in `useLayoutEffect`,
   so a key pressed straight after another (or after the page appears) sees its

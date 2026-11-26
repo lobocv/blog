@@ -42,7 +42,7 @@ export function StatusLine({ view, onView, stats, threads, onPage, claude, onSto
         <span>{formatNumber(stats.words)} words</span>
         <span>{stats.minutes} min read</span>
         {threads && (
-          <button type="button" class="status-threads" onClick={onPage} title="Page thread (P, or ⌥P in Source)">
+          <button type="button" class="status-threads" onClick={onPage} title="Page thread (⌘`)">
             {threads.open > 0 && (
               <span class="status-open">
                 <span class="dot dot-calvin" />

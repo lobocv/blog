@@ -110,8 +110,8 @@ test('comments on a selection, replies, resolves, and shows @@ notes as threads'
   await expect(margin).not.toContainText('needs a stronger verb');
   await expect(page.getByText('1 resolved')).toBeVisible();
 
-  // ⌥P opens the page thread for comments on the whole post.
-  await page.keyboard.press('Alt+p');
+  // ⌘` opens the page thread for comments on the whole post.
+  await page.keyboard.press('ControlOrMeta+Backquote');
   await page.getByLabel('Message about the whole page').fill('is the ending clear?');
   await page.getByLabel('Message about the whole page').press('Enter');
   await expect(page.getByRole('complementary', { name: 'Page thread' })).toContainText('is the ending clear?');

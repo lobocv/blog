@@ -162,6 +162,8 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       if (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'KeyC' && threads.working.value) {
         act(() => void threads.stopClaude());
       } else if (only('alt') && e.code === 'KeyO') act(() => void leave());
+      // ⌘` opens and closes the page thread, the chat about the whole post.
+      else if (only('meta') && e.code === 'Backquote') act(() => (threads.pageOpen.value = !threads.pageOpen.value));
       else if (only('meta') && e.code === 'Backslash') act(() => show(view.value === 'source' ? 'preview' : 'source'));
       else if (only('meta') && e.code === 'KeyK') {
         act(() => {
@@ -197,7 +199,6 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         });
       } else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
       else if (threadKey && e.code === 'KeyD') act(() => void threads.resolveSelected());
-      else if (threadKey && e.code === 'KeyP') act(() => (threads.pageOpen.value = !threads.pageOpen.value));
     };
     window.addEventListener('blur', flush);
     window.addEventListener('pagehide', flush);
