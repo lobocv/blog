@@ -9,6 +9,9 @@
   --line: rgba(232, 236, 244, .10);
   --accent: #9fb6ff;
   --accent-soft: rgba(159, 182, 255, .12);
+  /* figures keep a green accent at night (the site accent turns blue); used by src/styles/figure.css */
+  --fig-accent: #8fd1a8;
+  --fig-accent-soft: rgba(143, 209, 168, .12);
   --nav-bg: rgba(7, 11, 20, .55);
   --code-bg: #0a0f1b;
   --code-line: rgba(232, 236, 244, .08);
@@ -34,6 +37,8 @@
   --line: rgba(29, 35, 32, .12);
   --accent: #2d6a4c;
   --accent-soft: rgba(45, 106, 76, .10);
+  --fig-accent: #2d6a4c;
+  --fig-accent-soft: rgba(45, 106, 76, .10);
   --nav-bg: rgba(247, 243, 234, .75);
   --code-bg: #efe9dc;
   --code-line: rgba(29, 35, 32, .08);

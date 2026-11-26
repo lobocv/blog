@@ -2,6 +2,10 @@
    Imported by src/components/figure/Figure.astro, so any page with a figure gets it. */
 
 .fig {
+  /* green in day and night, so figures don't turn blue with the night site accent */
+  --accent: var(--fig-accent);
+  --accent-soft: var(--fig-accent-soft);
+
   /* what colours mean, the same in every figure */
   --fig-good: var(--accent);        /* found, correct, current, the thing to look at */
   --fig-good-soft: var(--accent-soft);
