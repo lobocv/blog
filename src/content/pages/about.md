@@ -12,6 +12,7 @@ decisions down, keeping process light enough that people actually follow it) as 
 do into the code. I also like the product side of engineering, figuring out what's
 worth building before deciding how to build it.
 
-Outside of work I'm a dad to three boys and a serial hobbyist with too little time.
+Outside of work I'm a husband, a dad to three boys and a serial hobbyist with too
+little time.
 These days that means wood carving, electric guitar and whichever part of the house
 I'm renovating. When I can, I'm outdoors.

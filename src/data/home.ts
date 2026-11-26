@@ -14,5 +14,5 @@ export const philosophy = {
 
 export const about = {
   heading: 'About me',
-  text: 'Software engineer and architect. I think about how systems fit together, how teams work together and what is worth building. Outside of work I enjoy spending time with my three boys, wood carving, playing electric guitar, and a whole other list of hobbies I don\'t have time for.',
+  text: 'Software engineer and architect. I think about how systems fit together, how teams work together and what is worth building. Outside of work I enjoy spending time with my wife and three boys, wood carving, playing electric guitar, and a whole other list of hobbies I don\'t have time for.',
 };
