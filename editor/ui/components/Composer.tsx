@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { reachesEditor } from '../keymap.ts';
 
 type Props = { label: string; initial?: string; onSend: (text: string) => Promise<boolean>; onCancel: () => void };
 
@@ -37,7 +38,12 @@ export function Composer({ label, initial, onSend, onCancel }: Props) {
       disabled={sending}
       onInput={grow}
       onKeyDown={async (e) => {
-        // Keys typed here are text, not shortcuts.
+        // Keys typed here are text, except the shortcuts that close what's open (eg ⌥P).
+        if (reachesEditor(e)) {
+          // ⌥ plus a letter would also type a character.
+          if (e.altKey) e.preventDefault();
+          return;
+        }
         e.stopPropagation();
         if (e.key === 'Escape') {
           e.preventDefault();

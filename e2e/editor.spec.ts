@@ -112,8 +112,8 @@ test('comments on a selection, replies, resolves, and shows @@ notes as threads'
   await expect(margin).not.toContainText('needs a stronger verb');
   await expect(page.getByText('1 resolved')).toBeVisible();
 
-  // ⌥P opens the page thread for comments on the whole post.
-  await page.keyboard.press('Alt+p');
+  // ⌥/ opens the page thread for comments on the whole post.
+  await page.keyboard.press('Alt+Slash');
   await page.getByLabel('Message about the whole page').fill('is the ending clear?');
   await page.getByLabel('Message about the whole page').press('Enter');
   await expect(page.getByRole('complementary', { name: 'Page thread' })).toContainText('is the ending clear?');
@@ -242,19 +242,53 @@ test('⇧C starts a critique that shows its progress, and ⇧A accepts every mec
   await expect.poll(() => readFile(postPath('first'), 'utf8')).toContain('The first line.\n\nThe second line.');
 });
 
-test('⌘/ shows every shortcut and the last key the editor saw', async ({ page }) => {
+test('⌥H shows every shortcut and the last key the editor saw', async ({ page }) => {
   await page.goto(`${url}?post=first`);
   const source = page.getByLabel('Post source');
   await source.click();
   await page.keyboard.press('Alt+j');
-  await page.keyboard.press('ControlOrMeta+Slash');
+  await page.keyboard.press('Alt+h');
   const sheet = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
   await expect(sheet).toContainText('Accept all mechanical fixes');
-  await expect(sheet).toContainText('Last key the editor saw: ⌘ /');
-  // ⌘/ didn't also comment out the line in the post.
-  await expect(source).not.toContainText('<!--');
+  await expect(sheet).toContainText('Last key the editor saw: ⌥ H');
+  await expect(source).not.toContainText('˙');
   await page.keyboard.press('Escape');
   await expect(sheet).toHaveCount(0);
   await page.getByRole('button', { name: 'Keys' }).click();
   await expect(sheet).toBeVisible();
+});
+
+test('the key that opens something closes it, even from a message box', async ({ page }) => {
+  await page.goto(`${url}?post=first`);
+  const source = page.getByLabel('Post source');
+  await source.getByText('First line.').click();
+  const pageThread = page.getByRole('complementary', { name: 'Page thread' });
+
+  // ⌥/ opens the page thread and puts the cursor in its box; ⌥/ there closes it, typing nothing.
+  await page.keyboard.press('Alt+Slash');
+  await expect(page.getByLabel('Message about the whole page')).toBeFocused();
+  await page.keyboard.press('Alt+Slash');
+  await expect(pageThread).toHaveCount(0);
+  // ⌘/ works the same way, and doesn't comment out the line.
+  await page.keyboard.press('ControlOrMeta+Slash');
+  await expect(pageThread).toBeVisible();
+  await page.keyboard.press('ControlOrMeta+Slash');
+  await expect(pageThread).toHaveCount(0);
+  await expect(source).not.toContainText('<!--');
+
+  // ⌘K opens a comment box on the selection, and ⌘K again closes it.
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Shift+End');
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(page.getByLabel('Comment')).toBeFocused();
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(page.getByLabel('Comment')).toHaveCount(0);
+
+  // ⌥H toggles the sheet.
+  await page.keyboard.press('Alt+h');
+  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await page.keyboard.press('Alt+h');
+  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toHaveCount(0);
+  await expect(source).toContainText('First line.');
+  expect(await readFile(postPath('first'), 'utf8')).not.toMatch(/[π∂∑®÷˙]/);
 });

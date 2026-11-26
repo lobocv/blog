@@ -165,21 +165,30 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       if (!['Meta', 'Alt', 'Control', 'Shift'].includes(e.key)) lastKey.value = describeKey(e);
       const only = (mod: 'alt' | 'meta' | 'none') =>
         e.altKey === (mod === 'alt') && e.metaKey === (mod === 'meta') && !e.ctrlKey;
-      // In Source a thread key needs ⌥, since bare letters are typing. In Preview it's the letter alone.
-      const threadKey = only(view.value === 'source' ? 'alt' : 'none') && !e.shiftKey;
+      // In Source a thread key needs ⌥, since bare letters are typing. In Preview the letter alone
+      // works too, and ⌥ still does (eg from a message box, where letters are text).
+      const threadKey = (only('alt') || (view.value === 'preview' && only('none'))) && !e.shiftKey;
       const shiftKey = only(view.value === 'source' ? 'alt' : 'none') && e.shiftKey;
       const act = (fn: () => void) => {
         e.preventDefault();
         fn();
       };
+      // Pressing the key that opened something closes it again.
+      const close = (fn: () => void) =>
+        act(() => {
+          fn();
+          backToWriting();
+        });
+      const composing = threads.composing.value;
 
       if (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'KeyC' && threads.working.value) {
         act(() => void threads.stopClaude());
       } else if (only('alt') && e.code === 'KeyO') act(() => void leave());
-      else if ((only('meta') && e.code === 'Slash') || (view.value === 'preview' && e.key === '?' && !e.metaKey && !e.altKey)) {
+      else if ((threadKey && e.code === 'KeyH') || (view.value === 'preview' && e.key === '?' && !e.metaKey && !e.altKey)) {
         act(() => (sheetOpen.value = !sheetOpen.value));
       }
       else if (only('meta') && e.code === 'Backslash') act(() => show(view.value === 'source' ? 'preview' : 'source'));
+      else if (only('meta') && e.code === 'KeyK' && composing?.kind === 'comment') close(() => (threads.composing.value = undefined));
       else if (only('meta') && e.code === 'KeyK') {
         act(() => {
           const anchor =
@@ -204,7 +213,11 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           if (view.value === 'source') source.current?.reveal(item.range.from);
           else preview.current?.scrollTo(lineOf(text.value, item.range.from));
         });
-      } else if (threadKey && ['KeyA', 'KeyX', 'KeyT'].includes(e.code) && threads.selectedSuggestion()) {
+      } else if (threadKey && e.code === 'KeyT' && composing?.kind === 'tweak') close(() => (threads.composing.value = undefined));
+      else if (threadKey && e.code === 'KeyR' && composing?.kind === 'reply') close(() => (threads.composing.value = undefined));
+      else if ((threadKey || only('meta')) && e.code === 'Slash' && threads.pageOpen.value) close(() => (threads.pageOpen.value = false));
+      else if ((threadKey || only('meta')) && e.code === 'Slash') act(() => (threads.pageOpen.value = true));
+      else if (threadKey && ['KeyA', 'KeyX', 'KeyT'].includes(e.code) && threads.selectedSuggestion()) {
         act(() => {
           const s = threads.selectedSuggestion()!;
           const a = actions.current;
@@ -215,7 +228,6 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         });
       } else if (shiftKey && e.code === 'KeyC') act(() => void threads.askPage('/critique line'));
       else if (shiftKey && e.code === 'KeyA') act(() => void acceptMechanical());
-      else if (threadKey && e.code === 'KeyP') act(() => (threads.pageOpen.value = !threads.pageOpen.value));
       else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
       else if (threadKey && e.code === 'KeyD') act(() => void threads.resolveSelected());
     };

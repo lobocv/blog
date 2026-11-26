@@ -10,10 +10,10 @@ export const KEYMAP: Group[] = [
     shortcuts: [
       { action: 'Preview / Source', keys: '⌘ \\' },
       { action: 'Comment on selection', keys: '⌘ K' },
-      { action: 'This sheet', keys: '⌘ /' },
+      { action: 'Page thread', keys: '⌘ /' },
       { action: 'Back to drafts', keys: '⌥ O' },
       { action: 'Stop Claude', keys: '⌃ C' },
-      { action: 'Close, cancel', keys: 'esc' },
+      { action: 'Close, cancel (or the key that opened it)', keys: 'esc' },
     ],
   },
   {
@@ -27,8 +27,9 @@ export const KEYMAP: Group[] = [
       { action: 'Reject suggestion', keys: 'X', source: '⌥ X' },
       { action: 'Tweak suggestion', keys: 'T', source: '⌥ T' },
       { action: 'Accept all mechanical fixes', keys: '⇧ A', source: '⌥ ⇧ A' },
-      { action: 'Page thread', keys: 'P', source: '⌥ P' },
+      { action: 'Page thread', keys: '/', source: '⌥ /' },
       { action: 'Critique', keys: '⇧ C', source: '⌥ ⇧ C' },
+      { action: 'This sheet', keys: 'H', source: '⌥ H' },
     ],
   },
   {
@@ -47,4 +48,17 @@ export function describeKey(e: Pick<KeyboardEvent, 'code' | 'key' | 'metaKey' | 
   const named: Record<string, string> = { Backslash: '\\', Backquote: '`', Slash: '/', Enter: '↵', Escape: 'esc', Space: 'space' };
   const key = named[e.code] ?? e.code.replace(/^Key|^Digit/, '');
   return [...mods, key].join(' ');
+}
+
+type Keydown = Pick<KeyboardEvent, 'code' | 'metaKey' | 'altKey' | 'ctrlKey' | 'shiftKey'>;
+
+/**
+ * Shortcuts that still work while Calvin types a message, so the key that opened something
+ * closes it again (eg ⌘/ closes the page thread). Bare letters stay text.
+ */
+export function reachesEditor(e: Keydown): boolean {
+  if (e.shiftKey) return false;
+  if (e.altKey && !e.metaKey && !e.ctrlKey) return ['Slash', 'KeyH', 'KeyR', 'KeyT'].includes(e.code);
+  if (e.metaKey && !e.altKey && !e.ctrlKey) return ['KeyK', 'Slash', 'Backslash'].includes(e.code);
+  return e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'KeyC';
 }
