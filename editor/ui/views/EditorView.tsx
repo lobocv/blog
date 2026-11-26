@@ -11,14 +11,16 @@ import { Margin } from '../components/Margin.tsx';
 import { PageThread } from '../components/PageThread.tsx';
 import { StatusLine, type View } from '../components/StatusLine.tsx';
 import type { SuggestionActions } from '../components/SuggestionView.tsx';
+import { describeKey } from '../keymap.ts';
 import { createThreadState } from '../thread-state.ts';
+import { KeySheet } from '../components/KeySheet.tsx';
 import { type PreviewHandle, PreviewView } from './PreviewView.tsx';
 import { type SourceHandle, SourceView } from './SourceView.tsx';
 import type { Mark } from './thread-marks.ts';
 
 /** One post: Source or Preview, the thread margin and the status line. */
 export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => void }) {
-  const { text, postStats, autosave, view, threads, layout, marks, clash } = useMemo(() => {
+  const { text, postStats, autosave, view, threads, layout, marks, clash, sheetOpen, lastKey } = useMemo(() => {
     const text = signal(post.text);
     const threads = createThreadState(post.slug, text);
     return {
@@ -28,6 +30,9 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       autosave: createAutosave((t) => savePost(post.slug, t), undefined, undefined, post.text),
       // The file's text after an outside edit that clashed with Calvin's typing, until he chooses.
       clash: signal<string | undefined>(undefined),
+      sheetOpen: signal(false),
+      // Shown on the sheet, to tell when the system takes a key before the editor sees it.
+      lastKey: signal<string | undefined>(undefined),
       view: signal<View>('source'),
       // Bumped when lines move in the source, so the margin follows.
       layout: signal(0),
@@ -157,6 +162,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
     // Save straight away when Calvin leaves the window or closes it.
     const flush = () => void autosave.flush();
     const onKey = (e: KeyboardEvent) => {
+      if (!['Meta', 'Alt', 'Control', 'Shift'].includes(e.key)) lastKey.value = describeKey(e);
       const only = (mod: 'alt' | 'meta' | 'none') =>
         e.altKey === (mod === 'alt') && e.metaKey === (mod === 'meta') && !e.ctrlKey;
       // In Source a thread key needs ⌥, since bare letters are typing. In Preview it's the letter alone.
@@ -170,8 +176,9 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       if (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'KeyC' && threads.working.value) {
         act(() => void threads.stopClaude());
       } else if (only('alt') && e.code === 'KeyO') act(() => void leave());
-      // ⌘` opens and closes the page thread, the chat about the whole post.
-      else if (only('meta') && e.code === 'Backquote') act(() => (threads.pageOpen.value = !threads.pageOpen.value));
+      else if ((only('meta') && e.code === 'Slash') || (view.value === 'preview' && e.key === '?' && !e.metaKey && !e.altKey)) {
+        act(() => (sheetOpen.value = !sheetOpen.value));
+      }
       else if (only('meta') && e.code === 'Backslash') act(() => show(view.value === 'source' ? 'preview' : 'source'));
       else if (only('meta') && e.code === 'KeyK') {
         act(() => {
@@ -183,7 +190,8 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           threads.pageOpen.value = false;
           threads.composing.value = { kind: 'comment', anchor };
         });
-      } else if (e.code === 'Escape' && (threads.pageOpen.value || threads.selected.value)) {
+      } else if (e.code === 'Escape' && sheetOpen.value) act(() => (sheetOpen.value = false));
+      else if (e.code === 'Escape' && (threads.pageOpen.value || threads.selected.value)) {
         act(() => {
           threads.pageOpen.value = false;
           threads.selected.value = undefined;
@@ -207,6 +215,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         });
       } else if (shiftKey && e.code === 'KeyC') act(() => void threads.askPage('/critique line'));
       else if (shiftKey && e.code === 'KeyA') act(() => void acceptMechanical());
+      else if (threadKey && e.code === 'KeyP') act(() => (threads.pageOpen.value = !threads.pageOpen.value));
       else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
       else if (threadKey && e.code === 'KeyD') act(() => void threads.resolveSelected());
     };
@@ -276,6 +285,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           </button>
         </div>
       )}
+      {sheetOpen.value && <KeySheet lastKey={lastKey.value} onClose={() => (sheetOpen.value = false)} />}
       <StatusLine
         view={view.value}
         onView={show}
@@ -283,6 +293,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         threads={threads.tally.value}
         claude={Boolean(threads.working.value)}
         onStop={() => void threads.stopClaude()}
+        onKeys={() => (sheetOpen.value = !sheetOpen.value)}
         onPage={() => (threads.pageOpen.value = !threads.pageOpen.value)}
         save={autosave.state.value}
         onDrafts={() => void leave()}

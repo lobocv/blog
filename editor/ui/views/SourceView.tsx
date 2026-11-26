@@ -67,7 +67,8 @@ export function SourceView({ text, onChange, handle, marks = [], onLayout }: Pro
         extensions: [
           history(),
           drawSelection(),
-          keymap.of([...defaultKeymap, ...historyKeymap]),
+          // ⌘/ opens the shortcut sheet, so it can't also toggle a comment.
+          keymap.of([...defaultKeymap.filter((b) => b.key !== 'Mod-/'), ...historyKeymap]),
           yamlFrontmatter({ content: markdown() }),
           syntaxHighlighting(highlight),
           EditorView.lineWrapping,

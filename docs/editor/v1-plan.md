@@ -14,7 +14,7 @@ replies and suggested edits in the margin. Everything follows
 - Preview view (the real `astro dev` in an iframe), swapped with ⌘\, keeping
   the scroll position on the same block
 - Threads in the margin of both views: comment on a selection (⌘K), reply,
-  resolve, move between them (J/K). The page thread for general comments (⌘`)
+  resolve, move between them (J/K). The page thread for general comments (P). The shortcut sheet (⌘/)
 - `@@` notes in the post show as threads
 - Claude replies in threads and proposes edits with `suggest_edit`. Accept,
   reject or tweak each one (A/X/T)

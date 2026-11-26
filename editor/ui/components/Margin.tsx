@@ -57,7 +57,7 @@ export function Margin({ state, text, topOf, layout, keyPrefix, suggestions, cla
   return (
     <aside class={`margin${extra ? ` ${extra}` : ''}`} aria-label="Threads" data-layout={layout}>
       {page && (page.messages.length > 0 || page.review) && (
-        <button type="button" ref={summary} class="page-summary" onClick={() => (state.pageOpen.value = true)} title="Page thread (⌘`)">
+        <button type="button" ref={summary} class="page-summary" onClick={() => (state.pageOpen.value = true)} title="Page thread (P, or ⌥P in Source)">
           <span class="page-summary-title">Page</span>
           <span class="page-summary-text">
             {page.review ? `${page.review.title} · ${page.review.done} of ${page.review.total}` : page.messages.at(-1)?.text}

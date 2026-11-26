@@ -13,11 +13,12 @@ type Props = {
   /** Claude is replying; ⌃C stops it. */
   claude?: boolean;
   onStop?: () => void;
+  onKeys?: () => void;
   save: SaveState;
   onDrafts: () => void;
 };
 
-export function StatusLine({ view, onView, stats, threads, onPage, claude, onStop, save, onDrafts }: Props) {
+export function StatusLine({ view, onView, stats, threads, onPage, claude, onStop, onKeys, save, onDrafts }: Props) {
   const tab = (name: View, label: string) => (
     <button type="button" class={`status-view${view === name ? ' on' : ''}`} aria-pressed={view === name} onClick={() => onView(name)} title={`${label} (⌘\\)`}>
       {label}
@@ -42,7 +43,7 @@ export function StatusLine({ view, onView, stats, threads, onPage, claude, onSto
         <span>{formatNumber(stats.words)} words</span>
         <span>{stats.minutes} min read</span>
         {threads && (
-          <button type="button" class="status-threads" onClick={onPage} title="Page thread (⌘`)">
+          <button type="button" class="status-threads" onClick={onPage} title="Page thread (P, or ⌥P in Source)">
             {threads.open > 0 && (
               <span class="status-open">
                 <span class="dot dot-calvin" />
@@ -51,6 +52,11 @@ export function StatusLine({ view, onView, stats, threads, onPage, claude, onSto
             )}
             {threads.resolved > 0 && <span>{threads.resolved} resolved</span>}
             {threads.open + threads.resolved === 0 && <span>No threads</span>}
+          </button>
+        )}
+        {onKeys && (
+          <button type="button" class="status-keys" onClick={onKeys} title="Keyboard shortcuts (⌘/)">
+            Keys
           </button>
         )}
       </div>

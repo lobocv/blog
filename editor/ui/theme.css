@@ -162,3 +162,16 @@ button.status-claude .k { margin-left: 8px; }
 .seg { height: 4px; flex: 1; border-radius: 2px; background: var(--border); }
 .seg.done { background: var(--green); }
 .seg.now { background: var(--ink); }
+
+/* The shortcut sheet (⌘/) */
+.sheet-backdrop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10, 12, 14, .6); z-index: 30; }
+.sheet { width: 100%; max-width: 760px; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 26px; padding: 28px 32px; background: #1b1f24; border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.55); font: 400 14px/1.4 var(--ui); color: #d9d5cd; }
+.sheet-group { display: flex; flex-direction: column; gap: 10px; }
+.sheet-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 110px; gap: 12px; align-items: center; }
+.sheet-row > :nth-child(n+2) { justify-self: end; }
+.sheet-head { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.sheet-keys { display: inline-flex; gap: 4px; }
+.key { min-width: 12px; text-align: center; font: 500 11.5px/1 var(--ui); color: #d0ccc3; background: #20242a; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 4px 7px; }
+.sheet-last { margin: 0; font-size: 12.5px; color: var(--ink-3); }
+button.status-keys { all: unset; cursor: pointer; }
+button.status-keys:hover, button.status-keys:focus-visible { color: var(--ink); }
