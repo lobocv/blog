@@ -3,16 +3,16 @@ import { streamSSE } from 'hono/streaming';
 import type { Conversation } from '../app/conversation.ts';
 import { NotFound, Refused } from '../app/errors.ts';
 import type { deleteDraft } from '../app/delete-draft.ts';
-import type { listDrafts } from '../app/list-drafts.ts';
+import type { listPosts } from '../app/list-posts.ts';
 import type { openPost } from '../app/open-post.ts';
 import type { savePost } from '../app/save-post.ts';
 import type { settleSuggestion } from '../app/suggestions.ts';
 import type { watchPost } from '../app/watch-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { PostEvent, Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
+import { PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
 
 export type UseCases = {
-  listDrafts: ReturnType<typeof listDrafts>;
+  listPosts: ReturnType<typeof listPosts>;
   openPost: ReturnType<typeof openPost>;
   savePost: ReturnType<typeof savePost>;
   deleteDraft: ReturnType<typeof deleteDraft>;
@@ -26,15 +26,16 @@ export type UseCases = {
   conversation: Pick<Conversation, 'ask' | 'stop' | 'subscribe'>;
   /** Waits for `astro dev` to answer. */
   previewOrigin: () => Promise<string>;
+  watchFigures: (onChange: () => void) => () => void;
 };
 
 /** Turns requests from the UI into use-case calls. No logic of its own. */
 export function createApi(uc: UseCases) {
   const api = new Hono();
 
-  api.get('/api/drafts', async (c) => {
-    const drafts = (await uc.listDrafts()).map((d) => ({ ...d, modified: d.modified.toISOString() }));
-    return c.json(Drafts.parse({ drafts }));
+  api.get('/api/posts', async (c) => {
+    const posts = (await uc.listPosts()).map((p) => ({ ...p, modified: p.modified.toISOString() }));
+    return c.json(PostList.parse({ posts }));
   });
 
   api.get('/api/posts/:slug', async (c) => c.json(Post.parse(await uc.openPost(c.req.param('slug')))));
@@ -99,7 +100,11 @@ export function createApi(uc: UseCases) {
         queue.push(e);
         wake?.();
       };
-      const stops = [uc.conversation.subscribe(slug, push), uc.watchPost(slug, (text) => push({ type: 'outside', text }))];
+      const stops = [
+        uc.conversation.subscribe(slug, push),
+        uc.watchPost(slug, (text) => push({ type: 'outside', text })),
+        uc.watchFigures(() => push({ type: 'figures' })),
+      ];
       stream.onAbort(() => {
         for (const stop of stops) stop();
         wake?.();

@@ -1,0 +1,44 @@
+---
+// Dev-only: one figure component on its own page, for the writing editor's Source view, which
+// shows each figure under the line that places it. The editor bridge in astro.config.mjs adds
+// this route only when the editor runs `astro dev`, so the built site never has it. It renders
+// the component alone (not the post), so typing in the post doesn't reload it, but changing the
+// figure's code does.
+import '../styles/fonts.css';
+import '../styles/site.css';
+
+const components = import.meta.glob<{ default: (props: Record<string, string>) => unknown }>('/src/components/**/*.astro');
+const src = Astro.url.searchParams.get('src') ?? '';
+const props: Record<string, string> = JSON.parse(Astro.url.searchParams.get('props') ?? '{}');
+const load = components[`/${src}`];
+const Component = load ? (await load()).default : undefined;
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script is:inline>
+  // No live reload: Astro reloads every open page when any post changes, which would restart the
+  // figure each time Calvin's typing is saved. The editor reloads this page when figure code changes.
+  window.WebSocket = function () {
+    return { readyState: 0, OPEN: 1, addEventListener() {}, removeEventListener() {}, send() {}, close() {} };
+  };
+</script>
+</head>
+<body class="editor-figure">
+  <div class="post-body" id="figure">{Component ? <Component {...props} /> : <p>No figure at {src}</p>}</div>
+  <script>
+    // Tells the editor how tall the figure is, so its frame fits.
+    const figure = document.getElementById('figure')!;
+    const send = () => parent.postMessage({ type: 'editor-figure-height', height: Math.ceil(figure.getBoundingClientRect().height) }, '*');
+    new ResizeObserver(send).observe(figure);
+    send();
+  </script>
+  <style is:global>
+    html, body { background: transparent !important; margin: 0; min-height: 0 !important; }
+    .editor-figure #figure { padding: 1px 0; }
+    .editor-figure #figure > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  </style>
+</body>
+</html>

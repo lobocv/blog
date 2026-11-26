@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deleteDraft } from '../app/delete-draft.ts';
-import { listDrafts } from '../app/list-drafts.ts';
+import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
 import { FakeClock, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
@@ -25,7 +25,7 @@ function setup() {
   };
   const uc: UseCases = {
     conversation,
-    listDrafts: listDrafts(lib),
+    listPosts: listPosts(lib),
     openPost: openPost(lib),
     savePost: savePost(lib, deps.threads),
     deleteDraft: deleteDraft(lib),
@@ -36,6 +36,7 @@ function setup() {
     settleSuggestion: settleSuggestion(deps),
     watchPost: watchPost(lib),
     previewOrigin: async () => 'http://127.0.0.1:4402',
+    watchFigures: () => () => {},
   };
   return { lib, uc, asked, listeners, api: createApi(uc) };
 }
@@ -43,11 +44,9 @@ function setup() {
 const put = (body: unknown) => ({ method: 'PUT', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
 
 describe('editor API', () => {
-  it('lists drafts', async () => {
-    const res = await setup().api.request('/api/drafts');
-    expect(await res.json()).toEqual({
-      drafts: [{ slug: 'a', title: 'A draft', words: 2, minutes: 1, modified: '1970-01-01T00:00:00.000Z' }],
-    });
+  it('lists posts', async () => {
+    const res = await setup().api.request('/api/posts');
+    expect((await res.json()).posts[0]).toEqual({ slug: 'a', title: 'A draft', draft: true, words: 2, minutes: 1, modified: '1970-01-01T00:00:00.000Z' });
   });
 
   it('adds, replies to and resolves threads', async () => {

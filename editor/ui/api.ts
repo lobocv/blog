@@ -1,14 +1,14 @@
-import { Drafts, Failure, type NewComment, type NewReply, Post, PreviewInfo, routes, type SavePost, type Settle, Threads } from '../protocol.ts';
+import { Failure, type NewComment, type NewReply, Post, PostList, PreviewInfo, routes, type SavePost, type Settle, Threads } from '../protocol.ts';
 
 async function failure(res: Response, fallback: string): Promise<Error> {
   const body = Failure.safeParse(await res.json().catch(() => null));
   return new Error(body.success ? body.data.error : `${fallback} (${res.status})`);
 }
 
-export async function loadDrafts(): Promise<Drafts['drafts']> {
-  const res = await fetch(routes.drafts);
-  if (!res.ok) throw await failure(res, "Couldn't list the drafts");
-  return Drafts.parse(await res.json()).drafts;
+export async function loadPosts(): Promise<PostList['posts']> {
+  const res = await fetch(routes.posts);
+  if (!res.ok) throw await failure(res, "Couldn't list the posts");
+  return PostList.parse(await res.json()).posts;
 }
 
 export async function loadPost(slug: string): Promise<Post> {

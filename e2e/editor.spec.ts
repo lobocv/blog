@@ -38,16 +38,18 @@ test.afterEach(() => {
   editor?.kill();
 });
 
-test('opens a draft from the drafts page, and typing saves it', async ({ page }) => {
+test('opens a draft from the posts page, and typing saves it', async ({ page }) => {
   await page.goto(url);
-  await expect(page.getByRole('option')).toHaveText([/First draft/, /Second draft/]);
-  await expect(page.getByText('Live post')).toHaveCount(0);
+  // Drafts first, then published posts.
+  await expect(page.getByRole('option')).toHaveText([/First draft/, /Second draft/, /Live post/]);
 
   await page.keyboard.press('j');
   await page.keyboard.press('Enter');
 
   const source = page.getByLabel('Post source');
-  await expect(source).toContainText('title: Second draft');
+  // The front matter is a form, not text.
+  await expect(page.getByLabel('Title')).toHaveValue('Second draft');
+  await expect(source).not.toContainText('draft: true');
   await expect(page.getByText('2 words')).toBeVisible();
 
   await page.keyboard.press('ControlOrMeta+End');
@@ -58,20 +60,29 @@ test('opens a draft from the drafts page, and typing saves it', async ({ page })
     .poll(() => readFile(postPath('second'), 'utf8'))
     .toBe('---\ntitle: Second draft\ndraft: true\n---\nFirst line.\nSecond line here.');
 
-  await page.keyboard.press('Alt+o');
-  await expect(page.getByRole('option')).toHaveCount(2);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('option')).toHaveCount(3);
   expect(await readFile(postPath('second'), 'utf8')).not.toContain('ø');
+});
+
+test('opens a published post from the posts page', async ({ page }) => {
+  await page.goto(url);
+  await page.getByRole('listbox', { name: 'Published' }).getByText('Live post').click();
+  await expect(page.getByLabel('Title')).toHaveValue('Live post');
+  // The arrow at the top left goes back.
+  await page.getByRole('button', { name: 'Back to posts' }).click();
+  await expect(page.getByRole('option')).toHaveCount(3);
 });
 
 test('deletes a draft after confirming, moving it to .trash', async ({ page }) => {
   await page.goto(url);
-  await expect(page.getByRole('option')).toHaveCount(2);
+  await expect(page.getByRole('option')).toHaveCount(3);
 
   await page.keyboard.press('Backspace');
   await expect(page.getByText(/Delete this draft\?/)).toBeVisible();
   await page.keyboard.press('Enter');
 
-  await expect(page.getByRole('option')).toHaveText([/Second draft/]);
+  await expect(page.getByRole('option')).toHaveText([/Second draft/, /Live post/]);
   expect(existsSync(postPath('first'))).toBe(false);
   expect(existsSync(join(root, '.trash'))).toBe(true);
 });
@@ -330,4 +341,36 @@ test('G goes to a section, Z hides the threads, and ⇧N asks Claude to action t
   await page.keyboard.press('Alt+Shift+n');
   await expect(page.getByRole('complementary', { name: 'Page thread' })).toContainText('/notes');
   expect(await readFile(postPath('first'), 'utf8')).not.toMatch(/[©Ω˜ˆ∆˚]/);
+});
+
+test('edits the front matter with fields, writing it in one format', async ({ page }) => {
+  await page.goto(`${url}?post=first`);
+  const source = page.getByLabel('Post source');
+  await expect(source).toContainText('First line.');
+
+  await page.getByLabel('Title').fill('A "better" title');
+  await page.getByLabel('Add a category').fill('Golang');
+  await page.getByLabel('Add a category').press('Enter');
+  await page.getByLabel('Date').fill('2026-11-26');
+  await page.getByLabel('Summary').fill('One line.');
+  await page.getByLabel('Draft').uncheck();
+  await expect
+    .poll(() => readFile(postPath('first'), 'utf8'))
+    .toBe('---\ntitle: "A \\"better\\" title"\ndraft: false\ndate: 2026-11-26\ncategories: ["Golang"]\nsummary: "One line."\n---\nFirst line.\n');
+
+  // Typing in the text can't reach the front matter: select all and delete leaves it.
+  await source.click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.press('Backspace');
+  await expect.poll(() => readFile(postPath('first'), 'utf8')).toMatch(/^---\ntitle: "A \\"better\\" title"[\s\S]*\n---\n$/);
+  // ⌘Z brings the text back, and undoes form changes too.
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(source).toContainText('First line.');
+});
+
+test('says when the front matter needs fixing by hand, and shows it in the text', async ({ page }) => {
+  await writeFile(postPath('first'), 'hh---\ntitle: First draft\ndraft: true\n---\nFirst line.\n');
+  await page.goto(`${url}?post=first`);
+  await expect(page.getByLabel('Front matter')).toContainText("can't be read");
+  await expect(page.getByLabel('Post source')).toContainText('hh---');
 });

@@ -27,6 +27,11 @@ export interface PostLibrary {
 export interface Preview {
   /** Resolves once the server answers. Rejects with Astro's output if it fails to start. */
   origin(): Promise<string>;
+  /**
+   * Calls `onChange` when a figure's code or styles change (src/components/, src/styles/). Source
+   * reloads its figures then, since their pages don't reload by themselves. Returns a function that stops.
+   */
+  watchFigures(onChange: () => void): () => void;
   stop(): void;
 }
 

@@ -17,10 +17,9 @@ type Props = {
   onStop?: () => void;
   onKeys?: () => void;
   save: SaveState;
-  onDrafts: () => void;
 };
 
-export function StatusLine({ view, onView, stats, threads, threadsHidden, onPage, claude, onStop, onKeys, save, onDrafts }: Props) {
+export function StatusLine({ view, onView, stats, threads, threadsHidden, onPage, claude, onStop, onKeys, save }: Props) {
   const tab = (name: View, label: string) => (
     <button type="button" class={`status-view${view === name ? ' on' : ''}`} aria-pressed={view === name} onClick={() => onView(name)} title={`${label} (⌘\\)`}>
       {label}
@@ -29,9 +28,6 @@ export function StatusLine({ view, onView, stats, threads, threadsHidden, onPage
   return (
     <footer class="status">
       <div class="status-views">
-        <button type="button" class="status-view" onClick={onDrafts} title="Drafts (⌥O)">
-          Drafts
-        </button>
         {tab('preview', 'Preview')}
         {tab('source', 'Source')}
       </div>

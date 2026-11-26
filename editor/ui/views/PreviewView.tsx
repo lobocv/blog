@@ -42,9 +42,16 @@ export function PreviewView({ slug, text, threads, suggestions, handle, hidden, 
   // Sent again when the page reloads.
   const marks = useRef<ToPage>({ type: 'marks', lines: [] });
 
+  // Started on load. If Astro failed (eg a post's front matter was broken), swapping to the preview tries again.
+  const loading = useRef(false);
   useEffect(() => {
-    loadPreviewOrigin().then(setOrigin, (err: Error) => setError(err.message));
-  }, []);
+    if (origin || loading.current || (error && hidden)) return;
+    loading.current = true;
+    setError(undefined);
+    loadPreviewOrigin()
+      .then(setOrigin, (err: Error) => setError(err.message))
+      .finally(() => (loading.current = false));
+  }, [hidden]);
 
   // Set straight away: Calvin may swap to the preview before Astro is ready.
   const send = (msg: ToPage) => origin && frame.current?.contentWindow?.postMessage(msg, origin);

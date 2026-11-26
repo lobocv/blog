@@ -1,22 +1,53 @@
 // Runs `astro dev` for the preview view, with EDITOR_PREVIEW=1 so pages carry source lines
 // and the editor bridge (see astro.config.mjs).
 import { type ChildProcess, spawn } from 'node:child_process';
+import { existsSync, watch } from 'node:fs';
 import { join } from 'node:path';
 import type { Preview } from '../app/ports.ts';
 
 export class AstroPreview implements Preview {
-  readonly #started: Promise<string>;
+  readonly #root: string;
+  readonly #port: number;
+  #started: Promise<string>;
+  #failed = false;
   #child: ChildProcess | undefined;
 
   /** Starts Astro straight away, so it's usually ready by the time Calvin swaps to the preview. */
   constructor(root: string, port: number) {
-    this.#started = this.#start(root, port);
-    // Callers may never ask, and an unhandled rejection would end the process.
-    this.#started.catch(() => {});
+    this.#root = root;
+    this.#port = port;
+    this.#started = this.#begin();
   }
 
+  /** After a failed start (eg a post's front matter was broken), asking again starts Astro again. */
   origin() {
+    if (this.#failed) this.#started = this.#begin();
     return this.#started;
+  }
+
+  #begin() {
+    this.#failed = false;
+    const started = this.#start(this.#root, this.#port);
+    // Callers may never ask, and an unhandled rejection would end the process.
+    started.catch(() => (this.#failed = true));
+    return started;
+  }
+
+  watchFigures(onChange: () => void) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // An editor saves a file in a few steps; tell once.
+    const changed = () => {
+      clearTimeout(timer);
+      timer = setTimeout(onChange, 100);
+    };
+    const watchers = ['src/components', 'src/styles']
+      .map((dir) => join(this.#root, dir))
+      .filter((dir) => existsSync(dir))
+      .map((dir) => watch(dir, { recursive: true }, changed).on('error', () => {}));
+    return () => {
+      clearTimeout(timer);
+      for (const w of watchers) w.close();
+    };
   }
 
   stop() {

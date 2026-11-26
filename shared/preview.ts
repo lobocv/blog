@@ -62,7 +62,8 @@ const MARK_STYLE = `
 
 /** Runs in the preview page. Does nothing unless the page is inside the editor. */
 export function startBridge(win: Window) {
-  if (win.parent === win) return;
+  // Not in the editor, or a figure page for its Source view (src/lib/editor-figure.astro).
+  if (win.parent === win || win.location.pathname.startsWith('/_editor/')) return;
   const doc = win.document;
   const send = (msg: FromPage) => win.parent.postMessage(msg, '*');
   const blocks = () => [...doc.querySelectorAll('[data-line]')];

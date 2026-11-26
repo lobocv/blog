@@ -19,3 +19,8 @@ export function formatAgo(date: Date, now = new Date()): string {
   for (const [u, s] of units) if (-seconds >= s) [unit, size] = [u, s];
   return relative.format(Math.round(seconds / size), unit);
 }
+
+const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+/** "Aug 1, 2021", from a front matter date like 2021-08-01. */
+export const formatDate = (iso: string) => day.format(new Date(`${iso}T00:00:00Z`));

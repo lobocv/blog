@@ -8,6 +8,8 @@ import { tags as t } from '@lezer/highlight';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Range } from '../../domain/anchor.ts';
 import { change } from '../../domain/merge.ts';
+import { type FigureSource, figureWidgets, setFigureSource } from './figure-widgets.ts';
+import { bodyStart, headEdit, postHead } from './post-head.ts';
 import { type Mark, setMarks, threadMarks } from './thread-marks.ts';
 
 // Markdown markers (#, *, `) recede so the words stand out. Colours come from theme.css.
@@ -37,8 +39,13 @@ export type SourceHandle = {
   reveal(pos: number): void;
   /** Replaces a range as if Calvin typed it, so ⌘Z undoes it. */
   replace(range: Range, text: string): void;
-  /** Changes the text to `next` with the smallest edit, keeping the cursor where it can. ⌘Z undoes it. */
+  /**
+   * Changes the text to `next` with the smallest edit, keeping the cursor where it can. ⌘Z undoes
+   * it. It may change the front matter (eg from the form, or an outside edit).
+   */
   setText(next: string): void;
+  /** Reloads the figures shown under their lines (eg after Claude changed one's code). */
+  reloadFigures(): void;
 };
 
 type Props = {
@@ -48,10 +55,12 @@ type Props = {
   marks?: Mark[];
   /** Called when lines move (typing, wrapping, resizing), so the margin can follow. */
   onLayout?: () => void;
+  /** Where to load figures from, once the preview server is up. */
+  figures?: FigureSource;
 };
 
 /** The post's Markdown in CodeMirror. Owns its own document after mounting. */
-export function SourceView({ text, onChange, handle, marks = [], onLayout }: Props) {
+export function SourceView({ text, onChange, handle, marks = [], onLayout, figures }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<EditorView>(undefined);
   const changed = useRef(onChange);
@@ -74,6 +83,8 @@ export function SourceView({ text, onChange, handle, marks = [], onLayout }: Pro
           EditorView.lineWrapping,
           EditorView.contentAttributes.of({ 'aria-label': 'Post source', spellcheck: 'true' }),
           threadMarks,
+          postHead,
+          figureWidgets,
           EditorView.updateListener.of((u) => {
             if (u.docChanged) changed.current(u.state.doc.toString());
             if (u.docChanged || u.geometryChanged || u.heightChanged) laidOut.current?.();
@@ -82,6 +93,8 @@ export function SourceView({ text, onChange, handle, marks = [], onLayout }: Pro
       }),
     });
     editor.current = view;
+    // Start at the top of the body: the front matter is the form's, and imports are hidden.
+    view.dispatch({ selection: { anchor: bodyStart(view.state) } });
     view.focus();
     if (handle) handle.current = sourceHandle(view);
     return () => view.destroy();
@@ -90,6 +103,10 @@ export function SourceView({ text, onChange, handle, marks = [], onLayout }: Pro
   useEffect(() => {
     editor.current?.dispatch({ effects: setMarks.of(marks) });
   }, [marks]);
+
+  useEffect(() => {
+    if (figures) editor.current?.dispatch({ effects: setFigureSource.of(figures) });
+  }, [figures?.origin, figures?.path]);
 
   return <div class="source" ref={host} />;
 }
@@ -115,15 +132,23 @@ function sourceHandle(view: EditorView): SourceHandle {
     },
     topOf: (pos) => {
       pos = Math.min(pos, view.state.doc.length);
+      // From the top of the column, which holds the front matter form above the text.
+      const column = view.dom.closest('.column')?.getBoundingClientRect().top ?? view.documentTop;
       // The wrapped line the words are on when it's drawn, else the top of their paragraph.
       const coords = view.coordsAtPos(pos);
-      return coords ? coords.top - view.documentTop : view.lineBlockAt(pos).top;
+      return coords ? coords.top - column : view.lineBlockAt(pos).top + view.documentTop - column;
     },
     reveal: (pos) => view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'center' }) }),
     replace: ({ from, to }, insert) => view.dispatch({ changes: { from, to, insert }, userEvent: 'input' }),
+    reloadFigures: () => {
+      for (const frame of view.dom.querySelectorAll<HTMLIFrameElement>('.cm-figure iframe')) frame.src = frame.src;
+    },
     setText: (next) => {
       const c = change(view.state.doc.toString(), next);
-      if (c.toA > c.from || c.toB > c.from) view.dispatch({ changes: { from: c.from, to: c.toA, insert: next.slice(c.from, c.toB) } });
+      // Outside edits and the front matter form may change the hidden front matter lines.
+      if (c.toA > c.from || c.toB > c.from) {
+        view.dispatch({ changes: { from: c.from, to: c.toA, insert: next.slice(c.from, c.toB) }, annotations: headEdit.of(true) });
+      }
     },
   };
 }

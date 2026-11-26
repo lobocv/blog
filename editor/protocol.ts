@@ -3,7 +3,7 @@
 import { z } from 'zod';
 
 export const routes = {
-  drafts: '/api/drafts',
+  posts: '/api/posts',
   post: (slug: string) => `/api/posts/${encodeURIComponent(slug)}`,
   preview: '/api/preview',
   threads: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/threads`,
@@ -13,13 +13,21 @@ export const routes = {
   thread: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/threads/${encodeURIComponent(id)}`,
 } as const;
 
-/** GET /api/drafts, most recently edited first */
-export const Drafts = z.object({
-  drafts: z.array(
-    z.object({ slug: z.string(), title: z.string(), words: z.number(), minutes: z.number(), modified: z.iso.datetime() }),
+/** GET /api/posts: drafts, most recently edited first, then published posts, newest first */
+export const PostList = z.object({
+  posts: z.array(
+    z.object({
+      slug: z.string(),
+      title: z.string(),
+      draft: z.boolean(),
+      date: z.string().optional(),
+      words: z.number(),
+      minutes: z.number(),
+      modified: z.iso.datetime(),
+    }),
   ),
 });
-export type Drafts = z.infer<typeof Drafts>;
+export type PostList = z.infer<typeof PostList>;
 
 /** GET /api/posts/:slug */
 export const Post = z.object({ slug: z.string(), name: z.string(), text: z.string() });
@@ -62,6 +70,8 @@ export const PostEvent = z.discriminatedUnion('type', [
   z.object({ type: z.literal('idle') }),
   z.object({ type: z.literal('failed'), threadId: z.string(), message: z.string() }),
   z.object({ type: z.literal('outside'), text: z.string() }),
+  /** A figure's code changed: Source reloads its figures. */
+  z.object({ type: z.literal('figures') }),
 ]);
 export type PostEvent = z.infer<typeof PostEvent>;
 

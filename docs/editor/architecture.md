@@ -22,6 +22,7 @@ editor/
   protocol.ts        browser <-> server message types (zod), used by both sides
   domain/            pure TypeScript. No I/O, runs in Node and the browser
     document.ts        text, headings, word count and reading time
+    front-matter.ts    the front matter as fields, written back in one format
     post.ts            drafts, titles and valid slugs
     anchor.ts          pins a thread to quoted text plus a line hint, re-finds it after edits
     figure.ts          what a thread on a figure points at: the component's file or the image
@@ -31,7 +32,7 @@ editor/
   app/               use cases, one per file, and the ports they need
     ports.ts           PostLibrary, ThreadStore, Agent, Preview, Clock
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
-    list-drafts.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
+    list-posts.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
@@ -48,12 +49,12 @@ editor/
     http.ts            routes, and server-sent events for Claude's replies. Turns
                        requests into use-case calls
   ui/
-    main.tsx           `/` is the drafts page, `/?post=<slug>` edits a post
+    main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
     thread-state.ts    the open post's threads and notes, selection and composer, as signals
     components/        Composer, ThreadCard, Margin, PageThread, StatusLine, KeySheet,
-                       SectionPicker
-    views/             DraftsView, EditorView, PreviewView (iframe plus anchors),
+                       SectionPicker, FrontMatterForm
+    views/             PostsView, EditorView, PreviewView (iframe plus anchors),
                        SourceView (CodeMirror)
 shared/              code the blog build and the editor both use, moved here when
                      the editor first needs it
@@ -62,7 +63,7 @@ shared/              code the blog build and the editor both use, moved here whe
   preview.ts           the post's URL, and the bridge script Astro injects into the
                        preview page plus the messages it exchanges with the editor
 e2e/
-  editor.spec.ts     drafts page, typing and saving, deleting, threads
+  editor.spec.ts     posts page, typing and saving, deleting, threads
   preview.spec.ts    Source and Preview swap, on a temporary copy of the site
 ```
 
@@ -94,6 +95,14 @@ e2e/
 
 ## How the pieces fit
 
+- Source shows the front matter as a form (title, draft, date, categories,
+  summary, and any other keys as YAML) above the text. Each change rewrites the
+  whole block in one format, so a typo can't break the page. The lines stay in
+  CodeMirror's document but hidden (`views/post-head.ts`, which hides MDX
+  imports too, since they only place figures), so line
+  numbers don't change, and typing can't reach them; only the form, outside
+  edits and undo can. Front matter the form can't read stays visible as text to
+  fix by hand
 - The `.mdx` file on disk is the only copy of the post. The UI saves about
   half a second after typing stops and on every view or window change. The
   status line shows something only when a save fails

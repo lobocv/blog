@@ -20,8 +20,11 @@ const editorPreview = dev && process.env.EDITOR_PREVIEW === '1';
 const editorBridge = {
   name: 'editor-bridge',
   hooks: {
-    'astro:config:setup': ({ injectScript }) =>
-      injectScript('page', "import { startBridge } from '/shared/preview.ts'; startBridge(window);"),
+    'astro:config:setup': ({ injectScript, injectRoute }) => {
+      injectScript('page', "import { startBridge } from '/shared/preview.ts'; startBridge(window);");
+      // One figure on its own, for the editor's Source view (src/lib/editor-figure.astro).
+      injectRoute({ pattern: '/_editor/figure', entrypoint: './src/lib/editor-figure.astro', prerender: false });
+    },
   },
 };
 

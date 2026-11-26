@@ -133,3 +133,32 @@ test('clicking a figure or an image in the preview picks it for ⌘K', async ({ 
   await expect(image).toHaveAttribute('data-editor-mark', 'on');
   await expect(frame(page).getByRole('dialog', { name: 'Image' })).toBeHidden();
 });
+
+test('Source shows figures under the lines that place them, without reloading them as Calvin types', async ({ page }) => {
+  await page.goto(`http://127.0.0.1:${port}/?post=figs`);
+  const source = page.getByLabel('Post source');
+  await expect(source).toContainText('<ContextStack />');
+  // The imports are hidden.
+  await expect(source).not.toContainText('import ContextStack');
+
+  const figure = page.frameLocator('.cm-figure iframe').locator('figure.fig');
+  await expect(figure).toBeVisible({ timeout: 60_000 });
+  const frameHeight = await page.locator('.cm-figure iframe').evaluate((el) => el.getBoundingClientRect().height);
+  expect(frameHeight).toBeGreaterThan(100);
+  await expect(page.locator('.cm-figure img')).toBeVisible();
+
+  // Typing saves the post; the figure page doesn't depend on it, so it stays loaded.
+  const loaded = () => page.frameLocator('.cm-figure iframe').locator('body').evaluate(() => performance.timeOrigin);
+  const before = await loaded();
+  await source.getByText('Intro.').click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' More.');
+  await expect.poll(() => readFile(join(root, 'src/content/posts/figs/index.mdx'), 'utf8')).toContain('Intro. More.');
+  await page.waitForTimeout(1500);
+  expect(await loaded()).toBe(before);
+
+  // Changing the figure's code reloads it.
+  const file = join(root, 'src/components/post/ContextStack.astro');
+  await writeFile(file, (await readFile(file, 'utf8')) + '\n');
+  await expect.poll(loaded, { timeout: 10_000 }).not.toBe(before);
+});

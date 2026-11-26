@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { deleteDraft } from './delete-draft.ts';
 import { NotFound, Refused } from './errors.ts';
-import { listDrafts } from './list-drafts.ts';
+import { listPosts } from './list-posts.ts';
 import { openPost } from './open-post.ts';
 import { savePost } from './save-post.ts';
 import { MemoryPostLibrary, MemoryThreadStore } from './testing/fakes.ts';
@@ -11,9 +11,12 @@ const live = '---\ntitle: Live\ndraft: false\n---\nthree';
 
 const library = () => new MemoryPostLibrary({ a: draft, live });
 
-describe('listDrafts', () => {
-  it('lists only drafts', async () => {
-    expect((await listDrafts(library())()).map((d) => d.slug)).toEqual(['a']);
+describe('listPosts', () => {
+  it('lists drafts, then published posts', async () => {
+    expect((await listPosts(library())()).map((d) => [d.slug, d.draft])).toEqual([
+      ['a', true],
+      ['live', false],
+    ]);
   });
 });
 

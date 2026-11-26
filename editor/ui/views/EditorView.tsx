@@ -1,11 +1,11 @@
 import { computed, signal } from '@preact/signals';
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { anchorAt, anchorNear, lineOf } from '../../domain/anchor.ts';
 import { type Section, sections, stats } from '../../domain/document.ts';
 import { merge } from '../../domain/merge.ts';
 import { openMechanical, openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
 import { PostEvent, type Post, routes } from '../../protocol.ts';
-import { savePost } from '../api.ts';
+import { loadPreviewOrigin, savePost } from '../api.ts';
 import { createAutosave } from '../autosave.ts';
 import { Margin } from '../components/Margin.tsx';
 import { PageThread } from '../components/PageThread.tsx';
@@ -13,6 +13,7 @@ import { StatusLine, type View } from '../components/StatusLine.tsx';
 import type { SuggestionActions } from '../components/SuggestionView.tsx';
 import { describeKey } from '../keymap.ts';
 import { createThreadState } from '../thread-state.ts';
+import { FrontMatterForm } from '../components/FrontMatterForm.tsx';
 import { KeySheet } from '../components/KeySheet.tsx';
 import { SectionPicker } from '../components/SectionPicker.tsx';
 import { type PreviewHandle, PreviewView } from './PreviewView.tsx';
@@ -20,7 +21,7 @@ import { type SourceHandle, SourceView } from './SourceView.tsx';
 import type { Mark } from './thread-marks.ts';
 
 /** One post: Source or Preview, the thread margin and the status line. */
-export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => void }) {
+export function EditorView({ post, onPosts }: { post: Post; onPosts: () => void }) {
   const { text, postStats, autosave, view, threads, layout, marks, clash, sheetOpen, lastKey, picking } = useMemo(() => {
     const text = signal(post.text);
     const threads = createThreadState(post.slug, text);
@@ -56,6 +57,11 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
     };
   }, [post]);
   const source = useRef<SourceHandle>(undefined);
+  // Figures show in Source once the preview server is up.
+  const [origin, setOrigin] = useState<string>();
+  useEffect(() => {
+    loadPreviewOrigin().then(setOrigin, () => {});
+  }, []);
   const preview = useRef<PreviewHandle>(undefined);
 
   // Load the threads, then follow Claude's replies as the server streams them.
@@ -66,12 +72,13 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       const parsed = PostEvent.safeParse(JSON.parse(e.data));
       if (!parsed.success) return;
       if (parsed.data.type === 'outside') outsideEdit(parsed.data.text);
+      else if (parsed.data.type === 'figures') source.current?.reloadFigures();
       else threads.apply(parsed.data);
     };
     return () => events.close();
   }, [threads]);
 
-  const leave = () => autosave.flush().then(onDrafts);
+  const leave = () => autosave.flush().then(onPosts);
 
   // Both views stay mounted, so swapping keeps the editor's undo history and the loaded page.
   const show = (next: View) => {
@@ -234,7 +241,8 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           threads.selected.value = undefined;
           backToWriting();
         });
-      } else if (threadKey && e.code === 'KeyG') act(openSections);
+      } else if (e.code === 'Escape' && only('none') && !e.shiftKey && clash.value === undefined) act(() => void leave());
+      else if (threadKey && e.code === 'KeyG') act(openSections);
       else if (threadKey && e.code === 'KeyZ') act(() => (threads.hidden.value = !threads.hidden.value));
       else if (threadKey && (e.code === 'KeyJ' || e.code === 'KeyK')) {
         act(() => {
@@ -277,11 +285,18 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
     <>
       <main class="page" hidden={view.value !== 'source'}>
         <div class="column">
+          <FrontMatterForm
+            text={text.value}
+            onChange={(next) => source.current?.setText(next)}
+            onLayout={() => layout.value++}
+            onDone={backToWriting}
+          />
           <SourceView
             text={post.text}
             handle={source}
             marks={marks.value}
             onLayout={() => layout.value++}
+            figures={origin ? { origin, path: post.name } : undefined}
             onChange={(next) => {
               text.value = next;
               autosave.change(next);
@@ -332,6 +347,11 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       {picking.value !== undefined && (
         <SectionPicker sections={sections(text.value)} at={picking.value} onGo={goTo} onClose={() => (picking.value = undefined)} />
       )}
+      <button type="button" class="back" aria-label="Back to posts" title="Posts (esc)" onClick={() => void leave()}>
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
       {sheetOpen.value && <KeySheet lastKey={lastKey.value} onClose={() => (sheetOpen.value = false)} />}
       <StatusLine
         view={view.value}
@@ -344,7 +364,6 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         onKeys={() => (sheetOpen.value = !sheetOpen.value)}
         onPage={() => (threads.pageOpen.value = !threads.pageOpen.value)}
         save={autosave.state.value}
-        onDrafts={() => void leave()}
       />
     </>
   );

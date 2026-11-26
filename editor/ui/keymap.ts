@@ -11,7 +11,7 @@ export const KEYMAP: Group[] = [
       { action: 'Preview / Source', keys: '⌘ \\' },
       { action: 'Comment on selection', keys: '⌘ K' },
       { action: 'Page thread', keys: '⌘ /' },
-      { action: 'Back to drafts', keys: '⌥ O' },
+      { action: 'Back to posts, when nothing is open', keys: 'esc' },
       { action: 'Stop Claude', keys: '⌃ C' },
       { action: 'Close, cancel (or the key that opened it)', keys: 'esc' },
     ],

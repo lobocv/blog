@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StatusLine } from './StatusLine.tsx';
 
 afterEach(cleanup);
-const base = { view: 'source', onView: () => {}, onDrafts: () => {} } as const;
+const base = { view: 'source', onView: () => {} } as const;
 
 describe('StatusLine', () => {
   it('shows words and reading time', () => {

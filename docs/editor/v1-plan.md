@@ -7,9 +7,10 @@ replies and suggested edits in the margin. Everything follows
 
 ## In v1
 
-- Opens on a drafts page (newest first) to pick a post with the keyboard, or
-  straight on one named on the command line (`make write POST=<slug>`). Drafts
-  can be deleted from it, and ⌥O goes back to it
+- Opens on a page listing the drafts (newest first), then the published posts,
+  to pick one with the keyboard, or straight on one named on the command line
+  (`make write POST=<slug>`). Drafts can be deleted from it, and ⌥O goes back
+  to it
 - Source view (CodeMirror, Markdown and MDX highlighting) with autosave
 - Preview view (the real `astro dev` in an iframe), swapped with ⌘\, keeping
   the scroll position on the same block

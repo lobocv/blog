@@ -9,7 +9,7 @@ import preact from '@preact/preset-vite';
 import { createServer } from 'vite';
 import { createConversation } from './app/conversation.ts';
 import { deleteDraft } from './app/delete-draft.ts';
-import { listDrafts } from './app/list-drafts.ts';
+import { listPosts } from './app/list-posts.ts';
 import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
 import { reportReview } from './app/review.ts';
@@ -60,7 +60,7 @@ const conversation = createConversation({
 });
 const mcp = createMcpHandler({ suggestEdit: suggestEdit(deps), reportReview: reportReview(deps), changed: conversation.changed });
 const api = createApi({
-  listDrafts: listDrafts(library),
+  listPosts: listPosts(library),
   openPost: openPost(library),
   savePost: savePost(library, threads),
   listThreads: listThreads(deps),
@@ -72,6 +72,7 @@ const api = createApi({
   deleteDraft: deleteDraft(library),
   conversation,
   previewOrigin: () => preview?.origin() ?? Promise.reject(new Error('The preview is off (--no-preview).')),
+  watchFigures: (onChange) => preview?.watchFigures(onChange) ?? (() => {}),
 });
 
 // Claude reaches the MCP tools on the API port directly, not through the UI's proxy.

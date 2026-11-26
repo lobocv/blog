@@ -42,7 +42,7 @@ verify-editor: test typecheck ## The editor's unit tests and its end-to-end test
 	npx playwright install chromium
 	npx playwright test
 
-write: node_modules ## Open the writing editor on the drafts page, or a post with POST=<slug>
+write: node_modules ## Open the writing editor on the posts page, or a post with POST=<slug>
 	node editor/main.ts --open $(if $(POST),--post $(POST),)
 
 lint: ## Lint a post: make lint POST=<slug> (defaults to the active draft)
