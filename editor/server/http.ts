@@ -1,14 +1,15 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import type { Conversation, ConversationEvent } from '../app/conversation.ts';
+import type { Conversation } from '../app/conversation.ts';
 import { NotFound, Refused } from '../app/errors.ts';
 import type { deleteDraft } from '../app/delete-draft.ts';
 import type { listDrafts } from '../app/list-drafts.ts';
 import type { openPost } from '../app/open-post.ts';
 import type { savePost } from '../app/save-post.ts';
 import type { settleSuggestion } from '../app/suggestions.ts';
+import type { watchPost } from '../app/watch-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { ClaudeEvent, Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
+import { PostEvent, Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
 
 export type UseCases = {
   listDrafts: ReturnType<typeof listDrafts>;
@@ -20,6 +21,7 @@ export type UseCases = {
   replyToThread: ReturnType<typeof replyToThread>;
   resolveThread: ReturnType<typeof resolveThread>;
   settleSuggestion: ReturnType<typeof settleSuggestion>;
+  watchPost: ReturnType<typeof watchPost>;
   /** Claude's replies. Every comment and reply Calvin sends is passed on to Claude. */
   conversation: Pick<Conversation, 'ask' | 'stop' | 'subscribe'>;
   /** Waits for `astro dev` to answer. */
@@ -87,22 +89,26 @@ export function createApi(uc: UseCases) {
     return c.body(null, 204);
   });
 
-  // Claude's side, as server-sent events: one `data:` line of ClaudeEvent JSON per event.
+  // Claude's work and outside edits, as server-sent events: one `data:` line of PostEvent JSON each.
   api.get('/api/posts/:slug/events', (c) =>
     streamSSE(c, async (stream) => {
-      const queue: ConversationEvent[] = [];
+      const slug = c.req.param('slug');
+      const queue: PostEvent[] = [];
       let wake: (() => void) | undefined;
-      const unsubscribe = uc.conversation.subscribe(c.req.param('slug'), (e) => {
+      const push = (e: PostEvent) => {
         queue.push(e);
         wake?.();
-      });
+      };
+      const stops = [uc.conversation.subscribe(slug, push), uc.watchPost(slug, (text) => push({ type: 'outside', text }))];
       stream.onAbort(() => {
-        unsubscribe();
+        for (const stop of stops) stop();
         wake?.();
       });
+      // A comment line, which EventSource ignores, so the response starts straight away.
+      await stream.write(': open\n\n');
       while (!stream.aborted) {
         const e = queue.shift();
-        if (e) await stream.writeSSE({ data: JSON.stringify(ClaudeEvent.parse(e)) });
+        if (e) await stream.writeSSE({ data: JSON.stringify(PostEvent.parse(e)) });
         else await new Promise<void>((r) => (wake = r));
       }
     }),

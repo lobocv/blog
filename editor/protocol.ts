@@ -50,14 +50,18 @@ const Thread = z.object({
 export const Threads = z.object({ threads: z.array(Thread) });
 export type Threads = z.infer<typeof Threads>;
 
-/** GET /api/posts/:slug/events streams these. POST /api/posts/:slug/stop stops Claude. */
-export const ClaudeEvent = z.discriminatedUnion('type', [
+/**
+ * GET /api/posts/:slug/events streams these: Claude's work, and edits made outside the editor.
+ * POST /api/posts/:slug/stop stops Claude.
+ */
+export const PostEvent = z.discriminatedUnion('type', [
   z.object({ type: z.literal('threads'), threads: z.array(Thread) }),
   z.object({ type: z.literal('working'), threadId: z.string(), text: z.string(), tool: z.string().optional() }),
   z.object({ type: z.literal('idle') }),
   z.object({ type: z.literal('failed'), threadId: z.string(), message: z.string() }),
+  z.object({ type: z.literal('outside'), text: z.string() }),
 ]);
-export type ClaudeEvent = z.infer<typeof ClaudeEvent>;
+export type PostEvent = z.infer<typeof PostEvent>;
 
 /** POST .../threads. No anchor means the page thread */
 export const NewComment = z.object({ anchor: Anchor.optional(), text: z.string().min(1) });

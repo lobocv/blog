@@ -35,6 +35,20 @@ export class MemoryPostLibrary implements PostLibrary {
     this.posts.delete(slug);
     this.removed.push(slug);
   }
+
+  #watchers = new Map<string, Set<(text: string) => void>>();
+
+  watch(slug: string, onOutsideEdit: (text: string) => void) {
+    const set = this.#watchers.get(slug) ?? new Set();
+    this.#watchers.set(slug, set.add(onOutsideEdit));
+    return () => void set.delete(onOutsideEdit);
+  }
+
+  /** Changes a post the way another program would, telling watchers. */
+  editOutside(slug: string, text: string) {
+    this.posts.set(slug, { slug, text, modified: new Date() });
+    for (const w of this.#watchers.get(slug) ?? []) w(text);
+  }
 }
 
 export class MemoryThreadStore implements ThreadStore {

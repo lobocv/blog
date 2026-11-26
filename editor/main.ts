@@ -14,6 +14,7 @@ import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
 import { settleSuggestion, suggestEdit } from './app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
+import { watchPost } from './app/watch-post.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
 import { ClaudeAgent } from './infra/claude-agent.ts';
 import { FsPostLibrary } from './infra/fs-post-library.ts';
@@ -66,6 +67,7 @@ const api = createApi({
   replyToThread: replyToThread(deps),
   resolveThread: resolveThread(deps),
   settleSuggestion: settleSuggestion(deps),
+  watchPost: watchPost(library),
   deleteDraft: deleteDraft(library),
   conversation,
   previewOrigin: () => preview?.origin() ?? Promise.reject(new Error('The preview is off (--no-preview).')),

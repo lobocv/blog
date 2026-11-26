@@ -16,6 +16,11 @@ export interface PostLibrary {
   write(slug: string, text: string): Promise<void>;
   /** Moves the post, its brief, images and threads somewhere they can be restored from. */
   remove(slug: string): Promise<void>;
+  /**
+   * Calls `onOutsideEdit` with the new text whenever something else (eg Zed, or Claude Code in a
+   * terminal) changes the post. Its own writes don't count. Returns a function that stops watching.
+   */
+  watch(slug: string, onOutsideEdit: (text: string) => void): () => void;
 }
 
 /** The site as `astro dev` serves it, for the preview view. */

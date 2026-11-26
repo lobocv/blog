@@ -7,6 +7,7 @@ import { drawSelection, EditorView, keymap } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Range } from '../../domain/anchor.ts';
+import { change } from '../../domain/merge.ts';
 import { type Mark, setMarks, threadMarks } from './thread-marks.ts';
 
 // Markdown markers (#, *, `) recede so the words stand out. Colours come from theme.css.
@@ -36,6 +37,8 @@ export type SourceHandle = {
   reveal(pos: number): void;
   /** Replaces a range as if Calvin typed it, so ⌘Z undoes it. */
   replace(range: Range, text: string): void;
+  /** Changes the text to `next` with the smallest edit, keeping the cursor where it can. ⌘Z undoes it. */
+  setText(next: string): void;
 };
 
 type Props = {
@@ -117,5 +120,9 @@ function sourceHandle(view: EditorView): SourceHandle {
     },
     reveal: (pos) => view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'center' }) }),
     replace: ({ from, to }, insert) => view.dispatch({ changes: { from, to, insert }, userEvent: 'input' }),
+    setText: (next) => {
+      const c = change(view.state.doc.toString(), next);
+      if (c.toA > c.from || c.toB > c.from) view.dispatch({ changes: { from: c.from, to: c.toA, insert: next.slice(c.from, c.toB) } });
+    },
   };
 }

@@ -65,4 +65,20 @@ describe('autosave', () => {
     expect(saved).toEqual(['x']);
     expect(a.state.value).toBe('saved');
   });
+
+  it("knows what the file holds, and doesn't save text it already has", async () => {
+    const saved: string[] = [];
+    const a = createAutosave(async (t) => void saved.push(t), 500, 3000, 'start');
+    expect(a.saved()).toBe('start');
+    a.change('start');
+    expect(a.unsaved()).toBe(false);
+    a.change('typed');
+    expect(a.unsaved()).toBe(true);
+    await a.flush();
+    expect([a.saved(), a.unsaved()]).toEqual(['typed', false]);
+    a.markSaved('outside');
+    a.change('outside');
+    await vi.advanceTimersByTimeAsync(600);
+    expect(saved).toEqual(['typed']);
+  });
 });

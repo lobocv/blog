@@ -130,8 +130,10 @@ e2e/
   thread, marked as having lost its place. `@@` notes stay in the post and show
   as threads
 - Outside edits (Zed, Claude Code in a terminal) reach the editor through the
-  file watcher. With no unsaved typing the buffer reloads, otherwise the change is
-  merged the same way suggestions are
+  file watcher and the event stream. With no unsaved typing the text reloads.
+  With unsaved typing the two are merged when they change different lines
+  (`domain/merge.ts`); when they change the same lines, Calvin chooses which to
+  keep. Either way ⌘Z undoes the reload
 - History is the editor's undo for recent changes and git for the rest. No
   automatic commits
 

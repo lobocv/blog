@@ -2,8 +2,9 @@ import { computed, signal } from '@preact/signals';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
 import { anchorAt, anchorNear, lineOf } from '../../domain/anchor.ts';
 import { stats } from '../../domain/document.ts';
+import { merge } from '../../domain/merge.ts';
 import { openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
-import { ClaudeEvent, type Post, routes } from '../../protocol.ts';
+import { PostEvent, type Post, routes } from '../../protocol.ts';
 import { savePost } from '../api.ts';
 import { createAutosave } from '../autosave.ts';
 import { Margin } from '../components/Margin.tsx';
@@ -17,14 +18,16 @@ import type { Mark } from './thread-marks.ts';
 
 /** One post: Source or Preview, the thread margin and the status line. */
 export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => void }) {
-  const { text, postStats, autosave, view, threads, layout, marks } = useMemo(() => {
+  const { text, postStats, autosave, view, threads, layout, marks, clash } = useMemo(() => {
     const text = signal(post.text);
     const threads = createThreadState(post.slug, text);
     return {
       text,
       threads,
       postStats: computed(() => stats(text.value)),
-      autosave: createAutosave((t) => savePost(post.slug, t)),
+      autosave: createAutosave((t) => savePost(post.slug, t), undefined, undefined, post.text),
+      // The file's text after an outside edit that clashed with Calvin's typing, until he chooses.
+      clash: signal<string | undefined>(undefined),
       view: signal<View>('source'),
       // Bumped when lines move in the source, so the margin follows.
       layout: signal(0),
@@ -51,8 +54,10 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
     void threads.load();
     const events = new EventSource(routes.events(post.slug));
     events.onmessage = (e) => {
-      const parsed = ClaudeEvent.safeParse(JSON.parse(e.data));
-      if (parsed.success) threads.apply(parsed.data);
+      const parsed = PostEvent.safeParse(JSON.parse(e.data));
+      if (!parsed.success) return;
+      if (parsed.data.type === 'outside') outsideEdit(parsed.data.text);
+      else threads.apply(parsed.data);
     };
     return () => events.close();
   }, [threads]);
@@ -114,6 +119,24 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
   // Keys read this through a ref, since the handler is attached once.
   const actions = useRef(suggestions);
   actions.current = suggestions;
+
+  // Something else changed the file: reload it, or merge it with typing that isn't saved yet.
+  const outsideEdit = (theirs: string) => {
+    const base = autosave.saved() ?? post.text;
+    const mine = text.value;
+    autosave.markSaved(theirs);
+    if (theirs === mine) return;
+    const merged = mine === base && !autosave.unsaved() ? theirs : merge(base, mine, theirs);
+    if (merged === undefined) clash.value = theirs;
+    else source.current?.setText(merged);
+  };
+
+  const resolveClash = (take: 'theirs' | 'mine') => {
+    if (take === 'theirs' && clash.value !== undefined) source.current?.setText(clash.value);
+    else autosave.change(text.value);
+    clash.value = undefined;
+    backToWriting();
+  };
 
   const backToWriting = () => {
     if (view.value === 'source') {
@@ -230,6 +253,17 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
             backToWriting();
           }}
         />
+      )}
+      {clash.value !== undefined && (
+        <div class="notice" role="alert">
+          <span>The post changed outside the editor while you were typing, in the same place.</span>
+          <button type="button" class="btn" onClick={() => resolveClash('theirs')}>
+            Use the outside version
+          </button>
+          <button type="button" class="btn" onClick={() => resolveClash('mine')}>
+            Keep mine
+          </button>
+        </div>
       )}
       <StatusLine
         view={view.value}

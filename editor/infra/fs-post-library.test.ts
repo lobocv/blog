@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -21,8 +21,27 @@ async function repo(files: Record<string, string>) {
 const postFiles = (posts: Record<string, string>) =>
   Object.fromEntries(Object.entries(posts).map(([slug, text]) => [`src/content/posts/${slug}/index.md`, text]));
 
-postLibraryContract('memory', async (posts) => new MemoryPostLibrary(posts));
-postLibraryContract('files', async (posts) => new FsPostLibrary(await repo(postFiles(posts))));
+postLibraryContract(
+  'memory',
+  async (posts) => new MemoryPostLibrary(posts),
+  async (lib, slug, text) => lib.editOutside(slug, text),
+);
+const roots = new WeakMap<FsPostLibrary, string>();
+postLibraryContract(
+  'files',
+  async (posts) => {
+    const root = await repo(postFiles(posts));
+    const lib = new FsPostLibrary(root);
+    roots.set(lib, root);
+    return lib;
+  },
+  // As editors do: write a new file and rename it over the post.
+  async (lib, slug, text) => {
+    const path = join(roots.get(lib)!, 'src/content/posts', slug, 'index.md');
+    await writeFile(`${path}.swp`, text);
+    await rename(`${path}.swp`, path);
+  },
+);
 
 describe('FsPostLibrary', () => {
   it('prefers index.mdx and skips folders without a post', async () => {

@@ -174,3 +174,36 @@ test('Claude suggests an edit; tweaking and accepting it changes the text, and â
   await page.keyboard.press('ControlOrMeta+z');
   await expect(source).toContainText('It took incredible amounts of work.');
 });
+
+test('reloads outside edits, merges them with unsaved typing, and asks when they clash', async ({ page }) => {
+  const base = '---\ntitle: First draft\ndraft: true\n---\nOne.\n\nTwo.\n';
+  await writeFile(postPath('first'), base);
+  // Outside edits arrive on the event stream, so wait for it to open.
+  const stream = page.waitForResponse((r) => r.url().includes('/events'));
+  await page.goto(`${url}?post=first`);
+  await stream;
+  const source = page.getByLabel('Post source');
+  await expect(source).toContainText('Two.');
+  const outside = (text: string) => writeFile(postPath('first'), text);
+
+  // No typing: the editor takes the new text.
+  await outside(base.replace('One.', 'One, from Zed.'));
+  await expect(source).toContainText('One, from Zed.');
+
+  // Unsaved typing in another paragraph: both survive, and the file ends up with both.
+  await source.getByText('Two.').click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' Typed.');
+  await outside(base.replace('One.', 'One, again.'));
+  await expect(source).toContainText('One, again.');
+  await expect(source).toContainText('Two. Typed.');
+  await expect.poll(() => readFile(postPath('first'), 'utf8')).toBe(base.replace('One.', 'One, again.').replace('Two.', 'Two. Typed.'));
+
+  // Typing in the same place as the outside edit: Calvin chooses.
+  await page.keyboard.type(' More.');
+  await outside(base.replace('One.', 'One, again.').replace('Two.', 'Two, from Zed.'));
+  await expect(page.getByRole('alert')).toContainText('changed outside the editor');
+  await page.getByRole('button', { name: 'Keep mine' }).click();
+  await expect.poll(() => readFile(postPath('first'), 'utf8')).toContain('Two. Typed. More.');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});

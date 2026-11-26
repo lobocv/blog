@@ -6,6 +6,7 @@ import { savePost } from '../app/save-post.ts';
 import { FakeClock, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
+import { watchPost } from '../app/watch-post.ts';
 import type { ConversationEvent } from '../app/conversation.ts';
 import { createApi, type UseCases } from './http.ts';
 
@@ -33,6 +34,7 @@ function setup() {
     replyToThread: replyToThread(deps),
     resolveThread: resolveThread(deps),
     settleSuggestion: settleSuggestion(deps),
+    watchPost: watchPost(lib),
     previewOrigin: async () => 'http://127.0.0.1:4402',
   };
   return { lib, uc, asked, listeners, api: createApi(uc) };
@@ -81,8 +83,21 @@ describe('editor API', () => {
     const reader = res.body!.getReader();
     await new Promise((r) => setTimeout(r, 0));
     for (const l of listeners) l({ type: 'working', threadId: 't1', text: 'Hi' });
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe(': open\n\n');
     const chunk = new TextDecoder().decode((await reader.read()).value);
     expect(chunk).toBe('data: {"type":"working","threadId":"t1","text":"Hi"}\n\n');
+    await reader.cancel();
+  });
+
+  it('streams edits made outside the editor', async () => {
+    const { api, lib } = setup();
+    const res = await api.request('/api/posts/a/events');
+    const reader = res.body!.getReader();
+    await new Promise((r) => setTimeout(r, 0));
+    lib.editOutside('a', 'changed');
+    await reader.read(); // ': open'
+    const chunk = new TextDecoder().decode((await reader.read()).value);
+    expect(chunk).toBe('data: {"type":"outside","text":"changed"}\n\n');
     await reader.cancel();
   });
 

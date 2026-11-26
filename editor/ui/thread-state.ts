@@ -4,7 +4,7 @@ import { computed, type ReadonlySignal, signal } from '@preact/signals';
 import { type Anchor, locate, type Range } from '../domain/anchor.ts';
 import { openSuggestion, type Suggestion } from '../domain/suggestion.ts';
 import { counts, type Message, notes, PAGE, type Thread } from '../domain/thread.ts';
-import type { ClaudeEvent } from '../protocol.ts';
+import type { PostEvent } from '../protocol.ts';
 import * as defaultApi from './api.ts';
 
 /** One entry in the margin, in the order it appears in the post. */
@@ -80,7 +80,7 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
     working,
 
     /** Applies an event from the server's stream of Claude's work. */
-    apply(e: ClaudeEvent) {
+    apply(e: PostEvent) {
       if (e.type === 'threads') threads.value = e.threads;
       else if (e.type === 'working') working.value = { threadId: e.threadId, text: e.text, tool: e.tool ?? working.value?.tool };
       else if (e.type === 'idle') working.value = undefined;
