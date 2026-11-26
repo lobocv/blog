@@ -17,9 +17,10 @@ export const KEYMAP: Group[] = [
     ],
   },
   {
-    title: 'Threads',
+    title: 'In the post',
     columns: ['Preview', 'Source'],
     shortcuts: [
+      { action: 'Go to section', keys: 'G', source: '⌥ G' },
       { action: 'Next / previous thread', keys: 'J K', source: '⌥ J K' },
       { action: 'Reply', keys: 'R', source: '⌥ R' },
       { action: 'Resolve', keys: 'D', source: '⌥ D' },
@@ -28,7 +29,9 @@ export const KEYMAP: Group[] = [
       { action: 'Tweak suggestion', keys: 'T', source: '⌥ T' },
       { action: 'Accept all mechanical fixes', keys: '⇧ A', source: '⌥ ⇧ A' },
       { action: 'Page thread', keys: '/', source: '⌥ /' },
+      { action: 'Hide threads', keys: 'Z', source: '⌥ Z' },
       { action: 'Critique', keys: '⇧ C', source: '⌥ ⇧ C' },
+      { action: 'Action all notes', keys: '⇧ N', source: '⌥ ⇧ N' },
       { action: 'This sheet', keys: 'H', source: '⌥ H' },
     ],
   },

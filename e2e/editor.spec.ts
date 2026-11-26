@@ -292,3 +292,42 @@ test('the key that opens something closes it, even from a message box', async ({
   await expect(source).toContainText('First line.');
   expect(await readFile(postPath('first'), 'utf8')).not.toMatch(/[π∂∑®÷˙]/);
 });
+
+test('G goes to a section, Z hides the threads, and ⇧N asks Claude to action the notes', async ({ page }) => {
+  await writeFile(postPath('first'), '---\ntitle: First draft\ndraft: true\n---\nIntro. @@ punchier?\n\n## One\n\nText.\n\n### One point five\n\n## Two\n\nMore.\n');
+  await page.goto(`${url}?post=first`);
+  const source = page.getByLabel('Post source');
+  await source.getByText('Intro.').click();
+
+  // ⌥G opens on the section in view; J moves down, ↵ goes there with the cursor on the heading.
+  await page.keyboard.press('Alt+g');
+  const picker = page.getByRole('listbox', { name: 'Sections' });
+  await expect(picker.getByRole('option')).toHaveText(['One', 'One point five', 'Two']);
+  await expect(picker.getByRole('option', { selected: true })).toHaveText('One');
+  await page.keyboard.press('j');
+  await page.keyboard.press('j');
+  await page.keyboard.press('Enter');
+  await expect(picker).toHaveCount(0);
+  await page.keyboard.type('X');
+  await expect(source).toContainText('X## Two');
+  await page.keyboard.press('ControlOrMeta+z');
+  // ⌥G again closes it.
+  await page.keyboard.press('Alt+g');
+  await expect(picker).toBeVisible();
+  await page.keyboard.press('Alt+g');
+  await expect(picker).toHaveCount(0);
+
+  // ⌥Z hides the threads until it's pressed again.
+  const margin = page.getByRole('complementary', { name: 'Threads' }).first();
+  await expect(margin).toContainText('punchier?');
+  await page.keyboard.press('Alt+z');
+  await expect(margin).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /hidden/ })).toBeVisible();
+  await page.keyboard.press('Alt+z');
+  await expect(margin).toContainText('punchier?');
+
+  // ⌥⇧N sends /notes to the page thread.
+  await page.keyboard.press('Alt+Shift+n');
+  await expect(page.getByRole('complementary', { name: 'Page thread' })).toContainText('/notes');
+  expect(await readFile(postPath('first'), 'utf8')).not.toMatch(/[©Ω˜ˆ∆˚]/);
+});

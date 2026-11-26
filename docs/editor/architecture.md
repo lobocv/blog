@@ -21,7 +21,7 @@ editor/
                      server for the UI (which proxies /api/). No logic
   protocol.ts        browser <-> server message types (zod), used by both sides
   domain/            pure TypeScript. No I/O, runs in Node and the browser
-    document.ts        text, edits, word count and reading time
+    document.ts        text, headings, word count and reading time
     post.ts            drafts, titles and valid slugs
     anchor.ts          pins a thread to quoted text plus a line hint, re-finds it after edits
     thread.ts          threads, replies, open and resolved
@@ -50,7 +50,8 @@ editor/
     main.tsx           `/` is the drafts page, `/?post=<slug>` edits a post
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
     thread-state.ts    the open post's threads and notes, selection and composer, as signals
-    components/        Composer, ThreadCard, Margin, PageThread, StatusLine
+    components/        Composer, ThreadCard, Margin, PageThread, StatusLine, KeySheet,
+                       SectionPicker
     views/             DraftsView, EditorView, PreviewView (iframe plus anchors),
                        SourceView (CodeMirror)
 shared/              code the blog build and the editor both use, moved here when

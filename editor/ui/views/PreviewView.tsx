@@ -98,7 +98,7 @@ export function PreviewView({ slug, text, threads, suggestions, handle, hidden, 
       ) : (
         <p class="preview-note">Starting the preview</p>
       )}
-      {!hidden && origin && (
+      {!hidden && origin && !threads.hidden.value && (
         <Margin
           state={threads}
           text={text}

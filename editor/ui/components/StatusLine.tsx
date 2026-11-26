@@ -9,6 +9,8 @@ type Props = {
   onView: (view: View) => void;
   stats: Stats;
   threads?: { open: number; resolved: number };
+  /** Threads are hidden (Z). */
+  threadsHidden?: boolean;
   onPage?: () => void;
   /** Claude is replying; ⌃C stops it. */
   claude?: boolean;
@@ -18,7 +20,7 @@ type Props = {
   onDrafts: () => void;
 };
 
-export function StatusLine({ view, onView, stats, threads, onPage, claude, onStop, onKeys, save, onDrafts }: Props) {
+export function StatusLine({ view, onView, stats, threads, threadsHidden, onPage, claude, onStop, onKeys, save, onDrafts }: Props) {
   const tab = (name: View, label: string) => (
     <button type="button" class={`status-view${view === name ? ' on' : ''}`} aria-pressed={view === name} onClick={() => onView(name)} title={`${label} (⌘\\)`}>
       {label}
@@ -52,6 +54,7 @@ export function StatusLine({ view, onView, stats, threads, onPage, claude, onSto
             )}
             {threads.resolved > 0 && <span>{threads.resolved} resolved</span>}
             {threads.open + threads.resolved === 0 && <span>No threads</span>}
+            {threadsHidden && <span>hidden</span>}
           </button>
         )}
         {onKeys && (

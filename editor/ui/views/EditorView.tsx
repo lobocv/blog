@@ -1,7 +1,7 @@
 import { computed, signal } from '@preact/signals';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
 import { anchorAt, anchorNear, lineOf } from '../../domain/anchor.ts';
-import { stats } from '../../domain/document.ts';
+import { type Section, sections, stats } from '../../domain/document.ts';
 import { merge } from '../../domain/merge.ts';
 import { openMechanical, openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
 import { PostEvent, type Post, routes } from '../../protocol.ts';
@@ -14,13 +14,14 @@ import type { SuggestionActions } from '../components/SuggestionView.tsx';
 import { describeKey } from '../keymap.ts';
 import { createThreadState } from '../thread-state.ts';
 import { KeySheet } from '../components/KeySheet.tsx';
+import { SectionPicker } from '../components/SectionPicker.tsx';
 import { type PreviewHandle, PreviewView } from './PreviewView.tsx';
 import { type SourceHandle, SourceView } from './SourceView.tsx';
 import type { Mark } from './thread-marks.ts';
 
 /** One post: Source or Preview, the thread margin and the status line. */
 export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => void }) {
-  const { text, postStats, autosave, view, threads, layout, marks, clash, sheetOpen, lastKey } = useMemo(() => {
+  const { text, postStats, autosave, view, threads, layout, marks, clash, sheetOpen, lastKey, picking } = useMemo(() => {
     const text = signal(post.text);
     const threads = createThreadState(post.slug, text);
     return {
@@ -31,12 +32,15 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       // The file's text after an outside edit that clashed with Calvin's typing, until he chooses.
       clash: signal<string | undefined>(undefined),
       sheetOpen: signal(false),
+      // The section picker's highlighted row (G), while it's open.
+      picking: signal<number | undefined>(undefined),
       // Shown on the sheet, to tell when the system takes a key before the editor sees it.
       lastKey: signal<string | undefined>(undefined),
       view: signal<View>('source'),
       // Bumped when lines move in the source, so the margin follows.
       layout: signal(0),
       marks: computed<Mark[]>(() => {
+        if (threads.hidden.value) return [];
         const out: Mark[] = threads.items.value.map((i) => ({
           from: i.range.from,
           to: i.range.to,
@@ -93,10 +97,24 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
   // Highlight the blocks with threads in the preview.
   useEffect(() => {
     const t = text.peek();
+    if (threads.hidden.value) return void preview.current?.mark([]);
     const lines = threads.items.value.map((i) => lineOf(t, i.range.from));
     const sel = threads.items.value.find((i) => i.id === threads.selected.value);
     preview.current?.mark(lines, sel && lineOf(t, sel.range.from));
-  }, [threads.items.value, threads.selected.value]);
+  }, [threads.items.value, threads.selected.value, threads.hidden.value]);
+
+  // G: open on the section at the top of the view.
+  const openSections = () => {
+    const top = (view.value === 'source' ? source.current?.topLine() : preview.current?.topLine()) ?? 1;
+    const list = sections(text.value);
+    picking.value = Math.max(0, list.findLastIndex((s) => s.line <= top));
+  };
+  const goTo = (s: Section) => {
+    picking.value = undefined;
+    if (view.value === 'source') source.current?.scrollTo(s.line);
+    else preview.current?.scrollTo(s.line);
+    backToWriting();
+  };
 
   const suggestions: SuggestionActions = {
     applies: (s) => Boolean(target(text.value, s)),
@@ -180,6 +198,16 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           backToWriting();
         });
       const composing = threads.composing.value;
+      // The section picker takes J/K, the arrows and ↵ while it's open, with or without ⌥.
+      const plain = (only('none') || only('alt')) && !e.shiftKey;
+      if (picking.value !== undefined && plain) {
+        const list = sections(text.value);
+        const at = picking.value;
+        if (e.code === 'KeyJ' || e.code === 'ArrowDown') return act(() => (picking.value = Math.min(list.length - 1, at + 1)));
+        if (e.code === 'KeyK' || e.code === 'ArrowUp') return act(() => (picking.value = Math.max(0, at - 1)));
+        if (e.code === 'Enter') return act(() => (list[at] ? goTo(list[at]) : close(() => (picking.value = undefined))));
+        if (e.code === 'Escape' || e.code === 'KeyG') return close(() => (picking.value = undefined));
+      }
 
       if (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'KeyC' && threads.working.value) {
         act(() => void threads.stopClaude());
@@ -206,8 +234,11 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           threads.selected.value = undefined;
           backToWriting();
         });
-      } else if (threadKey && (e.code === 'KeyJ' || e.code === 'KeyK')) {
+      } else if (threadKey && e.code === 'KeyG') act(openSections);
+      else if (threadKey && e.code === 'KeyZ') act(() => (threads.hidden.value = !threads.hidden.value));
+      else if (threadKey && (e.code === 'KeyJ' || e.code === 'KeyK')) {
         act(() => {
+          threads.hidden.value = false;
           const item = threads.move(e.code === 'KeyJ' ? 1 : -1);
           if (!item) return;
           if (view.value === 'source') source.current?.reveal(item.range.from);
@@ -228,6 +259,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         });
       } else if (shiftKey && e.code === 'KeyC') act(() => void threads.askPage('/critique line'));
       else if (shiftKey && e.code === 'KeyA') act(() => void acceptMechanical());
+      else if (shiftKey && e.code === 'KeyN') act(() => void threads.askPage('/notes'));
       else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
       else if (threadKey && e.code === 'KeyD') act(() => void threads.resolveSelected());
     };
@@ -256,7 +288,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
             }}
           />
         </div>
-        {view.value === 'source' && (
+        {view.value === 'source' && !threads.hidden.value && (
           <Margin
             state={threads}
             text={text.value}
@@ -297,12 +329,16 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           </button>
         </div>
       )}
+      {picking.value !== undefined && (
+        <SectionPicker sections={sections(text.value)} at={picking.value} onGo={goTo} onClose={() => (picking.value = undefined)} />
+      )}
       {sheetOpen.value && <KeySheet lastKey={lastKey.value} onClose={() => (sheetOpen.value = false)} />}
       <StatusLine
         view={view.value}
         onView={show}
         stats={postStats.value}
         threads={threads.tally.value}
+        threadsHidden={threads.hidden.value}
         claude={Boolean(threads.working.value)}
         onStop={() => void threads.stopClaude()}
         onKeys={() => (sheetOpen.value = !sheetOpen.value)}

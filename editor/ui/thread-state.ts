@@ -31,6 +31,8 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
   const selected = signal<string | undefined>(undefined);
   const composing = signal<Composing | undefined>(undefined);
   const pageOpen = signal(false);
+  // Z hides the margin and the highlights, to read the post on its own.
+  const hidden = signal(false);
   const error = signal<string | undefined>(undefined);
   const working = signal<Working | undefined>(undefined);
 
@@ -76,6 +78,7 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
     selected,
     composing,
     pageOpen,
+    hidden,
     error,
     working,
 

@@ -14,7 +14,8 @@ replies and suggested edits in the margin. Everything follows
 - Preview view (the real `astro dev` in an iframe), swapped with ⌘\, keeping
   the scroll position on the same block
 - Threads in the margin of both views: comment on a selection (⌘K), reply,
-  resolve, move between them (J/K). The page thread for general comments (P). The shortcut sheet (⌘/)
+  resolve, move between them (J/K). The page thread for general comments (/).
+  The shortcut sheet (H)
 - `@@` notes in the post show as threads
 - Claude replies in threads and proposes edits with `suggest_edit`. Accept,
   reject or tweak each one (A/X/T)
@@ -23,9 +24,9 @@ replies and suggested edits in the margin. Everything follows
 
 ## Later
 
-- Critique progress in the page thread (`review.ts`), and accept all mechanical
-  fixes (⇧A) (done: ⇧C starts a line critique)
-- Go to section (G), action all notes (⇧N), hide threads (Z)
+- Done after v1: critiques from the editor with progress in the page thread
+  (⇧C), accept all mechanical fixes (⇧A), go to section (G), action all notes
+  (⇧N), hide threads (Z)
 - Images and figure components as thread targets (v1 anchors to text only)
 - Anything for project pages
 

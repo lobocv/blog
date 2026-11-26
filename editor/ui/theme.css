@@ -175,3 +175,9 @@ button.status-claude .k { margin-left: 8px; }
 .sheet-last { margin: 0; font-size: 12.5px; color: var(--ink-3); }
 button.status-keys { all: unset; cursor: pointer; }
 button.status-keys:hover, button.status-keys:focus-visible { color: var(--ink); }
+
+/* Go to section (G) */
+.sections { max-width: 520px; gap: 2px; padding: 12px; outline: none; }
+.section-row { all: unset; cursor: pointer; padding: 7px 12px; border-radius: 7px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.section-row:hover { color: var(--ink); }
+.section-row[aria-selected="true"] { background: #262b32; color: var(--ink); }
