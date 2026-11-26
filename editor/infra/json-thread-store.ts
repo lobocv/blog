@@ -1,5 +1,5 @@
-// Threads and the post's Claude session as writing/threads/<slug>.json: pretty printed, so diffs
-// in git are readable.
+// Threads and the post's Claude session as writing/threads/<slug>.json: pretty printed, so they
+// are easy to read by hand. The folder is gitignored.
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { ThreadStore } from '../app/ports.ts';

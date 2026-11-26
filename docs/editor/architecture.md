@@ -147,7 +147,8 @@ e2e/
   post (later messages wait their turn). Each turn resumes the post's session
   (`--resume`), names the thread and quotes its words. The reply streams into
   the thread and is saved when it finishes. ⌃C stops it and keeps what it wrote
-- Threads live in `writing/threads/<slug>.json`, anchored by quoted text plus
+- Threads live in `writing/threads/<slug>.json` (gitignored, so they stay on
+  one machine), anchored by quoted text plus
   a line hint. If the quoted text disappears, the thread moves to the page
   thread, marked as having lost its place. `@@` notes stay in the post and show
   as threads
