@@ -3,14 +3,16 @@ import '../styles/journey.css';
 import Base from '../layouts/Base.astro';
 import { TIMELINE } from '../data/timeline';
 import { attachSideItems, validateTimeline, inlineLinks } from '../lib/timeline';
+import { getEntry, render } from 'astro:content';
 
 const errs = validateTimeline(TIMELINE);
 if (errs.length) throw new Error(`src/data/timeline.ts:\n  ${errs.join('\n  ')}`);
 const { chapters } = TIMELINE;
 const side = attachSideItems(chapters, TIMELINE.side);
+const { Content: About } = await render((await getEntry('pages', 'about'))!);
 const sideLabel = { renovation: 'Renovation', hobby: 'Hobby', project: 'Project' };
 ---
-<Base title="Journey · lobocv" description="Calvin Lobo's path from physics to staff software engineer." page="journey">
+<Base title="Journey · lobocv" description="Calvin Lobo's path from physics to software architecture." page="journey">
   {TIMELINE.draft && <meta slot="head" name="robots" content="noindex">}
   <div class="jr-stage" id="jr-stage" aria-hidden="true">
     <svg id="jr-svg" viewBox="0 0 1600 400" preserveAspectRatio="xMidYMax slice"></svg>
@@ -20,7 +22,8 @@ const sideLabel = { renovation: 'Renovation', hobby: 'Hobby', project: 'Project'
     <header class="jr-intro">
       <div class="eyebrow">Journey</div>
       <h1>Calvin Lobo</h1>
-      <p class="meta">Staff Software Engineer</p>
+      <p class="meta">Software engineer and architect</p>
+      <div class="jr-about"><About /></div>
     </header>
     {chapters.map((c, i) => (
       <div class="jr-row" data-i={i} data-scene={c.scene} data-age={c.age}>

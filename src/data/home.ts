@@ -14,6 +14,5 @@ export const philosophy = {
 
 export const about = {
   heading: 'About me',
-  // PLACEHOLDER: a short paragraph about who Calvin is and what he works on
-  text: 'Backend engineer focused on software architecture, scalability and developer efficiency. Outside of work: electric guitar, home renovation and time outdoors.',
+  text: 'Software engineer and architect. I think about how systems fit together, how teams work together and what is worth building. Outside of work I enjoy spending time with my three boys, wood carving, playing electric guitar, and a whole other list of hobbies I don\'t have time for.',
 };

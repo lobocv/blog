@@ -51,12 +51,12 @@ const topics = categoryCounts(posts);
       </section>
 
       <section class="about-me" aria-labelledby="about-h">
-        <img src="/img/logo.jpg" alt="Calvin Lobo" width="132" height="132">
+        <img src="/img/profile.jpg" alt="Calvin Lobo" width="132" height="132">
         <div>
           <div class="eyebrow">{about.heading}</div>
           <h2 id="about-h">Calvin Lobo</h2>
           <p>{about.text}</p>
-          <div class="links-row"><a href="/about/">More about me →</a>{social.map(s => <a href={s.href} rel="me">{s.name}</a>)}</div>
+          <div class="links-row"><a href="/journey/">My journey →</a>{social.map(s => <a href={s.href} rel="me">{s.name}</a>)}</div>
         </div>
       </section>
 

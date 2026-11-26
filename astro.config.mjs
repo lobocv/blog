@@ -21,7 +21,8 @@ export default defineConfig({
   site: 'https://www.lobocv.com',
   build: { format: 'directory' },
   integrations: [mdx(), sitemap({ filter: page => publishedProjects.length > 0 || !page.includes('/projects/') })],
-  redirects: legacyRedirects('src/content/posts'),
+  // /about/ was folded into the journey page
+  redirects: { ...legacyRedirects('src/content/posts'), '/about': '/journey/' },
   markdown: {
     processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex, rehypeHeadingIds, rehypeHeadingAnchors, rehypeCaptions] }),
     shikiConfig,

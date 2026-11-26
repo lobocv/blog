@@ -11,7 +11,6 @@ const links = [
   ...(hasProjects ? [{ href: '/projects/', label: 'Projects', on: page === 'projects' || page === 'project' }] : []),
   // Journey stays out of the nav in production until Calvin publishes it
   ...(!(import.meta.env.PROD && TIMELINE.draft) ? [{ href: '/journey/', label: 'Journey', on: page === 'journey' }] : []),
-  { href: '/about/', label: 'About', on: page === 'about' },
 ];
 ---
 <nav class="nav">
