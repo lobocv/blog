@@ -12,6 +12,7 @@ matches the task before starting, and both when a task spans two.
 |---|---|
 | Posts, briefs, ideas, and the writing skills (`/scope`, `/notes`, `/critique`, `/ship`, ...) | `docs/writing.md` |
 | Project pages (`src/content/projects/`) | `docs/writing.md`, "Project pages" |
+| Anything in Calvin's voice: posts, project pages, home and journey copy, bios | `docs/voice.md` |
 | Figures and diagrams, for posts or project pages | `docs/figures.md` |
 | The Astro site: `src/` outside content, `astro.config.mjs`, `scripts/` | `docs/site.md` |
 | The writing editor: `editor/`, `shared/` | `docs/editor/architecture.md` |

@@ -243,7 +243,7 @@ separate from the blog. Design:
 `docs/superpowers/specs/2026-11-20-projects-section-design.md`.
 
 The one rule above is for posts. Project pages are different: Claude writes
-them, in Calvin's voice, and Calvin reviews them. Over time, match the tone of
+them, in Calvin's voice (`docs/voice.md`), and Calvin reviews them. Over time, match the tone of
 his published posts more closely.
 
 - Source material is the WorkJournal archive in `writing/work-journal/` (a
