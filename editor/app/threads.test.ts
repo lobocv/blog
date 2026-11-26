@@ -29,7 +29,7 @@ describe('thread use cases', () => {
   it('adds comments without an anchor to the page thread', async () => {
     const { add } = setup();
     await add('a', { text: 'overall?' });
-    const threads = await add('a', { text: 'and the ending?' });
+    const { threads } = await add('a', { text: 'and the ending?' });
     expect(threads.map((t) => [t.id, t.messages.length])).toEqual([[PAGE, 2]]);
   });
 

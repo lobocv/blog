@@ -7,6 +7,8 @@ export const routes = {
   post: (slug: string) => `/api/posts/${encodeURIComponent(slug)}`,
   preview: '/api/preview',
   threads: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/threads`,
+  events: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/events`,
+  stop: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/stop`,
   thread: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/threads/${encodeURIComponent(id)}`,
 } as const;
 
@@ -39,6 +41,15 @@ const Thread = z.object({
 /** GET .../threads, and the reply to every change: all the post's threads */
 export const Threads = z.object({ threads: z.array(Thread) });
 export type Threads = z.infer<typeof Threads>;
+
+/** GET /api/posts/:slug/events streams these. POST /api/posts/:slug/stop stops Claude. */
+export const ClaudeEvent = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('threads'), threads: z.array(Thread) }),
+  z.object({ type: z.literal('working'), threadId: z.string(), text: z.string(), tool: z.string().optional() }),
+  z.object({ type: z.literal('idle') }),
+  z.object({ type: z.literal('failed'), threadId: z.string(), message: z.string() }),
+]);
+export type ClaudeEvent = z.infer<typeof ClaudeEvent>;
 
 /** POST .../threads. No anchor means the page thread */
 export const NewComment = z.object({ anchor: Anchor.optional(), text: z.string().min(1) });

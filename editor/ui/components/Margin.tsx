@@ -68,6 +68,7 @@ export function Margin({ state, text, topOf, layout, keyPrefix, class: extra, on
                 selected={state.selected.value === item.id}
                 keyPrefix={keyPrefix}
                 replying={composing?.kind === 'reply' && composing.id === item.id}
+                working={state.working.value?.threadId === item.id ? state.working.value : undefined}
                 onSelect={() => (state.selected.value = item.id)}
                 onReply={() => state.replyToSelected()}
                 onResolve={() => void state.resolveSelected()}

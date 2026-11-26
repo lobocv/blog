@@ -1,11 +1,13 @@
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
+import type { Conversation, ConversationEvent } from '../app/conversation.ts';
 import { NotFound, Refused } from '../app/errors.ts';
 import type { deleteDraft } from '../app/delete-draft.ts';
 import type { listDrafts } from '../app/list-drafts.ts';
 import type { openPost } from '../app/open-post.ts';
 import type { savePost } from '../app/save-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Threads } from '../protocol.ts';
+import { ClaudeEvent, Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Threads } from '../protocol.ts';
 
 export type UseCases = {
   listDrafts: ReturnType<typeof listDrafts>;
@@ -16,6 +18,8 @@ export type UseCases = {
   addComment: ReturnType<typeof addComment>;
   replyToThread: ReturnType<typeof replyToThread>;
   resolveThread: ReturnType<typeof resolveThread>;
+  /** Claude's replies. Every comment and reply Calvin sends is passed on to Claude. */
+  conversation: Pick<Conversation, 'ask' | 'stop' | 'subscribe'>;
   /** Waits for `astro dev` to answer. */
   previewOrigin: () => Promise<string>;
 };
@@ -50,17 +54,49 @@ export function createApi(uc: UseCases) {
   api.post('/api/posts/:slug/threads', async (c) => {
     const body = NewComment.safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: 'expected { anchor?: { quote, line }, text }' }, 400);
-    return c.json(threads(await uc.addComment(c.req.param('slug'), body.data)));
+    const slug = c.req.param('slug');
+    const added = await uc.addComment(slug, body.data);
+    void uc.conversation.ask(slug, added.id);
+    return c.json(threads(added.threads));
   });
 
   api.post('/api/posts/:slug/threads/:id/replies', async (c) => {
     const body = NewReply.safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: 'expected { text }' }, 400);
-    return c.json(threads(await uc.replyToThread(c.req.param('slug'), c.req.param('id'), body.data.text)));
+    const [slug, id] = [c.req.param('slug'), c.req.param('id')];
+    const list = await uc.replyToThread(slug, id, body.data.text);
+    void uc.conversation.ask(slug, id);
+    return c.json(threads(list));
   });
 
   api.post('/api/posts/:slug/threads/:id/resolve', async (c) =>
     c.json(threads(await uc.resolveThread(c.req.param('slug'), c.req.param('id')))),
+  );
+
+  api.post('/api/posts/:slug/stop', (c) => {
+    uc.conversation.stop(c.req.param('slug'));
+    return c.body(null, 204);
+  });
+
+  // Claude's side, as server-sent events: one `data:` line of ClaudeEvent JSON per event.
+  api.get('/api/posts/:slug/events', (c) =>
+    streamSSE(c, async (stream) => {
+      const queue: ConversationEvent[] = [];
+      let wake: (() => void) | undefined;
+      const unsubscribe = uc.conversation.subscribe(c.req.param('slug'), (e) => {
+        queue.push(e);
+        wake?.();
+      });
+      stream.onAbort(() => {
+        unsubscribe();
+        wake?.();
+      });
+      while (!stream.aborted) {
+        const e = queue.shift();
+        if (e) await stream.writeSSE({ data: JSON.stringify(ClaudeEvent.parse(e)) });
+        else await new Promise<void>((r) => (wake = r));
+      }
+    }),
   );
 
   api.get('/api/preview', async (c) => c.json(PreviewInfo.parse({ origin: await uc.previewOrigin() })));

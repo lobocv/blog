@@ -1,6 +1,7 @@
-import type { Message } from '../../domain/thread.ts';
+import { type Message, PAGE } from '../../domain/thread.ts';
 import type { ThreadState } from '../thread-state.ts';
 import { Composer } from './Composer.tsx';
+import { LiveReply } from './ThreadCard.tsx';
 
 const who = (m: Message) => (m.author === 'claude' ? 'claude' : 'you');
 
@@ -43,6 +44,7 @@ export function PageThread({ state, onClose }: { state: ThreadState; onClose: ()
           </div>
         ))}
         <Messages messages={state.page.value?.messages ?? []} />
+        {state.working.value?.threadId === PAGE && <LiveReply {...state.working.value} />}
       </div>
       {state.error.value && <p class="margin-error">{state.error.value}</p>}
       <div class="page-thread-compose">

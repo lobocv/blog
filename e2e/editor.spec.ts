@@ -24,8 +24,11 @@ test.beforeEach(async () => {
     const edited = new Date(2026, 10, day);
     await utimes(postPath(slug), edited, edited);
   }
-  // No Astro in this repo, so no preview.
-  editor = await startEditor(root, port, '--no-preview');
+  // No Astro in this repo, so no preview. Claude is a fake replaying a recorded reply, slowly
+  // enough to stop it part way.
+  process.env.FAKE_CLAUDE_STREAM = join(import.meta.dirname, '../editor/infra/testdata/reply.jsonl');
+  process.env.FAKE_CLAUDE_DELAY = '150';
+  editor = await startEditor(root, port, '--no-preview', '--claude', join(import.meta.dirname, '../editor/infra/testdata/fake-claude.mjs'));
 });
 
 test.afterEach(() => {
@@ -112,4 +115,32 @@ test('comments on a selection, replies, resolves, and shows @@ notes as threads'
   await page.getByLabel('Message about the whole page').press('Enter');
   await expect(page.getByRole('complementary', { name: 'Page thread' })).toContainText('is the ending clear?');
   expect(await readFile(postPath('first'), 'utf8')).not.toMatch(/[π∂∑®]/);
+});
+
+test('Claude replies in the thread as it writes, and ⌃C stops it', async ({ page }) => {
+  await page.goto(`${url}?post=first`);
+  const source = page.getByLabel('Post source');
+  await source.getByText('First line.').click();
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByLabel('Comment').fill('too plain?');
+  await page.getByLabel('Comment').press('Enter');
+
+  // The reply streams into the selected thread, then is saved with it.
+  const margin = page.getByRole('complementary', { name: 'Threads' }).first();
+  await expect(margin).toContainText('Two short sentences.');
+  await expect(page.getByText('Claude is replying')).toBeVisible();
+  await expect(margin).toContainText('Two short sentences. Nothing else.');
+  await expect(page.getByText('Claude is replying')).toHaveCount(0);
+  const stored = async () => JSON.parse(await readFile(join(root, 'writing/threads/first.json'), 'utf8').catch(() => '{"threads":[]}'));
+  await expect.poll(async () => (await stored()).threads[0]?.messages.at(-1)).toMatchObject({ author: 'claude', text: 'Two short sentences. Nothing else.' });
+  expect((await stored()).session).toBe('00000000-0000-4000-8000-000000000001');
+
+  // Ask again and stop part way: what Claude wrote is kept, marked as stopped.
+  await page.keyboard.press('Alt+r');
+  await page.getByLabel('Reply').fill('shorter?');
+  await page.getByLabel('Reply').press('Enter');
+  await expect(page.getByText('Claude is replying')).toBeVisible();
+  await expect(margin.locator('.claude-working')).toContainText('Two short sentences.');
+  await page.keyboard.press('Control+c');
+  await expect.poll(async () => (await stored()).threads[0]?.messages.at(-1)?.text).toMatch(/^Two short sentences\..* \(stopped\)$/);
 });

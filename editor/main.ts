@@ -7,12 +7,14 @@ import { parseArgs } from 'node:util';
 import { serve } from '@hono/node-server';
 import preact from '@preact/preset-vite';
 import { createServer } from 'vite';
+import { createConversation } from './app/conversation.ts';
 import { deleteDraft } from './app/delete-draft.ts';
 import { listDrafts } from './app/list-drafts.ts';
 import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
+import { ClaudeAgent } from './infra/claude-agent.ts';
 import { FsPostLibrary } from './infra/fs-post-library.ts';
 import { JsonThreadStore } from './infra/json-thread-store.ts';
 import { createApi } from './server/http.ts';
@@ -24,6 +26,8 @@ const { values: args } = parseArgs({
     open: { type: 'boolean', default: false },
     // --no-preview skips starting astro dev (eg for tests on a repo without Astro).
     preview: { type: 'boolean', default: true },
+    // The claude executable. Tests pass a fake that replays a recorded stream.
+    claude: { type: 'string', default: 'claude' },
     // The repo to edit. Tests point it at a temporary copy.
     root: { type: 'string', default: resolve(import.meta.dirname, '..') },
   },
@@ -45,6 +49,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 const library = new FsPostLibrary(root);
 const threads = new JsonThreadStore(root);
 const deps = { library, threads, clock: { now: () => new Date(), id: randomUUID } };
+const conversation = createConversation({ ...deps, agent: new ClaudeAgent(root, args.claude) });
 const api = createApi({
   listDrafts: listDrafts(library),
   openPost: openPost(library),
@@ -54,6 +59,7 @@ const api = createApi({
   replyToThread: replyToThread(deps),
   resolveThread: resolveThread(deps),
   deleteDraft: deleteDraft(library),
+  conversation,
   previewOrigin: () => preview?.origin() ?? Promise.reject(new Error('The preview is off (--no-preview).')),
 });
 

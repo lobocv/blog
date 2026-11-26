@@ -30,10 +30,30 @@ export interface ThreadStore {
   /** An empty list when the post has no threads yet. */
   load(slug: string): Promise<Thread[]>;
   save(slug: string, threads: Thread[]): Promise<void>;
+  /** The Claude session for the post, so each turn resumes the same conversation. */
+  session(slug: string): Promise<string | undefined>;
+  saveSession(slug: string, session: string): Promise<void>;
 }
 
 export interface Clock {
   now(): Date;
   /** A new unique id (eg for a thread). */
   id(): string;
+}
+
+/** What Claude is doing while it works on a reply. */
+export type AgentEvent = { type: 'text'; text: string } | { type: 'tool'; name: string };
+
+/** Claude, run once per turn. */
+export interface Agent {
+  /**
+   * Runs one turn and resolves with the final reply and the session to resume next time.
+   * `onEvent` gets the reply as it streams. Aborting `signal` stops Claude and resolves with
+   * `stopped: true` and whatever it had written.
+   */
+  ask(
+    turn: { prompt: string; session?: string },
+    onEvent: (e: AgentEvent) => void,
+    signal: AbortSignal,
+  ): Promise<{ text: string; session?: string; stopped: boolean }>;
 }

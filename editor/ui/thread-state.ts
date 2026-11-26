@@ -3,6 +3,7 @@
 import { computed, type ReadonlySignal, signal } from '@preact/signals';
 import { type Anchor, locate, type Range } from '../domain/anchor.ts';
 import { counts, type Message, notes, PAGE, type Thread } from '../domain/thread.ts';
+import type { ClaudeEvent } from '../protocol.ts';
 import * as defaultApi from './api.ts';
 
 /** One entry in the margin, in the order it appears in the post. */
@@ -11,7 +12,10 @@ export type Item = { id: string; kind: 'thread' | 'note'; range: Range; messages
 /** What the composer is for: a new comment on quoted text, a reply, or the page thread. */
 export type Composing = { kind: 'comment'; anchor: Anchor } | { kind: 'reply'; id: string } | { kind: 'page' };
 
-type Api = Pick<typeof defaultApi, 'loadThreads' | 'addComment' | 'replyToThread' | 'resolveThread'>;
+type Api = Pick<typeof defaultApi, 'loadThreads' | 'addComment' | 'replyToThread' | 'resolveThread' | 'stopClaude'>;
+
+/** Claude's reply in progress: the thread, the text so far, and the tool it's using. */
+export type Working = { threadId: string; text: string; tool?: string };
 
 export function createThreadState(slug: string, text: ReadonlySignal<string>, api: Api = defaultApi) {
   const threads = signal<Thread[]>([]);
@@ -19,6 +23,7 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
   const composing = signal<Composing | undefined>(undefined);
   const pageOpen = signal(false);
   const error = signal<string | undefined>(undefined);
+  const working = signal<Working | undefined>(undefined);
 
   const items = computed<Item[]>(() => {
     const t = text.value;
@@ -63,6 +68,21 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
     composing,
     pageOpen,
     error,
+    working,
+
+    /** Applies an event from the server's stream of Claude's work. */
+    apply(e: ClaudeEvent) {
+      if (e.type === 'threads') threads.value = e.threads;
+      else if (e.type === 'working') working.value = { threadId: e.threadId, text: e.text, tool: e.tool ?? working.value?.tool };
+      else if (e.type === 'idle') working.value = undefined;
+      else if (e.type === 'failed') {
+        working.value = undefined;
+        error.value = `Claude couldn't reply: ${e.message}`;
+      }
+    },
+
+    /** Stops Claude's reply (⌃C). What it wrote so far is kept. */
+    stopClaude: () => (working.value ? api.stopClaude(slug).catch(() => {}) : undefined),
 
     load: () => run(() => api.loadThreads(slug)),
 

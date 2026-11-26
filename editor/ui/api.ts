@@ -64,3 +64,7 @@ export async function replyToThread(slug: string, id: string, reply: NewReply) {
 export async function resolveThread(slug: string, id: string) {
   return threadsFrom(await postJson(`${routes.thread(slug, id)}/resolve`, {}), "Couldn't resolve the thread");
 }
+
+export async function stopClaude(slug: string) {
+  await fetch(routes.stop(slug), { method: 'POST' });
+}

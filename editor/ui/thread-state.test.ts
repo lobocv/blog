@@ -16,6 +16,7 @@ function fakeApi(initial: Thread[] = []) {
     replyToThread: async (_: string, id: string, r: { text: string }) =>
       (threads = reply(threads, id, { author: 'calvin', text: r.text, at })!),
     resolveThread: async (_: string, id: string) => (threads = resolve(threads, id)!),
+    stopClaude: async () => {},
   };
 }
 
@@ -78,6 +79,24 @@ describe('thread state', () => {
     await s.load();
     expect(s.lost.value.map((t) => t.id)).toEqual(['old']);
     expect(s.items.value.map((i) => i.kind)).toEqual(['note']);
+  });
+
+  it("follows Claude's reply as it streams, then takes the saved threads", () => {
+    const s = setup();
+    s.apply({ type: 'working', threadId: 't1', text: '', tool: 'Read' });
+    s.apply({ type: 'working', threadId: 't1', text: 'Because' });
+    expect(s.working.value).toEqual({ threadId: 't1', text: 'Because', tool: 'Read' });
+    const saved: Thread[] = [{ id: 't1', resolved: false, messages: [{ author: 'claude', text: 'Because.', at }] }];
+    s.apply({ type: 'threads', threads: saved });
+    s.apply({ type: 'idle' });
+    expect(s.working.value).toBeUndefined();
+    expect(s.threads.value).toEqual(saved);
+  });
+
+  it('says when Claude could not reply', () => {
+    const s = setup();
+    s.apply({ type: 'failed', threadId: 't1', message: 'claude not found' });
+    expect(s.error.value).toBe("Claude couldn't reply: claude not found");
   });
 
   it('keeps the composer open and shows why when sending fails', async () => {

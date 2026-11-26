@@ -30,6 +30,17 @@ export function threadStoreContract(name: string, make: () => Promise<ThreadStor
       expect(await store.load('a')).toEqual([]);
     });
 
+    it('keeps the session and the threads apart', async () => {
+      const store = await make();
+      expect(await store.session('a')).toBeUndefined();
+      await store.saveSession('a', 's1');
+      await store.save('a', [thread]);
+      expect(await store.session('a')).toBe('s1');
+      await store.saveSession('a', 's2');
+      expect(await store.load('a')).toEqual([thread]);
+      expect(await store.session('a')).toBe('s2');
+    });
+
     it("doesn't share objects with the caller", async () => {
       const store = await make();
       const saved = [structuredClone(thread)];

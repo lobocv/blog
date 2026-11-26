@@ -31,17 +31,20 @@ editor/
     ports.ts           PostLibrary, ThreadStore, Agent, Preview, Clock
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
     list-drafts.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
+    conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
     fs-post-library.ts     reads and writes posts, watches for outside edits, moves
                            deleted drafts to .trash/
-    json-thread-store.ts   writing/threads/<slug>.json
+    json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session
     claude-agent.ts        runs the claude CLI headless and parses its stream
+    testdata/              recorded claude streams and a fake claude that replays them
     mcp-tools.ts           the suggest_edit, reply and comment tools Claude calls
     astro-preview.ts       starts and stops astro dev
     contracts/             one shared test suite per port
   server/
-    http.ts            routes and a WebSocket. Turns messages into use-case calls
+    http.ts            routes, and server-sent events for Claude's replies. Turns
+                       requests into use-case calls
   ui/
     main.tsx           `/` is the drafts page, `/?post=<slug>` edits a post
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
@@ -67,7 +70,7 @@ e2e/
 | `domain` | The rules: anchoring, suggestions, threads, stats | `shared` only |
 | `app` | Use cases and port interfaces | `domain` |
 | `infra` | Adapters for files, Claude, Astro | `app` (ports), `domain`, Node APIs, libraries |
-| `server` | HTTP and WebSocket handlers | `app`, `protocol` |
+| `server` | HTTP handlers and the event stream | `app`, `protocol` |
 | `ui` | Browser code | `domain`, `protocol`, `shared` |
 | `protocol.ts` | Message types | `domain` |
 | `main.ts` | Wiring | Everything |
@@ -116,6 +119,10 @@ e2e/
   or tweaks. Accepting applies the edit like his own typing. This keeps the
   three edit levels from `docs/writing.md` in the tool itself and means his
   typing and Claude's edits never collide
+- Every comment and reply Calvin sends goes to Claude, one turn at a time per
+  post (later messages wait their turn). Each turn resumes the post's session
+  (`--resume`), names the thread and quotes its words. The reply streams into
+  the thread and is saved when it finishes. ⌃C stops it and keeps what it wrote
 - Threads live in `writing/threads/<slug>.json`, anchored by quoted text plus
   a line hint. If the quoted text disappears, the thread moves to the page
   thread, marked as having lost its place. `@@` notes stay in the post and show
@@ -175,7 +182,7 @@ split into projects: `blog`, `editor-node` and `editor-dom`.
 ## Stack
 
 - UI: Vite, Preact with signals, CodeMirror 6
-- Server: Hono on Node, `ws`, zod (why TypeScript: `docs/decisions/2026-11-25-write-the-editor-backend-in-typescript.md`)
+- Server: Hono on Node (server-sent events, since only the server pushes), zod (why TypeScript: `docs/decisions/2026-11-25-write-the-editor-backend-in-typescript.md`)
 - Tests: Vitest (with happy-dom and Testing Library), Playwright for the one
   end-to-end test
 - `make write` starts `astro dev` and the editor server and opens the editor in

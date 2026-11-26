@@ -3,7 +3,7 @@
 // like the real adapters.
 import type { PostFile } from '../../domain/post.ts';
 import type { Thread } from '../../domain/thread.ts';
-import type { Clock, PostLibrary, ThreadStore } from '../ports.ts';
+import type { Agent, AgentEvent, Clock, PostLibrary, ThreadStore } from '../ports.ts';
 
 export class MemoryPostLibrary implements PostLibrary {
   posts = new Map<string, PostFile>();
@@ -39,6 +39,15 @@ export class MemoryPostLibrary implements PostLibrary {
 
 export class MemoryThreadStore implements ThreadStore {
   threads = new Map<string, Thread[]>();
+  sessions = new Map<string, string>();
+
+  async session(slug: string) {
+    return this.sessions.get(slug);
+  }
+
+  async saveSession(slug: string, session: string) {
+    this.sessions.set(slug, session);
+  }
 
   async load(slug: string) {
     return structuredClone(this.threads.get(slug) ?? []);
@@ -60,5 +69,40 @@ export class FakeClock implements Clock {
 
   id() {
     return `t${++this.#ids}`;
+  }
+}
+
+/**
+ * Replies with the next scripted reply, streamed a word at a time. A reply of `wait` holds the
+ * turn open until `release()` is called (or the turn is stopped), to test queueing and stopping.
+ */
+export class FakeAgent implements Agent {
+  turns: { prompt: string; session?: string }[] = [];
+  #replies: string[];
+  #release: (() => void) | undefined;
+
+  constructor(replies: string[]) {
+    this.#replies = replies;
+  }
+
+  release() {
+    this.#release?.();
+  }
+
+  async ask(turn: { prompt: string; session?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+    this.turns.push(turn);
+    const reply = this.#replies.shift() ?? 'ok';
+    const session = `s${this.turns.length}`;
+    if (reply === 'wait') {
+      onEvent({ type: 'text', text: 'partial' });
+      const stopped = await new Promise<boolean>((done) => {
+        this.#release = () => done(false);
+        signal.addEventListener('abort', () => done(true));
+      });
+      return { text: stopped ? 'partial' : 'released', session, stopped };
+    }
+    let text = '';
+    for (const word of reply.split(' ')) onEvent({ type: 'text', text: (text += (text ? ' ' : '') + word) });
+    return { text: reply, session, stopped: false };
   }
 }

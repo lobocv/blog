@@ -10,11 +10,14 @@ type Props = {
   stats: Stats;
   threads?: { open: number; resolved: number };
   onPage?: () => void;
+  /** Claude is replying; ⌃C stops it. */
+  claude?: boolean;
+  onStop?: () => void;
   save: SaveState;
   onDrafts: () => void;
 };
 
-export function StatusLine({ view, onView, stats, threads, onPage, save, onDrafts }: Props) {
+export function StatusLine({ view, onView, stats, threads, onPage, claude, onStop, save, onDrafts }: Props) {
   const tab = (name: View, label: string) => (
     <button type="button" class={`status-view${view === name ? ' on' : ''}`} aria-pressed={view === name} onClick={() => onView(name)} title={`${label} (⌘\\)`}>
       {label}
@@ -31,6 +34,11 @@ export function StatusLine({ view, onView, stats, threads, onPage, save, onDraft
       </div>
       <div class="status-stats">
         {save === 'failed' && <span class="status-error">Not saved, retrying</span>}
+        {claude && (
+          <button type="button" class="status-claude" onClick={onStop} title="Stop Claude (⌃C)">
+            Claude is replying <kbd class="k">⌃C</kbd>
+          </button>
+        )}
         <span>{formatNumber(stats.words)} words</span>
         <span>{stats.minutes} min read</span>
         {threads && (
