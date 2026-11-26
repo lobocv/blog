@@ -12,6 +12,8 @@ let editor: ChildProcess;
 let root: string;
 
 const postPath = (slug: string) => join(root, 'src/content/posts', slug, 'index.md');
+/** The tool calls the fake claude makes on its next turn. */
+const tools = (calls: { name: string; arguments: object }[]) => writeFile(join(root, 'tools.json'), JSON.stringify(calls));
 
 test.beforeEach(async () => {
   // A throwaway repo with two drafts and a published post.
@@ -28,7 +30,7 @@ test.beforeEach(async () => {
   // enough to stop it part way.
   process.env.FAKE_CLAUDE_STREAM = join(import.meta.dirname, '../editor/infra/testdata/reply.jsonl');
   process.env.FAKE_CLAUDE_DELAY = '150';
-  process.env.FAKE_CLAUDE_SUGGEST = join(root, 'suggest.json');
+  process.env.FAKE_CLAUDE_TOOLS = join(root, 'tools.json');
   editor = await startEditor(root, port, '--no-preview', '--claude', join(import.meta.dirname, '../editor/infra/testdata/fake-claude.mjs'));
 });
 
@@ -148,7 +150,7 @@ test('Claude replies in the thread as it writes, and ⌃C stops it', async ({ pa
 
 test('Claude suggests an edit; tweaking and accepting it changes the text, and ⌘Z undoes it', async ({ page }) => {
   await writeFile(postPath('first'), '---\ntitle: First draft\ndraft: true\n---\nIt took incredible amounts of work.\n');
-  await writeFile(join(root, 'suggest.json'), JSON.stringify({ find: 'incredible amounts of', replace: 'a lot of', reason: 'Plainer.' }));
+  await tools([{ name: 'suggest_edit', arguments: { thread_id: '$thread', find: 'incredible amounts of', replace: 'a lot of', reason: 'Plainer.' } }]);
   await page.goto(`${url}?post=first`);
   const source = page.getByLabel('Post source');
   await source.getByText('It took').click();
@@ -206,4 +208,36 @@ test('reloads outside edits, merges them with unsaved typing, and asks when they
   await page.getByRole('button', { name: 'Keep mine' }).click();
   await expect.poll(() => readFile(postPath('first'), 'utf8')).toContain('Two. Typed. More.');
   await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('⇧C starts a critique that shows its progress, and ⇧A accepts every mechanical fix', async ({ page }) => {
+  await writeFile(postPath('first'), '---\ntitle: First draft\ndraft: true\n---\nTeh first line.\n\nThe second  line.\n');
+  const suggest = (find: string, replace: string) => ({
+    name: 'suggest_edit',
+    arguments: { thread_id: '$thread', find, replace, reason: 'Typo.', mechanical: true },
+  });
+  await tools([
+    { name: 'review_progress', arguments: { title: 'Line critique', done: 2, total: 5 } },
+    suggest('Teh', 'The'),
+    suggest('second  line', 'second line'),
+  ]);
+  await page.goto(`${url}?post=first`);
+  await expect(page.getByLabel('Post source')).toContainText('Teh first line.');
+
+  // In Source the key takes ⌥: ⌥⇧C sends "/critique line" to the page thread.
+  await page.getByLabel('Post source').click();
+  await page.keyboard.press('Alt+Shift+c');
+  const pageThread = page.getByRole('complementary', { name: 'Page thread' });
+  await expect(pageThread).toContainText('/critique line');
+  await expect(pageThread).toContainText('Line critique · 2 of 5');
+  await expect(pageThread.locator('.seg.done')).toHaveCount(2);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.page-summary')).toContainText('Line critique · 2 of 5');
+
+  // Each fix sits in the margin beside its words.
+  await expect(page.getByRole('complementary', { name: 'Threads' }).first().locator('.thread')).toHaveCount(2);
+  await page.keyboard.press('Alt+Shift+a');
+  await expect(page.getByLabel('Post source')).toContainText('The first line.');
+  await expect(page.getByLabel('Post source')).toContainText('The second line.');
+  await expect.poll(() => readFile(postPath('first'), 'utf8')).toContain('The first line.\n\nThe second line.');
 });

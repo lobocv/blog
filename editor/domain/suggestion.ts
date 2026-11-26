@@ -10,6 +10,8 @@ export type Suggestion = {
   replace: string;
   line: number;
   status: 'open' | 'accepted' | 'rejected';
+  /** Mechanical fixes (typos, spacing, punctuation) can all be accepted at once (⇧A). */
+  mechanical?: boolean;
 };
 
 /** Where the suggestion applies now. Undefined once the words it replaces have changed. */
@@ -18,13 +20,14 @@ export function target(text: string, s: Pick<Suggestion, 'find' | 'line'>): Rang
 }
 
 /**
- * Adds Claude's suggestion to a thread, as a message whose text is the reason. Fails with a
- * message Claude can act on when `find` isn't in the post.
+ * Adds Claude's suggestion to a thread, as a message whose text is the reason. A suggestion made
+ * from the page thread (eg during a critique) starts its own thread on the words it changes, so
+ * it shows beside them. Fails with a message Claude can act on when `find` isn't in the post.
  */
 export function suggest(
   threads: Thread[],
   text: string,
-  s: { threadId: string; id: string; find: string; replace: string; reason: string; at: string },
+  s: { threadId: string; id: string; find: string; replace: string; reason: string; at: string; mechanical?: boolean },
 ): { threads: Thread[] } | { error: string } {
   const thread = threads.find((t) => t.id === s.threadId);
   if (!thread) return { error: `There is no thread "${s.threadId}".` };
@@ -33,9 +36,20 @@ export function suggest(
   const near = thread.anchor?.line ?? 1;
   const at = locate(text, { quote: s.find, line: near });
   if (!at) return { error: '`find` is not in the post as it is now. Read the post again and copy the exact words.' };
-  const suggestion: Suggestion = { id: s.id, find: s.find, replace: s.replace, line: lineOf(text, at.from), status: 'open' };
-  const next = reply(threads, s.threadId, { author: 'claude', text: s.reason, at: s.at, suggestion });
-  return { threads: next! };
+  const suggestion: Suggestion = {
+    id: s.id,
+    find: s.find,
+    replace: s.replace,
+    line: lineOf(text, at.from),
+    status: 'open',
+    ...(s.mechanical ? { mechanical: true } : {}),
+  };
+  const message = { author: 'claude' as const, text: s.reason, at: s.at, suggestion };
+  if (!thread.anchor) {
+    const own: Thread = { id: `${s.id}-thread`, anchor: { quote: s.find, line: suggestion.line }, resolved: false, messages: [message] };
+    return { threads: [...threads, own] };
+  }
+  return { threads: reply(threads, s.threadId, message)! };
 }
 
 /**
@@ -69,4 +83,9 @@ function followEdit(quote: string, find: string, replace: string): string {
 /** The thread's latest suggestion still waiting on Calvin. */
 export function openSuggestion(thread: Pick<Thread, 'messages'>): Suggestion | undefined {
   return thread.messages.findLast((m) => m.suggestion?.status === 'open')?.suggestion;
+}
+
+/** Every mechanical fix still waiting on Calvin, across all threads. */
+export function openMechanical(threads: Thread[]): Suggestion[] {
+  return threads.flatMap((t) => t.messages.flatMap((m) => (m.suggestion?.status === 'open' && m.suggestion.mechanical ? [m.suggestion] : [])));
 }

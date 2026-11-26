@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
 import { anchorAt, anchorNear, lineOf } from '../../domain/anchor.ts';
 import { stats } from '../../domain/document.ts';
 import { merge } from '../../domain/merge.ts';
-import { openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
+import { openMechanical, openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
 import { PostEvent, type Post, routes } from '../../protocol.ts';
 import { savePost } from '../api.ts';
 import { createAutosave } from '../autosave.ts';
@@ -116,6 +116,13 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       backToWriting();
     },
   };
+  // ⇧A: every mechanical fix Claude suggested, applied one after another.
+  const acceptMechanical = async () => {
+    for (const s of openMechanical(threads.threads.value)) {
+      if (target(text.value, s)) await actions.current.accept(s);
+    }
+  };
+
   // Keys read this through a ref, since the handler is attached once.
   const actions = useRef(suggestions);
   actions.current = suggestions;
@@ -154,6 +161,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         e.altKey === (mod === 'alt') && e.metaKey === (mod === 'meta') && !e.ctrlKey;
       // In Source a thread key needs ⌥, since bare letters are typing. In Preview it's the letter alone.
       const threadKey = only(view.value === 'source' ? 'alt' : 'none') && !e.shiftKey;
+      const shiftKey = only(view.value === 'source' ? 'alt' : 'none') && e.shiftKey;
       const act = (fn: () => void) => {
         e.preventDefault();
         fn();
@@ -197,7 +205,9 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           else if (e.code === 'KeyA') void a.accept(s);
           else a.tweak(s);
         });
-      } else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
+      } else if (shiftKey && e.code === 'KeyC') act(() => void threads.askPage('/critique line'));
+      else if (shiftKey && e.code === 'KeyA') act(() => void acceptMechanical());
+      else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
       else if (threadKey && e.code === 'KeyD') act(() => void threads.resolveSelected());
     };
     window.addEventListener('blur', flush);

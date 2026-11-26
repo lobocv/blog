@@ -9,6 +9,9 @@ export const EDITOR_SYSTEM_PROMPT = [
   'short and plain, with no preamble. You cannot edit the post. To propose a change, call the',
   "suggest_edit tool with the thread's id, and keep the reply to a line or two since the",
   'suggestion shows in the thread. Calvin writes the prose; follow docs/writing.md.',
+  'When a skill (eg critique) says to edit the post, call suggest_edit for each change instead,',
+  'with mechanical: true for mechanical fixes (typos, spacing, punctuation, capitalisation).',
+  'While working through a checklist, call review_progress as each item is done.',
 ].join(' ');
 
 /** The message for one turn: where the thread is, what it quotes, and the conversation so far. */
@@ -21,5 +24,9 @@ export function threadPrompt(path: string, thread: Thread): string {
         : `Calvin wrote in thread ${thread.id} on ${path}.`;
   const lost = thread.lost ? '\nThe quoted words are no longer in the post.' : '';
   const talk = thread.messages.map((m) => `${m.author === 'claude' ? 'You' : 'Calvin'}: ${m.text}`).join('\n\n');
-  return `${where}${lost}\n\nRead the post if you need more context. Lines may have moved since.\n\n${talk}`;
+  // A message like "/critique line" asks for a skill, as it would in a terminal.
+  const latest = thread.messages.at(-1);
+  const command = latest?.author === 'calvin' ? /^\/([\w-]+)\s*(.*)$/s.exec(latest.text.trim()) : null;
+  const skill = command ? `\n\nCalvin's last message is a command: run the \`${command[1]}\` skill${command[2] ? ` with "${command[2]}"` : ''} on this post.` : '';
+  return `${where}${lost}\n\nRead the post if you need more context. Lines may have moved since.\n\n${talk}${skill}`;
 }

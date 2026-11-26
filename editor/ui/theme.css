@@ -147,3 +147,18 @@ button.status-claude .k { margin-left: 8px; }
 
 /* An outside edit that clashed with unsaved typing. */
 .notice { position: fixed; left: 50%; bottom: 48px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px; background: var(--raised); border: 1px solid #343a42; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.4); font: 400 13.5px/1.4 var(--ui); color: var(--ink); z-index: 20; }
+
+/* The page thread's summary at the top of the margin, and critique progress. */
+.page-summary { all: unset; box-sizing: border-box; position: absolute; top: 0; left: 36px; right: 0; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; font: 400 13px/1.3 var(--ui); color: var(--ink-2); cursor: pointer; background: var(--bg); z-index: 1; }
+.page-summary:hover, .page-summary:focus-visible { border-color: var(--ink-3); }
+.margin-float .page-summary { left: 0; pointer-events: auto; background: rgba(21, 24, 28, .92); }
+.page-summary-title { color: var(--ink); font-weight: 500; }
+.page-summary-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-thread-head { flex-direction: column; align-items: stretch; gap: 10px; }
+.page-thread-row { display: flex; align-items: center; gap: 10px; }
+.page-thread-review { flex: 1; color: var(--ink-3); }
+.page-thread-row .k { margin-left: auto; }
+.segments { display: flex; gap: 4px; }
+.seg { height: 4px; flex: 1; border-radius: 2px; background: var(--border); }
+.seg.done { background: var(--green); }
+.seg.now { background: var(--ink); }

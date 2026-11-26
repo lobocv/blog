@@ -36,6 +36,7 @@ const Suggestion = z.object({
   replace: z.string(),
   line: z.number().int().min(1),
   status: z.enum(['open', 'accepted', 'rejected']),
+  mechanical: z.boolean().optional(),
 });
 const Message = z.object({ author: z.enum(['calvin', 'claude']), text: z.string(), at: z.string(), suggestion: Suggestion.optional() });
 const Thread = z.object({
@@ -44,6 +45,7 @@ const Thread = z.object({
   resolved: z.boolean(),
   lost: z.boolean().optional(),
   messages: z.array(Message),
+  review: z.object({ title: z.string(), done: z.number(), total: z.number() }).optional(),
 });
 
 /** GET .../threads, and the reply to every change: all the post's threads */

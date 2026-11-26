@@ -2,6 +2,7 @@
 // share them and tests need no setup.
 import { NOTE } from '../../shared/notes.ts';
 import { type Anchor, lineOf, locate } from './anchor.ts';
+import type { Review } from './review.ts';
 import type { Suggestion } from './suggestion.ts';
 
 export type Author = 'calvin' | 'claude';
@@ -12,7 +13,15 @@ export type Message = { author: Author; text: string; at: string; suggestion?: S
  * A thread pinned to quoted text, or the page thread (no anchor) for comments on the whole post.
  * `lost` means the quoted words are gone; the thread then shows with the page thread.
  */
-export type Thread = { id: string; anchor?: Anchor; resolved: boolean; lost?: boolean; messages: Message[] };
+export type Thread = {
+  id: string;
+  anchor?: Anchor;
+  resolved: boolean;
+  lost?: boolean;
+  messages: Message[];
+  /** On the page thread: the progress of the latest critique. */
+  review?: Review;
+};
 
 /** An `@@` note in the post, shown as a thread. Notes live in the text, so they can't be replied to here. */
 export type Note = { id: string; anchor: Anchor; message: Message };

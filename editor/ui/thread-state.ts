@@ -139,6 +139,13 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
       return ok;
     },
 
+    /** Sends a message to the page thread without the composer (eg "/critique line" from ⇧C). */
+    async askPage(body: string) {
+      composing.value = { kind: 'page' };
+      pageOpen.value = true;
+      return this.send(body);
+    },
+
     /** Selects the next (1) or previous (-1) thread in the margin. Returns it. */
     move(by: 1 | -1): Item | undefined {
       const list = items.value;

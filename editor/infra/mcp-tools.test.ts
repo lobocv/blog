@@ -11,6 +11,10 @@ function setup(fail?: string) {
       if (fail) throw new Error(fail);
       return [] as Thread[];
     },
+    reportReview: async (slug, r) => {
+      calls.push([slug, r]);
+      return [] as Thread[];
+    },
     changed: (slug) => changed.push(slug),
   });
   const rpc = (body: object) => mcp('a', new Request('http://x/mcp/a', { method: 'POST', body: JSON.stringify(body) }));
@@ -26,7 +30,7 @@ describe('MCP tools', () => {
     const init = await (await rpc({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25' } })).json();
     expect(init.result).toMatchObject({ protocolVersion: '2025-11-25', capabilities: { tools: {} } });
     const list = await (await rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' })).json();
-    expect(list.result.tools.map((t: { name: string }) => t.name)).toEqual(['suggest_edit']);
+    expect(list.result.tools.map((t: { name: string }) => t.name)).toEqual(['suggest_edit', 'review_progress']);
   });
 
   it('answers a notification with 202 and no body', async () => {
@@ -37,8 +41,15 @@ describe('MCP tools', () => {
     const { rpc, calls, changed } = setup();
     const res = await (await rpc(call(args))).json();
     expect(res.result).toEqual({ content: [{ type: 'text', text: 'Suggested. Calvin will accept, tweak or reject it.' }], isError: false });
-    expect(calls).toEqual([['a', { threadId: 't1', find: 'incredible', replace: 'a lot', reason: 'Plainer.' }]]);
+    expect(calls).toEqual([['a', { threadId: 't1', find: 'incredible', replace: 'a lot', reason: 'Plainer.', mechanical: false }]]);
     expect(changed).toEqual(['a']);
+  });
+
+  it('passes on critique progress', async () => {
+    const { rpc, calls } = setup();
+    const res = await (await rpc({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'review_progress', arguments: { title: 'Line critique', done: 2, total: 7 } } })).json();
+    expect(res.result.isError).toBe(false);
+    expect(calls).toEqual([['a', { title: 'Line critique', done: 2, total: 7 }]]);
   });
 
   it('returns a refused suggestion as a tool error Claude can read', async () => {

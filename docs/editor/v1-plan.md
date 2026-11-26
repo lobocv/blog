@@ -24,7 +24,7 @@ replies and suggested edits in the margin. Everything follows
 ## Later
 
 - Critique progress in the page thread (`review.ts`), and accept all mechanical
-  fixes (⇧A)
+  fixes (⇧A) (done: ⇧C starts a line critique)
 - Go to section (G), action all notes (⇧N), hide threads (Z)
 - Images and figure components as thread targets (v1 anchors to text only)
 - Anything for project pages

@@ -16,7 +16,10 @@ async function postText(library: PostLibrary, slug: string) {
 /** From Claude. Refused (with a message Claude can act on) when the suggestion doesn't fit the post. */
 export const suggestEdit =
   ({ library, threads, clock }: Deps) =>
-  async (slug: string, s: { threadId: string; find: string; replace: string; reason: string }): Promise<Thread[]> => {
+  async (
+    slug: string,
+    s: { threadId: string; find: string; replace: string; reason: string; mechanical?: boolean },
+  ): Promise<Thread[]> => {
     const text = await postText(library, slug);
     const result = suggest(await threads.load(slug), text, { ...s, id: clock.id(), at: clock.now().toISOString() });
     if ('error' in result) throw new Refused(result.error);

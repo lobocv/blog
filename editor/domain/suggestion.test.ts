@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { openSuggestion, settle, suggest, target } from './suggestion.ts';
+import { openMechanical, openSuggestion, settle, suggest, target } from './suggestion.ts';
 import { comment, type Thread } from './thread.ts';
 
 const at = '2026-11-25T12:00:00.000Z';
@@ -16,6 +16,17 @@ describe('suggest', () => {
       at,
       suggestion: { id: 's1', find: 'incredible amounts of', replace: 'a lot of', line: 4, status: 'open' },
     });
+  });
+
+  it('gives a suggestion from the page thread its own thread on the words it changes', () => {
+    const page = comment([], { id: 'x', text: '/critique line', at });
+    const result = suggest(page, text, { ...base, threadId: 'page' });
+    expect('threads' in result && result.threads[1]).toMatchObject({
+      id: 's1-thread',
+      anchor: { quote: 'incredible amounts of', line: 4 },
+      messages: [{ author: 'claude', text: 'Plainer.', suggestion: { id: 's1' } }],
+    });
+    expect('threads' in result && result.threads[0].messages).toHaveLength(1);
   });
 
   it('uses the copy of the words nearest the thread', () => {
@@ -68,5 +79,13 @@ describe('settling', () => {
   it('finds where the suggestion applies, until the words change', () => {
     expect(target(text, { find: 'incredible amounts of', line: 4 })).toEqual({ from: 27, to: 48 });
     expect(target('It was work.', { find: 'incredible amounts of', line: 4 })).toBeUndefined();
+  });
+});
+
+describe('mechanical fixes', () => {
+  it('marks a suggestion mechanical, and lists the open ones', () => {
+    const list = (suggest(threads(), text, { ...base, mechanical: true }) as { threads: Thread[] }).threads;
+    expect(openMechanical(list).map((s) => s.id)).toEqual(['s1']);
+    expect(openMechanical(settle(list, 's1', 'accepted')!)).toEqual([]);
   });
 });

@@ -25,6 +25,8 @@ const GAP = 10;
 /** Threads beside the words they're about. Cards that would overlap are pushed down. */
 export function Margin({ state, text, topOf, layout, keyPrefix, suggestions, class: extra, onDone }: Props) {
   const list = useRef<HTMLDivElement>(null);
+  const summary = useRef<HTMLButtonElement>(null);
+  const page = state.page.value;
   const composing = state.composing.value;
   const draft = composing?.kind === 'comment' ? locate(text, composing.anchor) : undefined;
 
@@ -32,9 +34,9 @@ export function Margin({ state, text, topOf, layout, keyPrefix, suggestions, cla
   if (draft) entries.push({ key: 'new', top: topOf(draft.from), item: undefined as never });
   entries.sort((a, b) => a.top - b.top);
 
-  // Place cards after they're drawn, when their heights are known.
+  // Place cards after they're drawn, when their heights are known, below the page summary.
   useLayoutEffect(() => {
-    let bottom = -Infinity;
+    let bottom = summary.current ? summary.current.offsetHeight : -Infinity;
     for (const el of list.current?.children ?? []) {
       const card = el as HTMLElement;
       const top = Math.max(Number(card.dataset.top), bottom + GAP);
@@ -54,6 +56,15 @@ export function Margin({ state, text, topOf, layout, keyPrefix, suggestions, cla
 
   return (
     <aside class={`margin${extra ? ` ${extra}` : ''}`} aria-label="Threads" data-layout={layout}>
+      {page && (page.messages.length > 0 || page.review) && (
+        <button type="button" ref={summary} class="page-summary" onClick={() => (state.pageOpen.value = true)} title="Page thread (⌘`)">
+          <span class="page-summary-title">Page</span>
+          <span class="page-summary-text">
+            {page.review ? `${page.review.title} · ${page.review.done} of ${page.review.total}` : page.messages.at(-1)?.text}
+          </span>
+          <span class={`dot ${page.messages.at(-1)?.author === 'claude' || page.review ? 'dot-claude' : 'dot-calvin'}`} />
+        </button>
+      )}
       <div class="margin-list" ref={list}>
         {entries.map(({ key, top, item }) =>
           key === 'new' ? (

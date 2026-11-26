@@ -29,6 +29,11 @@ describe('threadPrompt', () => {
     expect(prompt).toMatch(/^Calvin wrote in the page thread/);
   });
 
+  it('turns a "/skill args" message into a request for the skill', () => {
+    const prompt = threadPrompt(path, { id: PAGE, resolved: false, messages: [{ author: 'calvin', text: '/critique line', at }] });
+    expect(prompt).toMatch(/run the `critique` skill with "line" on this post\.$/);
+  });
+
   it('says when the quoted words are gone', () => {
     const prompt = threadPrompt(path, { id: 't1', anchor: { quote: 'x', line: 1 }, lost: true, resolved: false, messages: [] });
     expect(prompt).toContain('no longer in the post');

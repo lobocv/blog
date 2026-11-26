@@ -12,6 +12,7 @@ import { deleteDraft } from './app/delete-draft.ts';
 import { listDrafts } from './app/list-drafts.ts';
 import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
+import { reportReview } from './app/review.ts';
 import { settleSuggestion, suggestEdit } from './app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
 import { watchPost } from './app/watch-post.ts';
@@ -57,7 +58,7 @@ const conversation = createConversation({
   agent: new ClaudeAgent(root, args.claude),
   toolsUrl: (slug) => `http://127.0.0.1:${apiPort}/mcp/${slug}`,
 });
-const mcp = createMcpHandler({ suggestEdit: suggestEdit(deps), changed: conversation.changed });
+const mcp = createMcpHandler({ suggestEdit: suggestEdit(deps), reportReview: reportReview(deps), changed: conversation.changed });
 const api = createApi({
   listDrafts: listDrafts(library),
   openPost: openPost(library),

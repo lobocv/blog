@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import type { Agent, AgentEvent } from '../app/ports.ts';
 import { EDITOR_SYSTEM_PROMPT } from '../domain/prompt.ts';
+import { TOOL_NAMES } from './mcp-tools.ts';
 
 /**
  * Turns stream-json lines into what the editor shows: the reply so far (the text of Claude's
@@ -86,7 +87,7 @@ export class ClaudeAgent implements Agent {
             JSON.stringify({ mcpServers: { editor: { type: 'http', url: turn.tools } } }),
             '--strict-mcp-config',
             '--allowedTools',
-            'mcp__editor__suggest_edit',
+            ...TOOL_NAMES,
           ]
         : []),
       ...(turn.session ? ['--resume', turn.session] : []),
