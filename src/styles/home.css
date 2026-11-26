@@ -40,6 +40,7 @@ html, body, .sheet { transition: none; }
 @keyframes fly { 0% { transform: translate(calc(-120 * var(--u)), calc(330 * var(--u))); } 50% { transform: translate(calc(800 * var(--u)), calc(290 * var(--u))); } 100% { transform: translate(calc(1760 * var(--u)), calc(315 * var(--u))); } }
 .copy { position: absolute; left: clamp(16px, 7vw, 120px); right: 16px; top: clamp(92px, 16vh, 180px); max-width: 560px; will-change: transform, opacity; }
 .kicker { line-height: 1.6; font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+.kicker span { white-space: nowrap; }
 h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(44px, 7vw, 88px); line-height: .98; letter-spacing: -.02em; }
 .sub { margin-top: 18px; font-size: clamp(16px, 1.5vw, 19px); line-height: 1.5; color: var(--ink-dim); max-width: 440px; }
 .ctas { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }

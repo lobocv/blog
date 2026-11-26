@@ -164,7 +164,7 @@ export function initHero() {
     layer(0.05, starG[2], { cls: 'tw', style: '--d:7s;--dl:-3s' });
     layer(0.05, `<line x1="0" y1="0" x2="-70" y2="-26" stroke="#eef2ff" stroke-width="1.4" stroke-linecap="round"/><circle r="1.6" fill="#ffffff"/>`, { cls: 'meteor' });
   }
-  // Stylized flat clouds, drifting slowly (day only)
+  // Stylized flat clouds, drifting slowly. At night they are dim, moonlit shapes just lighter than the sky
   const cloud = (x, y, s, dur, delay) => {
     // Flat base, a few arcs of different sizes across the top
     const tops = [[-60,-14,22],[-28,-30,30],[10,-36,34],[46,-22,24],[70,-10,14]];
@@ -173,9 +173,9 @@ export function initHero() {
       for (const [cx, cy, r] of tops) d += `L${(cx - r * .9) * s * k},${(cy * .4 + dy / s) * s}A${r * s * k},${r * s * k} 0 0 1 ${(cx + r * .9) * s * k},${(cy * .4 + dy / s) * s}`;
       return d + `L${84 * s * k},${dy}Q${88 * s * k},${dy + 4 * s} ${80 * s * k},${dy + 6 * s}L${-76 * s * k},${dy + 6 * s}Q${-86 * s * k},${dy + 4 * s} ${-80 * s * k},${dy}Z`;
     };
-    layer(0.07, `<g transform="translate(${x},${y})" opacity=".9"><path d="${shape(0, 1)}" fill="#dfeaf4"/><path d="${shape(-3 * s, .97)}" fill="#ffffff"/></g>`, { cls: 'cloud', style: `--dur:${dur}s;--dl:-${delay}s` });
+    layer(0.07, `<g transform="translate(${x},${y})" opacity="${DAY ? .9 : .8}"><path d="${shape(0, 1)}" fill="${DAY ? '#dfeaf4' : '#1a2548'}"/><path d="${shape(-3 * s, .97)}" fill="${DAY ? '#ffffff' : '#2a3866'}"/></g>`, { cls: 'cloud', style: `--dur:${dur}s;--dl:-${delay}s` });
   };
-  if (DAY) { cloud(860, 120, 1, 170, 20); cloud(1420, 270, .85, 210, 90); cloud(1050, 300, .55, 240, 150); cloud(700, 70, .6, 200, 60); }
+  cloud(860, 120, 1, 170, 20); cloud(1420, 270, .85, 210, 90); cloud(1050, 300, .55, 240, 150); cloud(700, 70, .6, 200, 60);
   // A small flock of birds crossing the far distance (day only)
   const bird = (x, y, s, beat, dl) => `<path transform="translate(${x},${y}) scale(${s})" fill="none" stroke="#2c3e52" stroke-width="1.3" stroke-linecap="round" d="M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2">
     <animate attributeName="d" dur="${beat}s" begin="${dl}s" repeatCount="indefinite" values="M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2;M-6,2.5 Q-3,0.5 0,0 Q3,0.5 6,2.5;M-6,-2 Q-3,-4 0,0 Q3,-4 6,-2"/></path>`;
