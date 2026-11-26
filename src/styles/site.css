@@ -1,30 +1,30 @@
 /* Shared styles for the blog mockups. Night is the default; day is set with data-time="day" on <html>. */
 :root {
-  --page: #070b14;
-  --sheet: #0b111e;
-  --raise: #111929;
-  --ink: #e8ecf4;
-  --ink-2: rgba(232, 236, 244, .74);
-  --ink-3: rgba(232, 236, 244, .5);
-  --line: rgba(232, 236, 244, .10);
-  --accent: #9fb6ff;
-  --accent-soft: rgba(159, 182, 255, .12);
+  --page: #090c12;
+  --sheet: #0d131c;
+  --raise: #141b26;
+  --ink: #eef2f8;
+  --ink-2: rgba(238, 242, 248, .86);
+  --ink-3: rgba(238, 242, 248, .6);
+  --line: rgba(234, 237, 243, .10);
+  --accent: #abc5f3;
+  --accent-soft: rgba(171, 197, 243, .12);
   /* figures keep a green accent at night (the site accent turns blue); used by src/styles/figure.css */
   --fig-accent: #8fd1a8;
   --fig-accent-soft: rgba(143, 209, 168, .12);
-  --nav-bg: rgba(7, 11, 20, .55);
-  --code-bg: #0a0f1b;
-  --code-line: rgba(232, 236, 244, .08);
+  --nav-bg: rgba(9, 12, 18, .55);
+  --code-bg: #0c1119;
+  --code-line: rgba(234, 237, 243, .08);
   --tok-kw: #c3a6ff; --tok-str: #a5d6a7; --tok-fn: #8fc8ff; --tok-type: #ffcf8a; --tok-com: #6b7896; --tok-num: #f2a7c3;
   /* inner-page horizon band */
-  --sky-1: #05070f; --sky-2: #1f2b55; --r1: #2b3866; --r2: #212c55; --r3: #18214a; --r4: var(--page); --orb: #f2f5ff;
-  --glow: #cfdcff; --crater: #dfe6f8; --star: #e8eeff; --mist: #8a9dd0; --tree: #111a33; --tree-lit: #26355f; --tree-edge: #070b16;
-  --soil: #0c0f18; --soil-2: #090c13; --path: #1a2136; --path-edge: #191f31; --path-near: #1c2439; --path-lt: #2a3350; --turf-n: #0a111f; --turf-n2: #080e1a; --stone: #1b2338; --stone-d: #121829; --stone-l: #283250; --grass1: #101a30; --grass2: #1c2c4a;
-  --jr-wolf-1: #050912; --jr-wolf-2: #0b1222; --jr-wolf-3: #1a2747; --jr-wolf-4: #2e4274; --jr-rim: #c9d6fa; --jr-muzzle: #8a97bd;
-  --jr-soil-1: #1d2539; --jr-soil-2: #161d30; --jr-soil-3: #111727; --jr-soil-4: #0c111d; --jr-pulse: #9fb6ff; --jr-target: #c9d6fa;
-  --jr-snow: #b9c4e6; --jr-snow-2: #7f8cb8; --jr-sky-ink: #dfe6ff; --jr-cloud: #8a9dd0; --jr-cloud-2: #55659a; --jr-wood: #3a2f3d; --jr-glow: #ffd27a;
-  --jr-gpr: #c49a22; --jr-gpr-lit: #e3bd45; --jr-frame: #04060b; --jr-tire: #0b0e16; --jr-rimlight: #6b7aa6;
-  --fol-sh: #070c16; --fol1: #0b1222; --fol1b: #111b30; --fol2: #18243f; --fol3: #22325a; --fol4: #2a3d6c; --side-fol: #9fb6ff; --side-op: .07; --topo: rgba(159, 182, 255, .05);
+  --sky-1: #06090e; --sky-2: #26354e; --r1: #32435f; --r2: #28364f; --r3: #1e2c44; --r4: var(--page); --orb: #f4f7fd;
+  --glow: #d5e2f9; --crater: #e2e9f5; --star: #ebf1fc; --mist: #93a6c7; --tree: #151f2f; --tree-lit: #2d3d58; --tree-edge: #090d14;
+  --soil: #0e1116; --soil-2: #0a0d12; --path: #1e2533; --path-edge: #1c232e; --path-near: #202835; --path-lt: #2f394b; --turf-n: #0d121c; --turf-n2: #0a0f18; --stone: #1f2734; --stone-d: #151b26; --stone-l: #2d384b; --grass1: #141d2c; --grass2: #222e44;
+  --jr-wolf-1: #070a10; --jr-wolf-2: #0e141f; --jr-wolf-3: #202c41; --jr-wolf-4: #374a6b; --jr-rim: #cfddf4; --jr-muzzle: #909eb7;
+  --jr-soil-1: #212836; --jr-soil-2: #19202d; --jr-soil-3: #141a24; --jr-soil-4: #0e131b; --jr-pulse: #abc5f3; --jr-target: #cfddf4;
+  --jr-snow: #bfcbe0; --jr-snow-2: #8696b1; --jr-sky-ink: #e3ecfb; --jr-cloud: #93a6c7; --jr-cloud-2: #5e7191; --jr-wood: #31353b; --jr-glow: #ffd27a;
+  --jr-gpr: #c49a22; --jr-gpr-lit: #e3bd45; --jr-frame: #05070a; --jr-tire: #0c0f15; --jr-rimlight: #72839f;
+  --fol-sh: #090d14; --fol1: #0e141f; --fol1b: #151d2c; --fol2: #1d283a; --fol3: #293853; --fol4: #324464; --side-fol: #abc5f3; --side-op: .07; --topo: rgba(171, 197, 243, .05);
   color-scheme: dark;
 }
 :root[data-time="day"] {
@@ -32,8 +32,8 @@
   --sheet: #f7f3ea;
   --raise: #fffdf8;
   --ink: #1d2320;
-  --ink-2: rgba(29, 35, 32, .76);
-  --ink-3: rgba(29, 35, 32, .52);
+  --ink-2: rgba(29, 35, 32, .88);
+  --ink-3: rgba(29, 35, 32, .62);
   --line: rgba(29, 35, 32, .12);
   --accent: #2d6a4c;
   --accent-soft: rgba(45, 106, 76, .10);

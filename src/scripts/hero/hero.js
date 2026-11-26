@@ -50,8 +50,20 @@ export function initHero() {
     // framing pines
     '#070c18': '#27402a', '#0c1626': '#3a5a34', '#0a0d14': '#33281e', '#10141d': '#4d3d2c'
   };
-  const K = c => (DAY && DAY_PALETTE[c]) || c;
-  const recolor = str => DAY ? str.replace(/#[0-9a-f]{6}\b/g, K) : str;
+  // Night keeps the authored colors' lightness but shifts them 7° away from violet and to 75% saturation,
+  // to match the night tokens in site.css
+  const NIGHT = {};
+  const toNight = c => NIGHT[c] || (NIGHT[c] = (() => {
+    let [r, g, b] = [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16) / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    if (!d) return c;
+    const s = (l > .5 ? d / (2 - mx - mn) : d / (mx + mn)) * .75;
+    const h = ((mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 - 7 + 360) % 360;
+    const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+    return '#' + [0, 8, 4].map(n => Math.round((l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))) * 255).toString(16).padStart(2, '0')).join('');
+  })());
+  const K = c => DAY ? (DAY_PALETTE[c] || c) : toNight(c);
+  const recolor = str => str.replace(/#[0-9a-f]{6}\b/g, K);
   const mix = (c1, c2, t) => {
     const p = c => c[0] === '#' ? [1,3,5].map(i => parseInt(c.slice(i, i+2), 16)) : c.slice(4, -1).split(',').map(Number);
     const a = p(K(c1)), b = p(K(c2));

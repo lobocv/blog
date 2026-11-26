@@ -1,9 +1,9 @@
 /* Home page: hero scene and the sheet that slides over it. Ported from prototypes/mockups/home.html. */
 .hero, .nav:not(.solid) {
-  --bg: #070b14;
+  --bg: #090c12;
   --ink: #eef1f7;
   --ink-dim: rgba(238,241,247,.62);
-  --accent: #9fb6ff;
+  --accent: #abc5f3;
   --line: rgba(238,241,247,.10);
 }
 :root[data-time="day"] .hero, :root[data-time="day"] .nav:not(.solid) { --bg: #2a2724; --ink: #ffffff; --ink-dim: rgba(255,255,255,.88); --accent: #fff0c2; --line: rgba(255,255,255,.18); }
@@ -14,7 +14,7 @@
 /* Hero */
 .hero { height: 170vh; position: relative; }
 .scene { position: sticky; top: 0; height: 100vh; overflow: hidden; }
-.scene { background: #0d1430; }
+.scene { background: #111b2c; }
 :root[data-time="day"] .scene { background: #6ea6dc; }
 #scene, .layer, .theme { position: absolute; inset: 0; }
 #scene { isolation: isolate; --u: 1px; }
