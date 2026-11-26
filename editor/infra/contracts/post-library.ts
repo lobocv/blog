@@ -30,6 +30,13 @@ export function postLibraryContract<L extends PostLibrary>(
       }
     });
 
+    it('writes a new post', async () => {
+      const lib = await make({ a: 'A' });
+      await lib.write('fresh', 'New');
+      expect((await lib.read('fresh'))?.text).toBe('New');
+      expect((await lib.list()).map((p) => p.slug)).toEqual(['a', 'fresh']);
+    });
+
     it('removes a post', async () => {
       const lib = await make({ a: 'A', b: 'B' });
       await lib.remove('a');

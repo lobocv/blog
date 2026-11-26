@@ -3,16 +3,22 @@ import { streamSSE } from 'hono/streaming';
 import type { Conversation } from '../app/conversation.ts';
 import { NotFound, Refused } from '../app/errors.ts';
 import type { deleteDraft } from '../app/delete-draft.ts';
+import type { createDraft } from '../app/create-draft.ts';
+import type { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import type { listPosts } from '../app/list-posts.ts';
 import type { openPost } from '../app/open-post.ts';
 import type { savePost } from '../app/save-post.ts';
 import type { settleSuggestion } from '../app/suggestions.ts';
 import type { watchPost } from '../app/watch-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
+import { CreatedDraft, Idea, Ideas, NewDraft, NewIdea, PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
 
 export type UseCases = {
   listPosts: ReturnType<typeof listPosts>;
+  createDraft: ReturnType<typeof createDraft>;
+  listIdeas: ReturnType<typeof listIdeas>;
+  addIdea: ReturnType<typeof addIdea>;
+  removeIdea: ReturnType<typeof removeIdea>;
   openPost: ReturnType<typeof openPost>;
   savePost: ReturnType<typeof savePost>;
   deleteDraft: ReturnType<typeof deleteDraft>;
@@ -36,6 +42,25 @@ export function createApi(uc: UseCases) {
   api.get('/api/posts', async (c) => {
     const posts = (await uc.listPosts()).map((p) => ({ ...p, modified: p.modified.toISOString() }));
     return c.json(PostList.parse({ posts }));
+  });
+
+  const ideas = (list: Ideas['ideas']) => Ideas.parse({ ideas: list });
+  api.get('/api/ideas', async (c) => c.json(ideas(await uc.listIdeas())));
+  api.post('/api/ideas', async (c) => {
+    const body = NewIdea.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text: string }' }, 400);
+    return c.json(ideas(await uc.addIdea(body.data.text)), 201);
+  });
+  api.delete('/api/ideas', async (c) => {
+    const body = Idea.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected an idea' }, 400);
+    return c.json(ideas(await uc.removeIdea(body.data)));
+  });
+
+  api.post('/api/posts', async (c) => {
+    const body = NewDraft.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { title: string }' }, 400);
+    return c.json(CreatedDraft.parse({ slug: await uc.createDraft(body.data.title) }), 201);
   });
 
   api.get('/api/posts/:slug', async (c) => c.json(Post.parse(await uc.openPost(c.req.param('slug')))));

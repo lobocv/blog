@@ -9,6 +9,8 @@ import preact from '@preact/preset-vite';
 import { createServer } from 'vite';
 import { createConversation } from './app/conversation.ts';
 import { deleteDraft } from './app/delete-draft.ts';
+import { createDraft } from './app/create-draft.ts';
+import { addIdea, listIdeas, removeIdea } from './app/ideas.ts';
 import { listPosts } from './app/list-posts.ts';
 import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
@@ -17,6 +19,7 @@ import { settleSuggestion, suggestEdit } from './app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
 import { watchPost } from './app/watch-post.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
+import { FsIdeasFile } from './infra/fs-ideas-file.ts';
 import { ClaudeAgent } from './infra/claude-agent.ts';
 import { FsPostLibrary } from './infra/fs-post-library.ts';
 import { JsonThreadStore } from './infra/json-thread-store.ts';
@@ -52,6 +55,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 const library = new FsPostLibrary(root);
 const threads = new JsonThreadStore(root);
+const ideasFile = new FsIdeasFile(root);
 const deps = { library, threads, clock: { now: () => new Date(), id: randomUUID } };
 const conversation = createConversation({
   ...deps,
@@ -61,6 +65,10 @@ const conversation = createConversation({
 const mcp = createMcpHandler({ suggestEdit: suggestEdit(deps), reportReview: reportReview(deps), changed: conversation.changed });
 const api = createApi({
   listPosts: listPosts(library),
+  createDraft: createDraft(library, deps.clock),
+  listIdeas: listIdeas(ideasFile),
+  addIdea: addIdea(ideasFile, deps.clock),
+  removeIdea: removeIdea(ideasFile),
   openPost: openPost(library),
   savePost: savePost(library, threads),
   listThreads: listThreads(deps),

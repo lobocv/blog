@@ -23,22 +23,24 @@ editor/
   domain/            pure TypeScript. No I/O, runs in Node and the browser
     document.ts        text, headings, word count and reading time
     front-matter.ts    the front matter as fields, written back in one format
-    post.ts            drafts, titles and valid slugs
+    post.ts            drafts, titles, valid slugs and new drafts
+    ideas.ts           the bullets in writing/ideas.md: list, add, remove
     anchor.ts          pins a thread to quoted text plus a line hint, re-finds it after edits
     figure.ts          what a thread on a figure points at: the component's file or the image
     thread.ts          threads, replies, open and resolved
     suggestion.ts      proposed edits: apply, tweak, keep in place as the text changes
     review.ts          critique checklist progress
   app/               use cases, one per file, and the ports they need
-    ports.ts           PostLibrary, ThreadStore, Agent, Preview, Clock
+    ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
-    list-posts.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
+    list-posts.ts, create-draft.ts, ideas.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
     fs-post-library.ts     reads and writes posts, watches for outside edits, moves
                            deleted drafts to .trash/
     json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session
+    fs-ideas-file.ts       writing/ideas.md, the same file /idea adds to
     claude-agent.ts        runs the claude CLI headless and parses its stream
     testdata/              recorded claude streams and a fake claude that replays them
     mcp-tools.ts           the suggest_edit tool Claude calls, as a small MCP server over
@@ -49,12 +51,13 @@ editor/
     http.ts            routes, and server-sent events for Claude's replies. Turns
                        requests into use-case calls
   ui/
-    main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post
+    main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post,
+                       `/?ideas` lists the ideas
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
     thread-state.ts    the open post's threads and notes, selection and composer, as signals
     components/        Composer, ThreadCard, Margin, PageThread, StatusLine, KeySheet,
                        SectionPicker, FrontMatterForm
-    views/             PostsView, EditorView, PreviewView (iframe plus anchors),
+    views/             PostsView, IdeasView, EditorView, PreviewView (iframe plus anchors),
                        SourceView (CodeMirror)
 shared/              code the blog build and the editor both use, moved here when
                      the editor first needs it

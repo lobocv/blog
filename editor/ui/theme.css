@@ -63,6 +63,11 @@ button.status-view:hover, button.status-view:focus-visible { color: var(--ink); 
 
 .drafts-title { margin: 24px 0 20px; font: 600 11px/1 var(--ui); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
 .drafts-title-later { margin-top: 40px; }
+.drafts-head { display: flex; align-items: center; justify-content: space-between; }
+.drafts-new { all: unset; cursor: pointer; display: grid; place-items: center; width: 26px; height: 26px; margin-top: 4px; border-radius: 7px; font: 400 18px/1 var(--ui); color: var(--ink-3); border: 1px solid var(--border); }
+.drafts-new:hover, .drafts-new:focus-visible { color: var(--ink); }
+.drafts-name { width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 12px 14px; border-radius: 10px; font: 500 15px/1.4 var(--ui); color: var(--ink); background: var(--raised); border: 1px solid var(--border); outline: none; }
+.drafts-name::placeholder { color: var(--ink-3); }
 .drafts-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .draft { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border-radius: 10px; cursor: pointer; }
 .draft.on { background: var(--raised); box-shadow: inset 0 0 0 1px var(--border); }
@@ -214,3 +219,12 @@ button.status-keys:hover, button.status-keys:focus-visible { color: var(--ink); 
 .source .cm-figure { padding: 10px 0 18px; }
 .source .cm-figure iframe { display: block; width: 100%; border: 0; background: transparent; color-scheme: dark; }
 .source .cm-figure img { display: block; max-width: 100%; border-radius: 6px; }
+
+/* Ideas page: each idea a card, so long ones don't run into each other */
+.ideas-list { gap: 10px; }
+.idea { cursor: default; gap: 8px; padding: 14px 16px; background: #1b1f24; border: 1px solid var(--border); border-radius: 10px; }
+.idea.on { background: #23282e; border-color: #4a525c; box-shadow: none; }
+.idea-meta { display: flex; align-items: center; gap: 8px; }
+.idea-text { font: 400 14.5px/1.55 var(--ui); color: var(--ink-2); }
+.idea.on .idea-text { color: var(--ink); }
+.idea-series { padding: 1px 7px; border-radius: 5px; color: var(--amber); background: rgba(232, 184, 96, .10); }

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { deleteDraft } from '../app/delete-draft.ts';
+import { createDraft } from '../app/create-draft.ts';
+import { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
-import { FakeClock, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { FakeClock, MemoryIdeasFile, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
 import { watchPost } from '../app/watch-post.ts';
@@ -14,6 +16,7 @@ const draft = '---\ntitle: A draft\ndraft: true\n---\none two';
 
 function setup() {
   const lib = new MemoryPostLibrary({ a: draft, live: '---\ndraft: false\n---\n' });
+  const ideasFile = new MemoryIdeasFile('## Ideas\n\n- 2026-11-21: Old\n');
   const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock() };
   const asked: [string, string][] = [];
   const listeners = new Set<(e: ConversationEvent) => void>();
@@ -26,6 +29,10 @@ function setup() {
   const uc: UseCases = {
     conversation,
     listPosts: listPosts(lib),
+    createDraft: createDraft(lib, deps.clock),
+    listIdeas: listIdeas(ideasFile),
+    addIdea: addIdea(ideasFile, deps.clock),
+    removeIdea: removeIdea(ideasFile),
     openPost: openPost(lib),
     savePost: savePost(lib, deps.threads),
     deleteDraft: deleteDraft(lib),
@@ -44,6 +51,27 @@ function setup() {
 const put = (body: unknown) => ({ method: 'PUT', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
 
 describe('editor API', () => {
+  it('starts a draft, and refuses a title already taken', async () => {
+    const { api, lib } = setup();
+    const post = (title: string) => api.request('/api/posts', { method: 'POST', body: JSON.stringify({ title }), headers: { 'content-type': 'application/json' } });
+    const res = await post('New idea');
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({ slug: 'new_idea' });
+    expect((await lib.read('new_idea'))?.text).toContain('draft: true');
+    expect((await post('New idea')).status).toBe(409);
+  });
+
+  it('lists, adds and removes ideas', async () => {
+    const { api } = setup();
+    const send = (method: string, body: unknown) => api.request('/api/ideas', { method, body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
+    expect(await (await api.request('/api/ideas')).json()).toEqual({ ideas: [{ date: '2026-11-21', text: 'Old' }] });
+    const added = await send('POST', { text: 'New' });
+    expect(added.status).toBe(201);
+    expect((await added.json()).ideas.map((i: { text: string }) => i.text)).toEqual(['New', 'Old']);
+    expect(await (await send('DELETE', { date: '2026-11-21', text: 'Old' })).json()).toEqual({ ideas: [{ date: '2026-11-25', text: 'New' }] });
+    expect((await send('POST', { text: ' ' })).status).toBe(409);
+  });
+
   it('lists posts', async () => {
     const res = await setup().api.request('/api/posts');
     expect((await res.json()).posts[0]).toEqual({ slug: 'a', title: 'A draft', draft: true, words: 2, minutes: 1, modified: '1970-01-01T00:00:00.000Z' });

@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 export const routes = {
   posts: '/api/posts',
+  ideas: '/api/ideas',
   post: (slug: string) => `/api/posts/${encodeURIComponent(slug)}`,
   preview: '/api/preview',
   threads: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/threads`,
@@ -28,6 +29,18 @@ export const PostList = z.object({
   ),
 });
 export type PostList = z.infer<typeof PostList>;
+
+/** GET /api/ideas, in the order writing/ideas.md lists them. POST adds one ({ text }), DELETE removes one (an Idea). Both answer with the list. */
+export const Idea = z.object({ date: z.string().optional(), text: z.string(), series: z.string().optional() });
+export const Ideas = z.object({ ideas: z.array(Idea) });
+export type Ideas = z.infer<typeof Ideas>;
+export const NewIdea = z.object({ text: z.string() });
+export type NewIdea = z.infer<typeof NewIdea>;
+
+/** POST /api/posts starts a draft from a title, and answers with its slug. */
+export const NewDraft = z.object({ title: z.string() });
+export type NewDraft = z.infer<typeof NewDraft>;
+export const CreatedDraft = z.object({ slug: z.string() });
 
 /** GET /api/posts/:slug */
 export const Post = z.object({ slug: z.string(), name: z.string(), text: z.string() });

@@ -1,4 +1,4 @@
-import { Failure, type NewComment, type NewReply, Post, PostList, PreviewInfo, routes, type SavePost, type Settle, Threads } from '../protocol.ts';
+import { CreatedDraft, Failure, Ideas, type NewIdea, type NewDraft, type NewComment, type NewReply, Post, PostList, PreviewInfo, routes, type SavePost, type Settle, Threads } from '../protocol.ts';
 
 async function failure(res: Response, fallback: string): Promise<Error> {
   const body = Failure.safeParse(await res.json().catch(() => null));
@@ -27,6 +27,29 @@ export async function savePost(slug: string, text: string): Promise<void> {
     keepalive: text.length < 60_000,
   });
   if (!res.ok) throw await failure(res, 'Save failed');
+}
+
+export async function loadIdeas(): Promise<Ideas['ideas']> {
+  const res = await fetch(routes.ideas);
+  if (!res.ok) throw await failure(res, "Couldn't read the ideas");
+  return Ideas.parse(await res.json()).ideas;
+}
+
+async function changeIdeas(method: 'POST' | 'DELETE', body: unknown, fallback: string): Promise<Ideas['ideas']> {
+  const res = await fetch(routes.ideas, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw await failure(res, fallback);
+  return Ideas.parse(await res.json()).ideas;
+}
+
+export const addIdea = (text: string) => changeIdeas('POST', { text } satisfies NewIdea, "Couldn't add the idea");
+export const removeIdea = (idea: Ideas['ideas'][number]) => changeIdeas('DELETE', idea, "Couldn't remove the idea");
+
+/** Starts a draft from a title. Resolves with its slug. */
+export async function createDraft(title: string): Promise<string> {
+  const body: NewDraft = { title };
+  const res = await fetch(routes.posts, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw await failure(res, "Couldn't start the draft");
+  return CreatedDraft.parse(await res.json()).slug;
 }
 
 export async function deleteDraft(slug: string): Promise<void> {

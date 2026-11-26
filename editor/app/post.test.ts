@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { createDraft } from './create-draft.ts';
 import { deleteDraft } from './delete-draft.ts';
 import { NotFound, Refused } from './errors.ts';
 import { listPosts } from './list-posts.ts';
 import { openPost } from './open-post.ts';
 import { savePost } from './save-post.ts';
-import { MemoryPostLibrary, MemoryThreadStore } from './testing/fakes.ts';
+import { FakeClock, MemoryPostLibrary, MemoryThreadStore } from './testing/fakes.ts';
 
 const draft = '---\ntitle: A draft\ndraft: true\n---\none two';
 const live = '---\ntitle: Live\ndraft: false\n---\nthree';
@@ -59,5 +60,18 @@ describe('deleteDraft', () => {
 
   it.each(['missing', '..'])('refuses %j', async (slug) => {
     await expect(deleteDraft(library())(slug)).rejects.toBeInstanceOf(NotFound);
+  });
+});
+
+describe('createDraft', () => {
+  it('writes a dated draft named after the title, and returns its slug', async () => {
+    const lib = library();
+    const slug = await createDraft(lib, new FakeClock())('The Plugin Pattern');
+    expect(slug).toBe('plugin_pattern');
+    expect((await lib.read('plugin_pattern'))?.text).toMatch(/^---\ntitle: "The Plugin Pattern"\ndraft: true\ndate: \d{4}-\d{2}-\d{2}\n---\n/);
+  });
+
+  it.each([['', 'a letter'], ['!!', 'a letter'], ['A', 'already a post']])('refuses %j', async (t, why) => {
+    await expect(createDraft(library(), new FakeClock())(t)).rejects.toThrow(why);
   });
 });

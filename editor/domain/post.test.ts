@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isDraft, isSlug, postList, publishDate, title, type PostFile } from './post.ts';
+import { dayOf, isDraft, isSlug, newDraft, postList, publishDate, slugFor, title, type PostFile } from './post.ts';
 
 const post = (slug: string, draft: boolean, day: number, head = `title: ${slug}`): PostFile => ({
   slug,
@@ -61,4 +61,23 @@ describe('postList', () => {
   it('falls back to the slug without a title', () => {
     expect(postList([post('untitled', true, 1, 'summary: x')])[0].title).toBe('untitled');
   });
+});
+
+describe('slugFor', () => {
+  it.each([
+    ['The Plugin Pattern', 'plugin_pattern'],
+    ['Reducing System Load With Event Folding!', 'reducing_system_load_with_event_folding'],
+    ['  Naïve café: a story ', 'naive_cafe_a_story'],
+    ['A', 'a'],
+    ['?!', ''],
+  ])('%j is %j', (t, want) => expect(slugFor(t)).toBe(want));
+});
+
+describe('newDraft', () => {
+  it('is front matter only, a dated draft', () => {
+    expect(newDraft('Hello "world"', '2026-11-26')).toBe('---\ntitle: "Hello \\"world\\""\ndraft: true\ndate: 2026-11-26\n---\n\n');
+    expect(isDraft(newDraft('x', '2026-11-26'))).toBe(true);
+  });
+
+  it('dates it in local time', () => expect(dayOf(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05'));
 });

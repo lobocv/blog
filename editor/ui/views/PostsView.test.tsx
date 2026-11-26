@@ -15,7 +15,7 @@ const key = (code: string) => fireEvent.keyDown(window, { code });
 function setup() {
   const onOpen = vi.fn();
   const onDelete = vi.fn(async () => {});
-  render(<PostsView posts={drafts} onOpen={onOpen} onDelete={onDelete} />);
+  render(<PostsView posts={drafts} onOpen={onOpen} onDelete={onDelete} onCreate={async () => {}} />);
   return { onOpen, onDelete };
 }
 
@@ -67,21 +67,21 @@ describe('PostsView', () => {
     const onDelete = vi.fn(async () => {
       throw new Error('"x" is published. Only drafts can be deleted here.');
     });
-    render(<PostsView posts={drafts} onOpen={() => {}} onDelete={onDelete} />);
+    render(<PostsView posts={drafts} onOpen={() => {}} onDelete={onDelete} onCreate={async () => {}} />);
     key('Delete');
     key('Enter');
     expect(await screen.findByText(/is published/)).toBeTruthy();
   });
 
   it('says so when there are no drafts', () => {
-    render(<PostsView posts={[]} onOpen={() => {}} onDelete={async () => {}} />);
-    expect(screen.getByText('No drafts. Start one with /scope.')).toBeTruthy();
+    render(<PostsView posts={[]} onOpen={() => {}} onDelete={async () => {}} onCreate={async () => {}} />);
+    expect(screen.getByText('No drafts. Start one with + or /scope.')).toBeTruthy();
   });
 
   it('lists published posts after the drafts, moving into them with J, and never deletes one', () => {
     const onOpen = vi.fn();
     const onDelete = vi.fn(async () => {});
-    render(<PostsView posts={[...drafts, live]} onOpen={onOpen} onDelete={onDelete} />);
+    render(<PostsView posts={[...drafts, live]} onOpen={onOpen} onDelete={onDelete} onCreate={async () => {}} />);
     expect(screen.getByRole('listbox', { name: 'Published' }).textContent).toContain('event_folding · 900 words · published Aug 1, 2021');
     key('KeyJ');
     key('KeyJ');
@@ -90,5 +90,17 @@ describe('PostsView', () => {
     key('Enter');
     expect(onOpen).toHaveBeenCalledWith('event_folding');
     expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it('starts a draft with N: type a title, then ↵', async () => {
+    const onCreate = vi.fn(async () => {});
+    render(<PostsView posts={drafts} onOpen={() => {}} onDelete={async () => {}} onCreate={onCreate} />);
+    key('KeyN');
+    const box = screen.getByLabelText('Title of the new draft') as HTMLInputElement;
+    // Letters typed in the box are the title, not shortcuts.
+    fireEvent.keyDown(box, { code: 'KeyJ', key: 'j' });
+    box.value = 'New idea';
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onCreate).toHaveBeenCalledWith('New idea');
   });
 });

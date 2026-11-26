@@ -1,6 +1,7 @@
 import { useSignal } from '@preact/signals';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { PostList } from '../../protocol.ts';
+import { PageTabs } from '../components/PageTabs.tsx';
 import { formatAgo, formatDate, formatNumber } from '../format.ts';
 
 type Summary = PostList['posts'][number];
@@ -10,26 +11,47 @@ type Props = {
   posts: Summary[];
   onOpen: (slug: string) => void;
   onDelete: (slug: string) => Promise<void>;
+  /** Starts a draft with this title (and opens it). */
+  onCreate: (title: string) => Promise<void>;
+  /** The ideas page (I). */
+  onIdeas?: () => void;
 };
 
-/** The first page: drafts, then published posts. J/K or arrows to move, Enter to open, ⌫ to delete a draft. */
-export function PostsView({ posts, onOpen, onDelete }: Props) {
+/**
+ * The first page: drafts, then published posts. J/K or arrows to move, Enter to open, ⌫ to delete
+ * a draft, N (or the + button) to start one.
+ */
+export function PostsView({ posts, onOpen, onDelete, onCreate, onIdeas }: Props) {
   // Signals, not state: a key handler must see the previous key's effect even
   // before the next render (eg ⌫ then Enter typed quickly).
   const selected = useSignal(0);
   const confirming = useSignal<string | undefined>(undefined);
   const error = useSignal<string | undefined>(undefined);
-  const props = useRef({ posts, onOpen, onDelete });
-  props.current = { posts, onOpen, onDelete };
+  // Typing the title of a new draft.
+  const naming = useSignal(false);
+  const props = useRef({ posts, onOpen, onDelete, onIdeas });
+  props.current = { posts, onOpen, onDelete, onIdeas };
 
   const index = Math.min(selected.value, posts.length - 1);
 
   // Layout effect so keys pressed right after the page appears aren't lost.
   useLayoutEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const { posts, onOpen, onDelete } = props.current;
+      const { posts, onOpen, onDelete, onIdeas } = props.current;
       const current = posts[Math.min(selected.value, posts.length - 1)];
-      if (e.metaKey || e.ctrlKey || e.altKey || !current) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || naming.value) return;
+      if (e.code === 'KeyI' && onIdeas && !confirming.value) {
+        e.preventDefault();
+        onIdeas();
+        return;
+      }
+      if (e.code === 'KeyN') {
+        e.preventDefault();
+        error.value = undefined;
+        naming.value = true;
+        return;
+      }
+      if (!current) return;
       const doing = (fn: () => void) => {
         e.preventDefault();
         error.value = undefined;
@@ -82,8 +104,30 @@ export function PostsView({ posts, onOpen, onDelete }: Props) {
     <>
       <main class="page page-centered">
         <div class="column drafts">
-          <h1 class="drafts-title">Drafts</h1>
-          {drafts === 0 && <p class="drafts-empty">No drafts. Start one with /scope.</p>}
+          <div class="drafts-head">
+            <h1 class="drafts-title">Drafts</h1>
+            <button type="button" class="drafts-new" aria-label="New draft" title="New draft (N)" onClick={() => (naming.value = true)}>
+              +
+            </button>
+          </div>
+          {naming.value && (
+            <input
+              class="drafts-name"
+              aria-label="Title of the new draft"
+              placeholder="Title, then ↵"
+              ref={(el) => el?.focus()}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Escape') naming.value = false;
+                else if (e.key === 'Enter' && !e.isComposing && e.currentTarget.value.trim()) {
+                  error.value = undefined;
+                  onCreate(e.currentTarget.value).catch((err: Error) => (error.value = err.message));
+                }
+              }}
+              onBlur={(e) => !e.currentTarget.value.trim() && (naming.value = false)}
+            />
+          )}
+          {drafts === 0 && !naming.value && <p class="drafts-empty">No drafts. Start one with + or /scope.</p>}
           <ul class="drafts-list" role="listbox" aria-label="Drafts">
             {posts.slice(0, drafts).map((p, i) => row(p, i))}
           </ul>
@@ -99,8 +143,9 @@ export function PostsView({ posts, onOpen, onDelete }: Props) {
         </div>
       </main>
       <footer class="status">
-        <div class="status-views" />
+        <PageTabs on="posts" go={(page) => page === 'ideas' && onIdeas?.()} />
         <div class="status-stats">
+          <span>N new</span>
           {posts.length > 0 && <span>↵ open</span>}
           {posts[index]?.draft && <span>⌫ delete</span>}
         </div>

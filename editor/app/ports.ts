@@ -45,6 +45,13 @@ export interface ThreadStore {
   saveSession(slug: string, session: string): Promise<void>;
 }
 
+/** writing/ideas.md, where /idea adds post ideas. */
+export interface IdeasFile {
+  /** An empty string when there is no file yet. */
+  read(): Promise<string>;
+  write(text: string): Promise<void>;
+}
+
 export interface Clock {
   now(): Date;
   /** A new unique id (eg for a thread). */

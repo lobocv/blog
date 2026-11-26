@@ -374,3 +374,45 @@ test('says when the front matter needs fixing by hand, and shows it in the text'
   await expect(page.getByLabel('Front matter')).toContainText("can't be read");
   await expect(page.getByLabel('Post source')).toContainText('hh---');
 });
+
+test('starts a new draft from the + button and opens it', async ({ page }) => {
+  await page.goto(url);
+  await page.getByRole('button', { name: 'New draft' }).click();
+  await page.getByLabel('Title of the new draft').fill('A Fresh Idea');
+  await page.getByLabel('Title of the new draft').press('Enter');
+
+  await expect(page.getByLabel('Title', { exact: true })).toHaveValue('A Fresh Idea');
+  expect(await readFile(postPath('fresh_idea'), 'utf8')).toMatch(/^---\ntitle: "A Fresh Idea"\ndraft: true\ndate: \d{4}-\d{2}-\d{2}\n---\n\n$/);
+  // Typing goes straight into the body.
+  await page.keyboard.type('First words.');
+  await expect.poll(() => readFile(postPath('fresh_idea'), 'utf8')).toMatch(/\n---\nFirst words\.\n$/);
+});
+
+test('lists the ideas from writing/ideas.md, adds one and removes one', async ({ page }) => {
+  const file = join(root, 'writing/ideas.md');
+  await mkdir(join(root, 'writing'), { recursive: true });
+  await writeFile(file, '# Ideas\n\nNotes.\n\n## Ideas\n\n- 2026-11-21: [trellis] Topic graph\n- 2026-11-19: Review symptoms\n');
+  await page.goto(url);
+  await expect(page.getByRole('option')).toHaveCount(3);
+  await page.keyboard.press('i');
+
+  const list = page.getByRole('listbox', { name: 'Ideas' });
+  await expect(list.getByRole('option')).toHaveText([/2026-11-21.*trellis.*Topic graph/, /Review symptoms/]);
+
+  await page.getByRole('button', { name: 'New idea' }).click();
+  await page.getByLabel('The new idea').fill('Generative UI');
+  await page.getByLabel('The new idea').press('Enter');
+  await expect(list.getByRole('option').first()).toContainText('Generative UI');
+  expect(await readFile(file, 'utf8')).toMatch(/## Ideas\n\n- \d{4}-\d{2}-\d{2}: Generative UI\n- 2026-11-21: \[trellis\] Topic graph\n/);
+
+  // J to "Topic graph", ⌫ and ↵ removes it.
+  await page.keyboard.press('j');
+  await page.keyboard.press('Backspace');
+  await page.keyboard.press('Enter');
+  await expect(list.getByRole('option')).toHaveCount(2);
+  expect(await readFile(file, 'utf8')).not.toContain('Topic graph');
+  expect(await readFile(file, 'utf8')).toContain('# Ideas\n\nNotes.\n');
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('listbox', { name: 'Drafts' })).toBeVisible();
+});

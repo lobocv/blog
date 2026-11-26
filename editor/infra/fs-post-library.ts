@@ -49,6 +49,8 @@ export class FsPostLibrary implements PostLibrary {
     const path = this.file(slug) ?? join(this.posts, slug, 'index.md');
     const tmp = join(dirname(path), `.${basename(path)}.${process.pid}.tmp`);
     this.written.set(slug, text);
+    // A new post gets its own folder.
+    await mkdir(dirname(path), { recursive: true });
     await writeFile(tmp, text, 'utf8');
     await rename(tmp, path);
   }

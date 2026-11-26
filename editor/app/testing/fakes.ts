@@ -3,7 +3,7 @@
 // like the real adapters.
 import type { PostFile } from '../../domain/post.ts';
 import type { Thread } from '../../domain/thread.ts';
-import type { Agent, AgentEvent, Clock, PostLibrary, ThreadStore } from '../ports.ts';
+import type { Agent, AgentEvent, Clock, IdeasFile, PostLibrary, ThreadStore } from '../ports.ts';
 
 export class MemoryPostLibrary implements PostLibrary {
   posts = new Map<string, PostFile>();
@@ -118,5 +118,21 @@ export class FakeAgent implements Agent {
     let text = '';
     for (const word of reply.split(' ')) onEvent({ type: 'text', text: (text += (text ? ' ' : '') + word) });
     return { text: reply, session, stopped: false };
+  }
+}
+
+export class MemoryIdeasFile implements IdeasFile {
+  text: string;
+
+  constructor(text = '') {
+    this.text = text;
+  }
+
+  async read() {
+    return this.text;
+  }
+
+  async write(text: string) {
+    this.text = text;
   }
 }
