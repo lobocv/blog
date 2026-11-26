@@ -7,8 +7,9 @@ replies and suggested edits in the margin. Everything follows
 
 ## In v1
 
-- Opens the active post (same rule as `docs/writing.md`), or one named on the
-  command line (`make write POST=<slug>`)
+- Opens on a drafts page (newest first) to pick a post with the keyboard, or
+  straight on one named on the command line (`make write POST=<slug>`). Drafts
+  can be deleted from it, and ⌥O goes back to it
 - Source view (CodeMirror, Markdown and MDX highlighting) with autosave
 - Preview view (the real `astro dev` in an iframe), swapped with ⌘\, keeping
   the scroll position on the same block
@@ -32,9 +33,9 @@ replies and suggested edits in the margin. Everything follows
 
 Each one ends with something Calvin can use and a passing `make verify`.
 
-1. Write in it. `make write` starts the server and opens the UI on the active
-   post. Source view, autosave, word count and reading time in the status line.
-   The Playwright test types and checks the file on disk
+1. Write in it. `make write` starts the server and opens the drafts page.
+   Source view, autosave, word count and reading time in the status line. The
+   Playwright test opens a draft, types and checks the file on disk
 2. See the page. The server starts and stops `astro dev`. The dev-only rehype
    plugin tags blocks with their source line. ⌘\ swaps views and keeps the same
    block in view

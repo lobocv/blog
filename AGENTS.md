@@ -34,6 +34,8 @@ Run `make` to list targets. The common ones:
   build, old-URL check, link check)
 - `make deploy`: refuses off `master` or with uncommitted changes, runs `verify`,
   then pushes
+- `make write` / `make write POST=<slug>`: open the writing editor on the drafts
+  page, or straight on a post. `make verify-editor` runs its tests, including the browser test
 - `make lint` / `make lint POST=<slug>`: mechanical checks on a post
   (`scripts/lint_post.py`)
 - Single test file: `npx vitest run src/lib/rehype.test.ts`; single test: add

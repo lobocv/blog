@@ -1,0 +1,74 @@
+import { Hono } from 'hono';
+import { NotFound, Refused } from '../app/errors.ts';
+import type { deleteDraft } from '../app/delete-draft.ts';
+import type { listDrafts } from '../app/list-drafts.ts';
+import type { openPost } from '../app/open-post.ts';
+import type { savePost } from '../app/save-post.ts';
+import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
+import { Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Threads } from '../protocol.ts';
+
+export type UseCases = {
+  listDrafts: ReturnType<typeof listDrafts>;
+  openPost: ReturnType<typeof openPost>;
+  savePost: ReturnType<typeof savePost>;
+  deleteDraft: ReturnType<typeof deleteDraft>;
+  listThreads: ReturnType<typeof listThreads>;
+  addComment: ReturnType<typeof addComment>;
+  replyToThread: ReturnType<typeof replyToThread>;
+  resolveThread: ReturnType<typeof resolveThread>;
+  /** Waits for `astro dev` to answer. */
+  previewOrigin: () => Promise<string>;
+};
+
+/** Turns requests from the UI into use-case calls. No logic of its own. */
+export function createApi(uc: UseCases) {
+  const api = new Hono();
+
+  api.get('/api/drafts', async (c) => {
+    const drafts = (await uc.listDrafts()).map((d) => ({ ...d, modified: d.modified.toISOString() }));
+    return c.json(Drafts.parse({ drafts }));
+  });
+
+  api.get('/api/posts/:slug', async (c) => c.json(Post.parse(await uc.openPost(c.req.param('slug')))));
+
+  api.put('/api/posts/:slug', async (c) => {
+    const body = SavePost.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text: string }' }, 400);
+    await uc.savePost(c.req.param('slug'), body.data.text);
+    return c.body(null, 204);
+  });
+
+  api.delete('/api/posts/:slug', async (c) => {
+    await uc.deleteDraft(c.req.param('slug'));
+    return c.body(null, 204);
+  });
+
+  const threads = (list: Threads['threads']) => Threads.parse({ threads: list });
+
+  api.get('/api/posts/:slug/threads', async (c) => c.json(threads(await uc.listThreads(c.req.param('slug')))));
+
+  api.post('/api/posts/:slug/threads', async (c) => {
+    const body = NewComment.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { anchor?: { quote, line }, text }' }, 400);
+    return c.json(threads(await uc.addComment(c.req.param('slug'), body.data)));
+  });
+
+  api.post('/api/posts/:slug/threads/:id/replies', async (c) => {
+    const body = NewReply.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text }' }, 400);
+    return c.json(threads(await uc.replyToThread(c.req.param('slug'), c.req.param('id'), body.data.text)));
+  });
+
+  api.post('/api/posts/:slug/threads/:id/resolve', async (c) =>
+    c.json(threads(await uc.resolveThread(c.req.param('slug'), c.req.param('id')))),
+  );
+
+  api.get('/api/preview', async (c) => c.json(PreviewInfo.parse({ origin: await uc.previewOrigin() })));
+
+  api.onError((err, c) => {
+    const status = err instanceof NotFound ? 404 : err instanceof Refused ? 409 : 500;
+    return c.json({ error: err.message }, status);
+  });
+
+  return api;
+}

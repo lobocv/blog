@@ -17,20 +17,24 @@ One repo, one `package.json`. The editor lives in `editor/`, next to the blog.
 
 ```
 editor/
-  main.ts            wires adapters into use cases and starts the server. No logic
+  main.ts            wires adapters into use cases, starts the API and the Vite dev
+                     server for the UI (which proxies /api/). No logic
   protocol.ts        browser <-> server message types (zod), used by both sides
   domain/            pure TypeScript. No I/O, runs in Node and the browser
     document.ts        text, edits, word count and reading time
+    post.ts            drafts, titles and valid slugs
     anchor.ts          pins a thread to quoted text plus a line hint, re-finds it after edits
     thread.ts          threads, replies, open and resolved
     suggestion.ts      proposed edits: apply, tweak, keep in place as the text changes
     review.ts          critique checklist progress
   app/               use cases, one per file, and the ports they need
-    ports.ts           DocumentStore, ThreadStore, Agent, Preview, Clock
-    accept-suggestion.ts, tweak-suggestion.ts, add-comment.ts, ...
+    ports.ts           PostLibrary, ThreadStore, Agent, Preview, Clock
+    errors.ts          NotFound and Refused, which the server turns into 404 and 409
+    list-drafts.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
-    fs-document-store.ts   reads and writes the .mdx, watches for outside edits
+    fs-post-library.ts     reads and writes posts, watches for outside edits, moves
+                           deleted drafts to .trash/
     json-thread-store.ts   writing/threads/<slug>.json
     claude-agent.ts        runs the claude CLI headless and parses its stream
     mcp-tools.ts           the suggest_edit, reply and comment tools Claude calls
@@ -39,13 +43,21 @@ editor/
   server/
     http.ts            routes and a WebSocket. Turns messages into use-case calls
   ui/
-    main.tsx, keymap.ts, theme.css
-    components/        Kbd, Button, ThreadCard, Margin, PageThread, StatusLine
-    views/             PreviewView (iframe plus anchors), SourceView (CodeMirror)
+    main.tsx           `/` is the drafts page, `/?post=<slug>` edits a post
+    api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
+    thread-state.ts    the open post's threads and notes, selection and composer, as signals
+    components/        Composer, ThreadCard, Margin, PageThread, StatusLine
+    views/             DraftsView, EditorView, PreviewView (iframe plus anchors),
+                       SourceView (CodeMirror)
 shared/              code the blog build and the editor both use, moved here when
-                     the editor first needs it (eg the @@ note grammar in src/lib/notes.mjs)
+                     the editor first needs it
+  reading.ts           word count and reading time, so the editor matches the site
+  notes.ts             the `@@` note pattern
+  preview.ts           the post's URL, and the bridge script Astro injects into the
+                       preview page plus the messages it exchanges with the editor
 e2e/
-  editor.spec.ts     one Playwright smoke test
+  editor.spec.ts     drafts page, typing and saving, deleting, threads
+  preview.spec.ts    Source and Preview swap, on a temporary copy of the site
 ```
 
 ## Layers and what they may import
@@ -80,9 +92,23 @@ e2e/
   half a second after typing stops and on every view or window change. The
   status line shows something only when a save fails
 - The preview is the real `astro dev` server in an iframe, so it always
-  matches the site. A dev-only rehype plugin tags rendered blocks with their
-  source line so threads can anchor to the preview. It runs only when the editor
-  starts Astro, so the built site is unchanged
+  matches the site and reloads when the post is saved. The editor starts it with
+  `EDITOR_PREVIEW=1` and `--ignore-lock` (so it runs beside `make dev`), which
+  turns on two things in `astro.config.mjs`:
+  - `src/lib/source-lines.mjs`, a rehype plugin that tags rendered blocks with
+    their line in the post file (`data-line`), so threads and scrolling can
+    anchor to the preview
+  - the bridge from `shared/preview.ts`, which talks to the editor with
+    `postMessage`: scroll to a line, report where each block is on screen,
+    highlight the blocks with threads, and pass on keys (a focused iframe gets
+    them instead of the editor) along with the selection for ⌘K
+- The preview keeps its full width. Threads float over its right edge, level
+  with the block holding their first line. ⌘K there quotes the selected words
+  when the source has them as typed, otherwise the block's first line
+  (`anchorNear` in `domain/anchor.ts`)
+- Neither runs in a build, so the built site is unchanged. ⌘\ swaps views and
+  keeps the same block at the top: the source's top line goes to the preview,
+  and the preview's top block comes back
 - Claude never writes to the post. It runs as the headless `claude` CLI
   (Calvin's own login) with `--mcp-config` pointing at the editor's tools, and
   the post file is blocked from its Edit and Write tools. Its only way to change
@@ -136,6 +162,11 @@ split into projects: `blog`, `editor-node` and `editor-dom`.
 - Don't bind shortcuts the browser keeps for itself (⌘ with T, N, W, R, L, 1-9 or
   `) or that edit text (⌘⌫). Match keys by `event.code`, since ⌥ plus a letter
   types a special character on macOS
+- Key handlers read signals, not component state, and attach in `useLayoutEffect`,
+  so a key pressed straight after another (or after the page appears) sees its
+  effect
+- Deleting asks first, and only drafts can be deleted. Deleted drafts go to
+  `.trash/` with their brief, images and threads, so they can be moved back
 - Nothing on screen that doesn't help the writing: no explanatory text, no
   counters that can't be acted on
 - Colours follow the roles in `docs/figures.md`: green for Claude and accepted

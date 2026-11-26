@@ -1,9 +1,10 @@
-// Calvin's drafting notes for Claude, written straight into a post: `@@ note` runs to the end of the
-// line, `@@ note @@` ends early so the sentence can carry on. A note starting with "claude:" is a reply.
+// Calvin's drafting notes for Claude (the pattern is in shared/notes.ts).
 // In `astro dev` notes show as highlighted spans; in a build they're dropped from drafts and fail the
 // build in a published post, so one can never ship. See "Notes in the post" in docs/writing.md.
 
-export const NOTE = /@@[ \t]*([^\n]*?)[ \t]*(?:@@|(?=\n)|$)/g;
+import { NOTE } from '../../shared/notes.ts';
+
+export { NOTE };
 
 const SKIP = new Set(['code', 'pre', 'script', 'style']);
 

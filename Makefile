@@ -1,7 +1,7 @@
 # Common tasks for the blog. Run `make` (or `make help`) to list them.
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build preview test typecheck check-urls check-links verify lint share clean deploy
+.PHONY: help install dev build preview test typecheck check-urls check-links verify verify-editor write lint share clean deploy
 
 POST ?=
 
@@ -37,6 +37,13 @@ check-links: ## Check internal links in dist/
 	npm run check:links
 
 verify: test typecheck build check-urls check-links ## Everything the deploy checks, plus the type check
+
+verify-editor: test typecheck ## The editor's unit tests and its end-to-end test
+	npx playwright install chromium
+	npx playwright test
+
+write: node_modules ## Open the writing editor on the drafts page, or a post with POST=<slug>
+	node editor/main.ts --open $(if $(POST),--post $(POST),)
 
 lint: ## Lint a post: make lint POST=<slug> (defaults to the active draft)
 	python3 scripts/lint_post.py $(if $(POST),$(POST),--active)

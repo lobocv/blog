@@ -1,0 +1,131 @@
+/* Colour roles follow docs/figures.md: green for Claude and accepted text,
+   amber for Calvin's notes, red for deletions. */
+:root {
+  --bg: #15181c;
+  --raised: #1d2126;
+  --line: #22262c;
+  --border: #2b3037;
+  --ink: #e8e5de;
+  --ink-2: #b0aca3;
+  --ink-3: #8c887f;
+  --green: #97c98f;
+  --amber: #e8b860;
+  --red: #ec9384;
+  --ui: 'Inter Variable', Inter, system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+#app { height: 100%; display: flex; flex-direction: column; }
+
+/* One 680px writing column with the 380px thread margin beside it. The
+   margin stays even when empty, so nothing moves when threads appear. */
+.page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 680px) minmax(0, 380px) minmax(0, 1fr);
+  align-content: start;
+  padding: 36px 32px 40vh;
+}
+.page-centered { grid-template-columns: minmax(0, 1fr) minmax(0, 680px) minmax(0, 1fr); }
+.column { grid-column: 2; }
+.margin { grid-column: 3; padding-left: 36px; }
+
+.source .cm-editor { background: transparent; color: var(--ink-2); font: 400 15px/1.8 var(--mono); }
+.source .cm-editor.cm-focused { outline: none; }
+.source .cm-content { padding: 0; caret-color: var(--ink); }
+.source .cm-line { padding: 0; }
+.source .cm-cursor { border-left: 2px solid var(--ink); }
+.source .cm-selectionBackground, .source .cm-focused .cm-selectionBackground { background: #2e3a4a !important; }
+
+.status {
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-top: 1px solid var(--line);
+  font: 400 12px/1 var(--ui);
+  color: var(--ink-3);
+}
+.status-views, .status-stats { display: flex; align-items: center; gap: 18px; }
+.status-views { gap: 4px; }
+.status-view { padding: 5px 8px; border-radius: 5px; }
+.status-view.on { color: var(--ink); background: #23282e; }
+.status-error { color: var(--red); }
+button.status-view { all: unset; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
+button.status-view:hover, button.status-view:focus-visible { color: var(--ink); }
+
+.drafts-title { margin: 24px 0 20px; font: 600 11px/1 var(--ui); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.drafts-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.draft { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border-radius: 10px; cursor: pointer; }
+.draft.on { background: var(--raised); box-shadow: inset 0 0 0 1px var(--border); }
+.draft-name { font: 500 15px/1.4 var(--ui); color: var(--ink); }
+.draft-meta { font: 400 12.5px/1.4 var(--ui); color: var(--ink-3); }
+.draft-confirm { color: var(--red); }
+.drafts-empty, .drafts-error { font: 400 14px/1.5 var(--ui); color: var(--ink-2); }
+.drafts-error { color: var(--red); }
+.fatal { margin: 80px auto; max-width: 680px; font: 400 14px/1.5 var(--ui); color: var(--red); }
+
+[hidden] { display: none !important; }
+
+/* The site page fills the window, as a reader sees it. */
+.page-preview { padding: 0; overflow: hidden; grid-template-columns: 100%; grid-template-rows: 100%; }
+.preview { width: 100%; height: 100%; border: 0; background: var(--bg); }
+.preview-note { align-self: center; justify-self: center; font: 400 14px/1.5 var(--ui); color: var(--ink-3); white-space: pre-wrap; }
+.preview-error { color: var(--red); max-width: 680px; }
+
+/* Threads. Amber is Calvin's (comments and notes), green is Claude's. */
+.margin { position: relative; }
+.margin-list { position: relative; }
+.margin-entry { position: absolute; left: 36px; right: 0; transition: top .12s ease-out; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.dot-calvin { background: var(--amber); }
+.dot-claude { background: var(--green); }
+.thread { display: flex; flex-direction: column; gap: 3px; padding: 4px 12px; font: 400 13px/1.5 var(--ui); color: var(--ink-3); cursor: pointer; border-radius: 10px; }
+.thread-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.thread-first { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-sub { padding-left: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-on { cursor: default; gap: 12px; padding: 14px 16px; background: var(--raised); border: 1px solid #343a42; box-shadow: 0 10px 30px rgba(0,0,0,.4); font-size: 13.5px; line-height: 1.55; }
+.thread-on .thread-sub { padding-left: 0; white-space: normal; }
+.message { display: flex; flex-direction: column; gap: 3px; }
+.message-who { font-size: 12px; color: var(--ink-3); }
+.message-who.claude { color: var(--green); }
+.message-text { color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.thread-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { all: unset; display: inline-flex; align-items: center; font: 500 12.5px/1 var(--ui); border-radius: 7px; padding: 7px 10px; cursor: pointer; border: 1px solid #343a42; background: #23282e; color: var(--ink); }
+.btn:hover, .btn:focus-visible { border-color: var(--ink-3); }
+.k { display: inline-block; font: 500 10.5px/1 var(--ui); color: var(--ink-3); border: 1px solid #343a42; border-radius: 4px; padding: 2px 4px; margin-left: 6px; }
+.composer { width: 100%; resize: none; overflow: hidden; background: #111316; border: 1px solid #343a42; border-radius: 9px; padding: 9px 11px; font: 400 13.5px/1.5 var(--ui); color: var(--ink); outline: none; }
+.composer:focus { border-color: var(--ink-3); }
+.margin-error { padding: 0 0 0 36px; font: 400 12.5px/1.4 var(--ui); color: var(--red); }
+
+.source .cm-thread, .source .cm-note { background: rgba(232,184,96,.10); border-bottom: 1.5px solid rgba(232,184,96,.45); }
+.source .cm-note { color: #f0c97c; }
+.source .cm-thread.on, .source .cm-note.on { background: rgba(232,184,96,.22); border-bottom-color: var(--amber); }
+
+.page-thread { position: fixed; top: 0; right: 0; bottom: 33px; width: 380px; display: flex; flex-direction: column; background: #1b1f24; border-left: 1px solid var(--border); font: 400 13.5px/1.55 var(--ui); color: var(--ink-2); z-index: 10; }
+.page-thread-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.page-thread-title { color: var(--ink); font-weight: 500; }
+.page-thread-head .k { margin: 0; }
+.page-thread-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 18px; padding: 16px; }
+.page-thread-compose { padding: 12px 16px 16px; }
+.lost { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.lost-quote { color: var(--ink-3); }
+
+button.status-threads { all: unset; display: flex; align-items: center; gap: 18px; cursor: pointer; }
+button.status-threads:hover, button.status-threads:focus-visible { color: var(--ink); }
+.status-open { display: flex; align-items: center; gap: 6px; }
+.status-open .dot { width: 6px; height: 6px; }
+
+/* In Preview the page keeps its full width and threads float over its right edge. */
+.page-preview { position: relative; }
+.margin-float { grid-area: 1 / 1; position: absolute; top: 0; right: 24px; bottom: 0; width: 344px; overflow: hidden; pointer-events: none; }
+.margin-float .margin-entry { left: 0; pointer-events: auto; }
+.margin-float .thread:not(.thread-on) { background: rgba(21, 24, 28, .92); border: 1px solid var(--border); padding: 6px 12px; }
+.margin-float .margin-error { padding-left: 0; }

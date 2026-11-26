@@ -4,3 +4,6 @@ dist/
 .astro/
 .superpowers/
 writing/work-journal/
+test-results/
+playwright-report/
+.trash/

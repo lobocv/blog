@@ -1,5 +1,10 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "prototypes"]
+  "exclude": ["dist", "prototypes"],
+  "compilerOptions": {
+    // The editor's UI (editor/ui) is Preact. Astro components ignore these.
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
 }
