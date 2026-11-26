@@ -2,7 +2,7 @@
 title: "About"
 ---
 
-I'm a software engineer and architect. What I care about most is the shape of a
+I'm a software developer. What I care about most is the shape of a
 system: how the pieces fit together, and whether it will still make sense a few
 years from now.
 
