@@ -13,7 +13,9 @@ export type ToPage = { type: 'scrollTo'; line: number } | { type: 'marks'; lines
 
 /**
  * Page to editor. Keys are passed on because a focused iframe gets them instead of the editor.
- * `selection` (with ⌘K) says what Calvin selected and which block it's in.
+ * `selection` (with ⌘K) says what Calvin selected and which block it's in. With no words
+ * selected, it's the figure he last clicked (an image or MDX component, tagged data-figure), with
+ * empty text, so the thread quotes the line that places the figure.
  */
 export type FromPage =
   | { type: 'ready' }
@@ -30,13 +32,16 @@ export type FromPage =
       selection?: { line: number; text: string };
     };
 
-/** Of things that start on a line, the last one starting on or above `line`. */
+/**
+ * Of things that start on a line, the last one starting on or above `line`. When several start
+ * on the same line, the later one wins: in document order that's the inner one (eg an image in its paragraph).
+ */
 export function lastAtOrAbove<T>(items: Iterable<T>, line: number, lineOf: (t: T) => number): T | undefined {
   let best: T | undefined;
   let bestLine = -1;
   for (const item of items) {
     const at = lineOf(item);
-    if (at <= line && at > bestLine) [best, bestLine] = [item, at];
+    if (at <= line && at >= bestLine) [best, bestLine] = [item, at];
   }
   return best;
 }
@@ -49,6 +54,10 @@ export const blockAt = (blocks: Iterable<Element>, line: number) => lastAtOrAbov
 const MARK_STYLE = `
 [data-editor-mark] { background: rgba(232, 184, 96, .10); box-shadow: 0 0 0 6px rgba(232, 184, 96, .10); border-radius: 2px; }
 [data-editor-mark="on"] { background: rgba(232, 184, 96, .22); box-shadow: 0 0 0 6px rgba(232, 184, 96, .22); }
+[data-figure] { cursor: pointer; }
+[data-figure]:hover { outline: 1px dashed rgba(232, 184, 96, .45); outline-offset: 6px; }
+[data-figure][data-editor-mark] { background: none; box-shadow: none; outline: 1px solid rgba(232, 184, 96, .45); outline-offset: 6px; }
+[data-figure][data-editor-mark="on"], [data-figure][data-editor-pick] { outline: 2px solid rgba(232, 184, 96, .8); outline-offset: 6px; }
 `;
 
 /** Runs in the preview page. Does nothing unless the page is inside the editor. */
@@ -117,11 +126,28 @@ export function startBridge(win: Window) {
     send({ type: 'key', code, key, metaKey, altKey, ctrlKey, shiftKey, selection: metaKey && code === 'KeyK' ? selection() : undefined });
   });
 
+  // Clicking a figure picks it for ⌘K; clicking anywhere else drops it. Run before the page's
+  // own handlers, so clicking an image picks it instead of opening the site's zoomed view.
+  let picked: Element | undefined;
+  win.addEventListener(
+    'click',
+    (e) => {
+      const target = e.target as Element | null;
+      picked?.removeAttribute('data-editor-pick');
+      picked = target?.closest?.('[data-figure]') ?? undefined;
+      picked?.setAttribute('data-editor-pick', '');
+      if (picked && target?.tagName === 'IMG') e.stopPropagation();
+    },
+    true,
+  );
+
   function selection() {
     const sel = win.getSelection();
+    const text = sel?.toString() ?? '';
+    if (!text.trim() && picked?.isConnected) return { line: dataLine(picked), text: '' };
     const node = sel?.anchorNode;
     const el = (node instanceof Element ? node : node?.parentElement)?.closest('[data-line]');
-    return el ? { line: dataLine(el), text: sel!.toString() } : undefined;
+    return el ? { line: dataLine(el), text } : undefined;
   }
 
   send({ type: 'ready' });

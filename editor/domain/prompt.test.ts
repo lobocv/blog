@@ -34,6 +34,14 @@ describe('threadPrompt', () => {
     expect(prompt).toMatch(/run the `critique` skill with "line" on this post\.$/);
   });
 
+  it('says which figure a thread is on, and where its code is', () => {
+    const post = "import Loop from '../../../components/post/Loop.astro';\n\n<Loop />\n";
+    const prompt = threadPrompt(path, { id: 't1', anchor: { quote: '<Loop />', line: 3 }, resolved: false, messages: [] }, post);
+    expect(prompt).toMatch(/^Calvin wrote in thread t1 on .*, about the figure Loop \(its code is in src\/components\/post\/Loop\.astro\) near line 3:/);
+    const image = threadPrompt(path, { id: 't2', anchor: { quote: '![x](./a.png)', line: 5 }, resolved: false, messages: [] }, post);
+    expect(image).toContain('about the image src/content/posts/a/a.png near line 5');
+  });
+
   it('says when the quoted words are gone', () => {
     const prompt = threadPrompt(path, { id: 't1', anchor: { quote: 'x', line: 1 }, lost: true, resolved: false, messages: [] });
     expect(prompt).toContain('no longer in the post');

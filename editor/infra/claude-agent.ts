@@ -82,14 +82,13 @@ export class ClaudeAgent implements Agent {
       'NotebookEdit',
       // Only the editor's tools: Calvin's other MCP servers would slow every turn down.
       ...(turn.tools
-        ? [
-            '--mcp-config',
-            JSON.stringify({ mcpServers: { editor: { type: 'http', url: turn.tools } } }),
-            '--strict-mcp-config',
-            '--allowedTools',
-            ...TOOL_NAMES,
-          ]
+        ? ['--mcp-config', JSON.stringify({ mcpServers: { editor: { type: 'http', url: turn.tools } } }), '--strict-mcp-config']
         : []),
+      // Figure components are code Claude may change without asking (see EDITOR_SYSTEM_PROMPT).
+      '--allowedTools',
+      ...(turn.tools ? TOOL_NAMES : []),
+      'Edit(src/components/**)',
+      'Write(src/components/**)',
       ...(turn.session ? ['--resume', turn.session] : []),
     ];
     // Started from inside a Claude Code session (eg while testing), the CLI would think it's nested.

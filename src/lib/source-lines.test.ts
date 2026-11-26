@@ -31,4 +31,20 @@ describe('rehypeSourceLines', () => {
     expect(h2.properties.dataLine).toBe(8);
     expect(p.children[0].properties.dataLine).toBeUndefined();
   });
+
+  it('wraps MDX components in a tagged div, and marks images, so they can be picked as figures', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'lines-')), 'index.mdx');
+    writeFileSync(path, file);
+    const jsx = (name: string, line: number) => ({ type: 'mdxJsxFlowElement', name, attributes: [], position: { start: { line } }, children: [] });
+    const img = { type: 'element', tagName: 'img', properties: {}, position: { start: { line: 1 } }, children: [] };
+    const raw = { type: 'raw', value: '<img src="/a.png"/>', position: { start: { line: 3 } } };
+    const tree = { type: 'root', children: [jsx('ContextStack', 3), jsx('div', 3), img, raw, jsx('img', 1)] };
+    rehypeSourceLines()(tree as any, { value: body, path } as any);
+    const [wrapped, lower, image, html, jsxImg] = tree.children as any[];
+    expect(wrapped).toMatchObject({ tagName: 'div', properties: { dataLine: 8, dataFigure: 'ContextStack' }, children: [{ name: 'ContextStack' }] });
+    expect(lower.type).toBe('mdxJsxFlowElement');
+    expect(image.properties).toEqual({ 'data-line': 6, 'data-figure': 'image' });
+    expect(html).toMatchObject({ tagName: 'div', properties: { dataLine: 8, dataFigure: 'image' }, children: [raw] });
+    expect(jsxImg).toMatchObject({ tagName: 'div', properties: { dataLine: 6, dataFigure: 'image' } });
+  });
 });

@@ -24,7 +24,16 @@ test.beforeAll(async () => {
   await mkdir(join(root, 'src/content/posts/long'), { recursive: true });
   const body = Array.from({ length: 80 }, (_, i) => `Paragraph ${i + 1}.`).join('\n\n');
   await writeFile(join(root, 'src/content/posts/long/index.md'), `---\ntitle: Long draft\ndraft: true\n---\n\n${body}\n`);
-  editor = await startEditor(root, port);
+  // And one with a figure component and an image, to comment on.
+  await mkdir(join(root, 'src/content/posts/figs'), { recursive: true });
+  await writeFile(
+    join(root, 'src/content/posts/figs/index.mdx'),
+    "---\ntitle: Figures\ndraft: true\n---\nimport ContextStack from '../../../components/post/ContextStack.astro';\n\nIntro.\n\n<ContextStack />\n\n![A dot](./dot.png)\n",
+  );
+  await cp(join(repo, 'public/posts/elasticsearch_slots/img.png'), join(root, 'src/content/posts/figs/dot.png'));
+  // Comments go to Claude: a fake one, replaying a recorded reply.
+  process.env.FAKE_CLAUDE_STREAM = join(repo, 'editor/infra/testdata/reply.jsonl');
+  editor = await startEditor(root, port, '--claude', join(repo, 'editor/infra/testdata/fake-claude.mjs'));
 });
 
 test.afterAll(async () => {
@@ -95,4 +104,32 @@ test('comments on text selected in the preview, and the thread floats beside it'
   await page.getByLabel('Reply').fill('yes');
   await page.getByLabel('Reply').press('Enter');
   await expect.poll(async () => (await stored())[0].messages.length).toBe(2);
+});
+
+test('clicking a figure or an image in the preview picks it for ⌘K', async ({ page }) => {
+  await page.goto(`http://127.0.0.1:${port}/?post=figs`);
+  await expect(page.getByLabel('Post source')).toContainText('<ContextStack />');
+  await page.keyboard.press('ControlOrMeta+Backslash');
+  const stored = async () => JSON.parse(await readFile(join(root, 'writing/threads/figs.json'), 'utf8').catch(() => '{"threads":[]}')).threads;
+
+  // The thread quotes the line that places the figure.
+  const figure = frame(page).locator('[data-figure="ContextStack"]');
+  await expect(figure).toBeVisible({ timeout: 60_000 });
+  await figure.click({ position: { x: 5, y: 5 } });
+  await expect(figure).toHaveAttribute('data-editor-pick', '');
+  await figure.press('ControlOrMeta+k');
+  await page.getByLabel('Comment').fill('fewer layers?');
+  await page.getByLabel('Comment').press('Enter');
+  await expect.poll(async () => (await stored())[0]?.anchor).toEqual({ quote: '<ContextStack />', line: 9 });
+  await expect(figure).toHaveAttribute('data-editor-mark', 'on');
+
+  const image = frame(page).locator('#body img[data-figure="image"]');
+  await image.click();
+  await image.press('ControlOrMeta+k');
+  await page.getByLabel('Comment').fill('bigger');
+  await page.getByLabel('Comment').press('Enter');
+  await expect.poll(async () => (await stored())[1]?.anchor).toEqual({ quote: '![A dot](./dot.png)', line: 11 });
+  // The image's own highlight, not its paragraph's, and the site's zoomed view stayed shut.
+  await expect(image).toHaveAttribute('data-editor-mark', 'on');
+  await expect(frame(page).getByRole('dialog', { name: 'Image' })).toBeHidden();
 });

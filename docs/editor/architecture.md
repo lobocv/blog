@@ -24,6 +24,7 @@ editor/
     document.ts        text, headings, word count and reading time
     post.ts            drafts, titles and valid slugs
     anchor.ts          pins a thread to quoted text plus a line hint, re-finds it after edits
+    figure.ts          what a thread on a figure points at: the component's file or the image
     thread.ts          threads, replies, open and resolved
     suggestion.ts      proposed edits: apply, tweak, keep in place as the text changes
     review.ts          critique checklist progress
@@ -111,6 +112,14 @@ e2e/
   with the block holding their first line. ⌘K there quotes the selected words
   when the source has them as typed, otherwise the block's first line
   (`anchorNear` in `domain/anchor.ts`)
+- Figures can be commented on like words. The rehype plugin tags images with
+  `data-figure`, and wraps MDX components (eg `<ContextStack />`) and raw HTML
+  images in a tagged div, since they render as whatever they output. Clicking
+  one in the preview picks it, and ⌘K comments on the line that places it. In
+  Source, ⌘K with the cursor on that line does the same. Claude is told which
+  component file or image the thread is about (`domain/figure.ts`). Figure
+  components are code rather than Calvin's prose, so Claude edits them directly
+  (`src/components/`) and the preview reloads
 - Neither runs in a build, so the built site is unchanged. ⌘\ swaps views and
   keeps the same block at the top: the source's top line goes to the preview,
   and the preview's top block comes back

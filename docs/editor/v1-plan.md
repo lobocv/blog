@@ -26,8 +26,7 @@ replies and suggested edits in the margin. Everything follows
 
 - Done after v1: critiques from the editor with progress in the page thread
   (⇧C), accept all mechanical fixes (⇧A), go to section (G), action all notes
-  (⇧N), hide threads (Z)
-- Images and figure components as thread targets (v1 anchors to text only)
+  (⇧N), hide threads (Z), and images and figure components as thread targets
 - Anything for project pages
 
 ## Milestones

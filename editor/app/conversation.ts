@@ -53,7 +53,7 @@ export function createConversation({ library, threads, clock, agent, toolsUrl }:
     publish(slug, { type: 'working', threadId, text: '' });
     let text = '';
     const result = await agent.ask(
-      { prompt: threadPrompt(library.pathOf(slug), thread), session: await threads.session(slug), tools: toolsUrl?.(slug) },
+      { prompt: threadPrompt(library.pathOf(slug), thread, (await library.read(slug))?.text), session: await threads.session(slug), tools: toolsUrl?.(slug) },
       (e) => {
         if (e.type === 'text') text = e.text;
         publish(slug, { type: 'working', threadId, text, tool: e.type === 'tool' ? e.name : undefined });
