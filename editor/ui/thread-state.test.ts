@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import { describe, expect, it } from 'vitest';
+import { settle } from '../domain/suggestion.ts';
 import { comment, PAGE, reply, resolve, type Thread } from '../domain/thread.ts';
 import { createThreadState } from './thread-state.ts';
 
@@ -17,6 +18,8 @@ function fakeApi(initial: Thread[] = []) {
       (threads = reply(threads, id, { author: 'calvin', text: r.text, at })!),
     resolveThread: async (_: string, id: string) => (threads = resolve(threads, id)!),
     stopClaude: async () => {},
+    settleSuggestion: async (_: string, id: string, x: { status: 'accepted' | 'rejected'; replace?: string }) =>
+      (threads = settle(threads, id, x.status, x.replace)!),
   };
 }
 
@@ -91,6 +94,19 @@ describe('thread state', () => {
     s.apply({ type: 'idle' });
     expect(s.working.value).toBeUndefined();
     expect(s.threads.value).toEqual(saved);
+  });
+
+  it("finds the selected thread's open suggestion and settles it", async () => {
+    const suggestion = { id: 's1', find: 'Gamma', replace: 'Delta', line: 5, status: 'open' as const };
+    const s = setup([{ id: 't1', anchor: { quote: 'Gamma', line: 5 }, resolved: false, messages: [{ author: 'claude', text: 'why', at, suggestion }] }]);
+    await s.load();
+    s.selected.value = 't1';
+    expect(s.selectedSuggestion()?.id).toBe('s1');
+    s.composing.value = { kind: 'tweak', suggestion };
+    await s.settle('s1', 'accepted', 'Delta!');
+    expect(s.selectedSuggestion()).toBeUndefined();
+    expect(s.composing.value).toBeUndefined();
+    expect(s.threads.value[0].messages[0].suggestion).toMatchObject({ status: 'accepted', replace: 'Delta!' });
   });
 
   it('says when Claude could not reply', () => {

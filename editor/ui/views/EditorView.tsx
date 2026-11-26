@@ -2,12 +2,14 @@ import { computed, signal } from '@preact/signals';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
 import { anchorAt, anchorNear, lineOf } from '../../domain/anchor.ts';
 import { stats } from '../../domain/document.ts';
+import { openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
 import { ClaudeEvent, type Post, routes } from '../../protocol.ts';
 import { savePost } from '../api.ts';
 import { createAutosave } from '../autosave.ts';
 import { Margin } from '../components/Margin.tsx';
 import { PageThread } from '../components/PageThread.tsx';
 import { StatusLine, type View } from '../components/StatusLine.tsx';
+import type { SuggestionActions } from '../components/SuggestionView.tsx';
 import { createThreadState } from '../thread-state.ts';
 import { type PreviewHandle, PreviewView } from './PreviewView.tsx';
 import { type SourceHandle, SourceView } from './SourceView.tsx';
@@ -27,11 +29,16 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
       // Bumped when lines move in the source, so the margin follows.
       layout: signal(0),
       marks: computed<Mark[]>(() => {
-        const out = threads.items.value.map((i) => ({
+        const out: Mark[] = threads.items.value.map((i) => ({
           from: i.range.from,
           to: i.range.to,
           className: `cm-${i.kind}${threads.selected.value === i.id ? ' on' : ''}`,
         }));
+        // The words the selected thread's suggestion would replace.
+        const open = threads.threads.value.find((t) => t.id === threads.selected.value);
+        const s = open && openSuggestion(open);
+        const at = s && target(text.value, s);
+        if (at) out.push({ ...at, className: 'cm-del' });
         return out;
       }),
     };
@@ -81,6 +88,33 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
     preview.current?.mark(lines, sel && lineOf(t, sel.range.from));
   }, [threads.items.value, threads.selected.value]);
 
+  const suggestions: SuggestionActions = {
+    applies: (s) => Boolean(target(text.value, s)),
+    tweaking: threads.composing.value?.kind === 'tweak' ? threads.composing.value.suggestion.id : undefined,
+    // Applied to the editor like Calvin's own typing (⌘Z undoes it), then saved by autosave.
+    async accept(s: Suggestion, replace?: string) {
+      const at = target(text.value, s);
+      if (!at || !source.current) {
+        threads.error.value = 'The words that suggestion replaces have changed.';
+        return false;
+      }
+      source.current.replace(at, replace ?? s.replace);
+      void autosave.flush();
+      const ok = await threads.settle(s.id, 'accepted', replace);
+      if (ok) backToWriting();
+      return ok;
+    },
+    reject: (s) => void threads.settle(s.id, 'rejected'),
+    tweak: (s) => (threads.composing.value = { kind: 'tweak', suggestion: s }),
+    cancelTweak: () => {
+      threads.composing.value = undefined;
+      backToWriting();
+    },
+  };
+  // Keys read this through a ref, since the handler is attached once.
+  const actions = useRef(suggestions);
+  actions.current = suggestions;
+
   const backToWriting = () => {
     if (view.value === 'source') {
       // The text Calvin commented on is often still selected.
@@ -129,6 +163,15 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
           if (view.value === 'source') source.current?.reveal(item.range.from);
           else preview.current?.scrollTo(lineOf(text.value, item.range.from));
         });
+      } else if (threadKey && ['KeyA', 'KeyX', 'KeyT'].includes(e.code) && threads.selectedSuggestion()) {
+        act(() => {
+          const s = threads.selectedSuggestion()!;
+          const a = actions.current;
+          if (e.code === 'KeyX') a.reject(s);
+          else if (!a.applies(s)) threads.error.value = 'The words that suggestion replaces have changed.';
+          else if (e.code === 'KeyA') void a.accept(s);
+          else a.tweak(s);
+        });
       } else if (threadKey && e.code === 'KeyR') act(() => threads.replyToSelected());
       else if (threadKey && e.code === 'KeyD') act(() => void threads.resolveSelected());
       else if (threadKey && e.code === 'KeyP') act(() => (threads.pageOpen.value = !threads.pageOpen.value));
@@ -165,6 +208,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
             topOf={(pos) => source.current?.topOf(pos) ?? 0}
             layout={layout.value}
             keyPrefix="⌥"
+            suggestions={suggestions}
             onDone={backToWriting}
           />
         )}
@@ -173,6 +217,7 @@ export function EditorView({ post, onDrafts }: { post: Post; onDrafts: () => voi
         slug={post.slug}
         text={text.value}
         threads={threads}
+        suggestions={suggestions}
         handle={preview}
         hidden={view.value !== 'preview'}
         onDone={backToWriting}

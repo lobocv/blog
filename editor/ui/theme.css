@@ -134,3 +134,13 @@ button.status-threads:hover, button.status-threads:focus-visible { color: var(--
 .claude-working .message-text, .thread-sub.claude-working { color: var(--green); }
 button.status-claude { all: unset; display: flex; align-items: center; color: var(--green); cursor: pointer; }
 button.status-claude .k { margin-left: 8px; }
+
+/* Suggested edits: red for what goes, green for what comes in. */
+.suggestion { font: 400 13.5px/1.55 var(--ui); overflow-wrap: anywhere; }
+.del { color: var(--red); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.ins { color: var(--green); background: rgba(151,201,143,.12); border-bottom: 1.5px solid var(--green); }
+.suggestion-status { font-size: 12.5px; color: var(--ink-3); }
+.btn-go { background: var(--green); border-color: var(--green); color: #13210f; }
+.btn-go .k { color: #2c4a26; border-color: rgba(19,33,15,.35); }
+.btn-go:hover, .btn-go:focus-visible { border-color: var(--green); filter: brightness(1.08); }
+.source .cm-del { color: var(--red); text-decoration: line-through; text-decoration-thickness: 1.5px; background: transparent; border-bottom: 0; }

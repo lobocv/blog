@@ -12,11 +12,13 @@ import { deleteDraft } from './app/delete-draft.ts';
 import { listDrafts } from './app/list-drafts.ts';
 import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
+import { settleSuggestion, suggestEdit } from './app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
 import { ClaudeAgent } from './infra/claude-agent.ts';
 import { FsPostLibrary } from './infra/fs-post-library.ts';
 import { JsonThreadStore } from './infra/json-thread-store.ts';
+import { createMcpHandler } from './infra/mcp-tools.ts';
 import { createApi } from './server/http.ts';
 
 const { values: args } = parseArgs({
@@ -49,7 +51,12 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 const library = new FsPostLibrary(root);
 const threads = new JsonThreadStore(root);
 const deps = { library, threads, clock: { now: () => new Date(), id: randomUUID } };
-const conversation = createConversation({ ...deps, agent: new ClaudeAgent(root, args.claude) });
+const conversation = createConversation({
+  ...deps,
+  agent: new ClaudeAgent(root, args.claude),
+  toolsUrl: (slug) => `http://127.0.0.1:${apiPort}/mcp/${slug}`,
+});
+const mcp = createMcpHandler({ suggestEdit: suggestEdit(deps), changed: conversation.changed });
 const api = createApi({
   listDrafts: listDrafts(library),
   openPost: openPost(library),
@@ -58,11 +65,14 @@ const api = createApi({
   addComment: addComment(deps),
   replyToThread: replyToThread(deps),
   resolveThread: resolveThread(deps),
+  settleSuggestion: settleSuggestion(deps),
   deleteDraft: deleteDraft(library),
   conversation,
   previewOrigin: () => preview?.origin() ?? Promise.reject(new Error('The preview is off (--no-preview).')),
 });
 
+// Claude reaches the MCP tools on the API port directly, not through the UI's proxy.
+api.all('/mcp/:slug', (c) => mcp(c.req.param('slug'), c.req.raw));
 serve({ fetch: api.fetch, port: apiPort, hostname: '127.0.0.1' });
 
 const ui = await createServer({

@@ -2,6 +2,7 @@
 // is selected and what Calvin is typing. Views read the signals; keys and buttons call the actions.
 import { computed, type ReadonlySignal, signal } from '@preact/signals';
 import { type Anchor, locate, type Range } from '../domain/anchor.ts';
+import { openSuggestion, type Suggestion } from '../domain/suggestion.ts';
 import { counts, type Message, notes, PAGE, type Thread } from '../domain/thread.ts';
 import type { ClaudeEvent } from '../protocol.ts';
 import * as defaultApi from './api.ts';
@@ -10,9 +11,17 @@ import * as defaultApi from './api.ts';
 export type Item = { id: string; kind: 'thread' | 'note'; range: Range; messages: Message[] };
 
 /** What the composer is for: a new comment on quoted text, a reply, or the page thread. */
-export type Composing = { kind: 'comment'; anchor: Anchor } | { kind: 'reply'; id: string } | { kind: 'page' };
+export type Composing =
+  | { kind: 'comment'; anchor: Anchor }
+  | { kind: 'reply'; id: string }
+  | { kind: 'page' }
+  /** Calvin's version of a suggestion, before it's applied. */
+  | { kind: 'tweak'; suggestion: Suggestion };
 
-type Api = Pick<typeof defaultApi, 'loadThreads' | 'addComment' | 'replyToThread' | 'resolveThread' | 'stopClaude'>;
+type Api = Pick<
+  typeof defaultApi,
+  'loadThreads' | 'addComment' | 'replyToThread' | 'resolveThread' | 'stopClaude' | 'settleSuggestion'
+>;
 
 /** Claude's reply in progress: the thread, the text so far, and the tool it's using. */
 export type Working = { threadId: string; text: string; tool?: string };
@@ -89,7 +98,7 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
     /** Sends what the composer holds. Resolves true when it was saved. */
     async send(body: string) {
       const c = composing.value;
-      if (!c || !body.trim()) return false;
+      if (!c || c.kind === 'tweak' || !body.trim()) return false;
       const ok = await run(() =>
         c.kind === 'comment'
           ? api.addComment(slug, { anchor: c.anchor, text: body })
@@ -115,6 +124,19 @@ export function createThreadState(slug: string, text: ReadonlySignal<string>, ap
     replyToSelected() {
       const id = selected.value;
       if (id && threads.value.some((th) => th.id === id)) composing.value = { kind: 'reply', id };
+    },
+
+    /** The selected thread's suggestion waiting on Calvin, if any. */
+    selectedSuggestion(): Suggestion | undefined {
+      const t = threads.value.find((th) => th.id === selected.value);
+      return t && openSuggestion(t);
+    },
+
+    /** Records an accepted (after the editor applied it) or rejected suggestion. */
+    async settle(id: string, status: 'accepted' | 'rejected', replace?: string) {
+      const ok = await run(() => api.settleSuggestion(slug, id, { status, replace }));
+      if (ok && composing.value?.kind === 'tweak') composing.value = undefined;
+      return ok;
     },
 
     /** Selects the next (1) or previous (-1) thread in the margin. Returns it. */

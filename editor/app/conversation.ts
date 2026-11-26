@@ -12,13 +12,28 @@ export type ConversationEvent =
   | { type: 'idle' }
   | { type: 'failed'; threadId: string; message: string };
 
-type Deps = { library: PostLibrary; threads: ThreadStore; clock: Clock; agent: Agent };
+type Deps = {
+  library: PostLibrary;
+  threads: ThreadStore;
+  clock: Clock;
+  agent: Agent;
+  /** The URL of the editor's MCP tools for a post (eg suggest_edit). */
+  toolsUrl?: (slug: string) => string;
+};
 type Listener = (e: ConversationEvent) => void;
 
 /** Per post: the running turn, the turns waiting behind it, and who's listening. */
-type PostState = { chain: Promise<void>; waiting: number; current?: AbortController; generation: number; listeners: Set<Listener>; last?: ConversationEvent };
+type PostState = {
+  chain: Promise<void>;
+  waiting: number;
+  current?: AbortController;
+  generation: number;
+  listeners: Set<Listener>;
+  /** The latest progress of the running turn, for listeners that join late. */
+  lastWorking?: ConversationEvent;
+};
 
-export function createConversation({ library, threads, clock, agent }: Deps) {
+export function createConversation({ library, threads, clock, agent, toolsUrl }: Deps) {
   const posts = new Map<string, PostState>();
   const stateOf = (slug: string) => {
     let s = posts.get(slug);
@@ -27,7 +42,8 @@ export function createConversation({ library, threads, clock, agent }: Deps) {
   };
   const publish = (slug: string, e: ConversationEvent) => {
     const s = stateOf(slug);
-    s.last = e.type === 'working' ? e : undefined;
+    if (e.type === 'working') s.lastWorking = e;
+    else if (e.type !== 'threads') s.lastWorking = undefined;
     for (const l of s.listeners) l(e);
   };
 
@@ -37,7 +53,7 @@ export function createConversation({ library, threads, clock, agent }: Deps) {
     publish(slug, { type: 'working', threadId, text: '' });
     let text = '';
     const result = await agent.ask(
-      { prompt: threadPrompt(library.pathOf(slug), thread), session: await threads.session(slug) },
+      { prompt: threadPrompt(library.pathOf(slug), thread), session: await threads.session(slug), tools: toolsUrl?.(slug) },
       (e) => {
         if (e.type === 'text') text = e.text;
         publish(slug, { type: 'working', threadId, text, tool: e.type === 'tool' ? e.name : undefined });
@@ -87,11 +103,19 @@ export function createConversation({ library, threads, clock, agent }: Deps) {
       s.current?.abort();
     },
 
+    /** Tells listeners the threads changed during a turn (eg Claude suggested an edit). */
+    changed(slug: string, list: Thread[]) {
+      publish(slug, { type: 'threads', threads: list });
+      // The turn is still running: say so again, so the editor keeps showing it.
+      const s = stateOf(slug);
+      if (s.current && s.lastWorking) publish(slug, s.lastWorking);
+    },
+
     /** Calls `listener` with every event for the post. Starts with the turn in progress, if any. */
     subscribe(slug: string, listener: Listener): () => void {
       const s = stateOf(slug);
       s.listeners.add(listener);
-      if (s.last) listener(s.last);
+      if (s.lastWorking) listener(s.lastWorking);
       return () => s.listeners.delete(listener);
     },
   };

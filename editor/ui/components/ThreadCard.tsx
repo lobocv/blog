@@ -1,5 +1,6 @@
 import type { Message } from '../../domain/thread.ts';
 import { Composer } from './Composer.tsx';
+import { type SuggestionActions, SuggestionView } from './SuggestionView.tsx';
 
 type Props = {
   kind: 'thread' | 'note';
@@ -10,6 +11,7 @@ type Props = {
   replying: boolean;
   /** Claude's reply while it's being written. */
   working?: { text: string; tool?: string };
+  suggestions: SuggestionActions;
   onSelect: () => void;
   onReply: () => void;
   onResolve: () => void;
@@ -33,7 +35,7 @@ export function LiveReply({ text, tool }: { text: string; tool?: string }) {
 }
 
 /** A thread or note in the margin: one line until selected, then the whole conversation. */
-export function ThreadCard({ kind, messages, selected, keyPrefix, replying, working, ...on }: Props) {
+export function ThreadCard({ kind, messages, selected, keyPrefix, replying, working, suggestions, ...on }: Props) {
   const [first, ...rest] = messages;
   const last = rest.at(-1);
   const dot = (last ?? first)?.author === 'claude' ? 'dot dot-claude' : 'dot dot-calvin';
@@ -50,7 +52,7 @@ export function ThreadCard({ kind, messages, selected, keyPrefix, replying, work
         ) : (
           last && (
             <div class="thread-sub">
-              {who(last)} · {last.text}
+              {who(last)} · {last.suggestion?.status === 'open' ? 'suggested an edit' : last.text}
             </div>
           )
         )}
@@ -60,12 +62,16 @@ export function ThreadCard({ kind, messages, selected, keyPrefix, replying, work
 
   return (
     <div class="thread thread-on">
-      {messages.map((m, i) => (
-        <div class="message" key={i}>
-          <span class={`message-who ${m.author}`}>{who(m)}</span>
-          <div class="message-text">{m.text}</div>
-        </div>
-      ))}
+      {messages.map((m, i) =>
+        m.suggestion ? (
+          <SuggestionView key={i} s={m.suggestion} reason={m.text} keyPrefix={keyPrefix} act={suggestions} />
+        ) : (
+          <div class="message" key={i}>
+            <span class={`message-who ${m.author}`}>{who(m)}</span>
+            <div class="message-text">{m.text}</div>
+          </div>
+        ),
+      )}
       {working && <LiveReply {...working} />}
       {kind === 'note' ? (
         <div class="thread-sub">Note in the post. Edit it there.</div>

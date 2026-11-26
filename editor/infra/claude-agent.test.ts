@@ -40,7 +40,7 @@ describe('ClaudeAgent, with a fake claude', () => {
     process.env = { ...env };
   });
 
-  async function ask(opts: { stream: string; delay?: number; session?: string; failResume?: boolean; stopOnText?: boolean }) {
+  async function ask(opts: { stream: string; delay?: number; session?: string; tools?: string; failResume?: boolean; stopOnText?: boolean }) {
     const argsFile = join(await mkdtemp(join(tmpdir(), 'claude-')), 'args');
     Object.assign(process.env, {
       FAKE_CLAUDE_STREAM: join(data, opts.stream),
@@ -54,7 +54,7 @@ describe('ClaudeAgent, with a fake claude', () => {
       events.push(e);
       if (opts.stopOnText && e.type === 'text') controller.abort();
     };
-    const result = await new ClaudeAgent(tmpdir(), fake).ask({ prompt: 'hi', session: opts.session }, onEvent, controller.signal);
+    const result = await new ClaudeAgent(tmpdir(), fake).ask({ prompt: 'hi', session: opts.session, tools: opts.tools }, onEvent, controller.signal);
     const calls = (await readFile(argsFile, 'utf8')).split('\n').filter(Boolean).map((l) => JSON.parse(l) as string[]);
     return { result, events, calls };
   }
@@ -64,6 +64,13 @@ describe('ClaudeAgent, with a fake claude', () => {
     expect(result).toEqual({ text: 'Two short sentences. Nothing else.', session: '00000000-0000-4000-8000-000000000001', stopped: false, error: false });
     expect(calls[0]).toEqual(expect.arrayContaining(['-p', 'hi', '--output-format', 'stream-json', 'Edit(src/content/posts/**)']));
     expect(calls[0]).not.toContain('--resume');
+  });
+
+  it("gives Claude only the editor's tools when there are some", async () => {
+    const { calls } = await ask({ stream: 'reply.jsonl', tools: 'http://127.0.0.1:4401/mcp/a' });
+    const config = calls[0][calls[0].indexOf('--mcp-config') + 1];
+    expect(JSON.parse(config)).toEqual({ mcpServers: { editor: { type: 'http', url: 'http://127.0.0.1:4401/mcp/a' } } });
+    expect(calls[0]).toEqual(expect.arrayContaining(['--strict-mcp-config', 'mcp__editor__suggest_edit']));
   });
 
   it('resumes the session it is given', async () => {

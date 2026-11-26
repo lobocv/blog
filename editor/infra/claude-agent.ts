@@ -55,17 +55,17 @@ export class ClaudeAgent implements Agent {
     this.#command = command;
   }
 
-  async ask(turn: { prompt: string; session?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  async ask(turn: { prompt: string; session?: string; tools?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
     const first = await this.#run(turn, onEvent, signal);
     // A session can disappear (eg cleared from ~/.claude). Start a new one rather than fail.
     if (first.error && turn.session && !first.stopped && !first.text) {
-      return this.#run({ prompt: turn.prompt }, onEvent, signal);
+      return this.#run({ ...turn, session: undefined }, onEvent, signal);
     }
     if (first.error && !first.stopped) throw new Error(first.text || 'Claude stopped without replying.');
     return first;
   }
 
-  #run(turn: { prompt: string; session?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  #run(turn: { prompt: string; session?: string; tools?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
     const args = [
       '-p',
       turn.prompt,
@@ -79,6 +79,16 @@ export class ClaudeAgent implements Agent {
       'Edit(src/content/posts/**)',
       'Write(src/content/posts/**)',
       'NotebookEdit',
+      // Only the editor's tools: Calvin's other MCP servers would slow every turn down.
+      ...(turn.tools
+        ? [
+            '--mcp-config',
+            JSON.stringify({ mcpServers: { editor: { type: 'http', url: turn.tools } } }),
+            '--strict-mcp-config',
+            '--allowedTools',
+            'mcp__editor__suggest_edit',
+          ]
+        : []),
       ...(turn.session ? ['--resume', turn.session] : []),
     ];
     // Started from inside a Claude Code session (eg while testing), the CLI would think it's nested.

@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'preact/hooks';
 import { locate } from '../../domain/anchor.ts';
 import type { ThreadState } from '../thread-state.ts';
 import { Composer } from './Composer.tsx';
+import type { SuggestionActions } from './SuggestionView.tsx';
 import { ThreadCard } from './ThreadCard.tsx';
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
   /** Changes whenever lines move, so cards follow their words. */
   layout: number;
   keyPrefix: string;
+  suggestions: SuggestionActions;
   /** Extra classes, eg to float the margin over the preview. */
   class?: string;
   /** Hands focus back to the writing after a message is sent or cancelled. */
@@ -21,7 +23,7 @@ type Props = {
 const GAP = 10;
 
 /** Threads beside the words they're about. Cards that would overlap are pushed down. */
-export function Margin({ state, text, topOf, layout, keyPrefix, class: extra, onDone }: Props) {
+export function Margin({ state, text, topOf, layout, keyPrefix, suggestions, class: extra, onDone }: Props) {
   const list = useRef<HTMLDivElement>(null);
   const composing = state.composing.value;
   const draft = composing?.kind === 'comment' ? locate(text, composing.anchor) : undefined;
@@ -69,6 +71,7 @@ export function Margin({ state, text, topOf, layout, keyPrefix, class: extra, on
                 keyPrefix={keyPrefix}
                 replying={composing?.kind === 'reply' && composing.id === item.id}
                 working={state.working.value?.threadId === item.id ? state.working.value : undefined}
+                suggestions={suggestions}
                 onSelect={() => (state.selected.value = item.id)}
                 onReply={() => state.replyToSelected()}
                 onResolve={() => void state.resolveSelected()}

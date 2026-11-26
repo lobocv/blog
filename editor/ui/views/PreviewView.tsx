@@ -3,6 +3,7 @@ import { lineOf } from '../../domain/anchor.ts';
 import { type BlockPlace, type FromPage, lastAtOrAbove, postPath, type ToPage } from '../../../shared/preview.ts';
 import { loadPreviewOrigin } from '../api.ts';
 import { Margin } from '../components/Margin.tsx';
+import type { SuggestionActions } from '../components/SuggestionView.tsx';
 import type { ThreadState } from '../thread-state.ts';
 
 /** What EditorView needs from the preview: keeping it on the same block as Source, and threads. */
@@ -20,6 +21,7 @@ type Props = {
   slug: string;
   text: string;
   threads: ThreadState;
+  suggestions: SuggestionActions;
   handle?: { current: PreviewHandle | undefined };
   hidden: boolean;
   onDone: () => void;
@@ -29,7 +31,7 @@ type Props = {
  * The real page from `astro dev`, which reloads by itself when the post is saved. Threads float
  * at the right edge beside the block they're in, so the page keeps its full width.
  */
-export function PreviewView({ slug, text, threads, handle, hidden, onDone }: Props) {
+export function PreviewView({ slug, text, threads, suggestions, handle, hidden, onDone }: Props) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [origin, setOrigin] = useState<string>();
   const [error, setError] = useState<string>();
@@ -97,7 +99,16 @@ export function PreviewView({ slug, text, threads, handle, hidden, onDone }: Pro
         <p class="preview-note">Starting the preview</p>
       )}
       {!hidden && origin && (
-        <Margin state={threads} text={text} topOf={topOf} layout={0} keyPrefix="" class="margin-float" onDone={onDone} />
+        <Margin
+          state={threads}
+          text={text}
+          topOf={topOf}
+          layout={0}
+          keyPrefix=""
+          suggestions={suggestions}
+          class="margin-float"
+          onDone={onDone}
+        />
       )}
     </main>
   );

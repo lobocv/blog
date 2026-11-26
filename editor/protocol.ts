@@ -8,6 +8,7 @@ export const routes = {
   preview: '/api/preview',
   threads: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/threads`,
   events: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/events`,
+  suggestion: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/suggestions/${encodeURIComponent(id)}`,
   stop: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/stop`,
   thread: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/threads/${encodeURIComponent(id)}`,
 } as const;
@@ -29,7 +30,14 @@ export const SavePost = z.object({ text: z.string() });
 export type SavePost = z.infer<typeof SavePost>;
 
 const Anchor = z.object({ quote: z.string(), line: z.number().int().min(1) });
-const Message = z.object({ author: z.enum(['calvin', 'claude']), text: z.string(), at: z.string() });
+const Suggestion = z.object({
+  id: z.string(),
+  find: z.string(),
+  replace: z.string(),
+  line: z.number().int().min(1),
+  status: z.enum(['open', 'accepted', 'rejected']),
+});
+const Message = z.object({ author: z.enum(['calvin', 'claude']), text: z.string(), at: z.string(), suggestion: Suggestion.optional() });
 const Thread = z.object({
   id: z.string(),
   anchor: Anchor.optional(),
@@ -54,6 +62,10 @@ export type ClaudeEvent = z.infer<typeof ClaudeEvent>;
 /** POST .../threads. No anchor means the page thread */
 export const NewComment = z.object({ anchor: Anchor.optional(), text: z.string().min(1) });
 export type NewComment = z.infer<typeof NewComment>;
+
+/** POST /api/posts/:slug/suggestions/:id, after an accepted edit was applied to the text */
+export const Settle = z.object({ status: z.enum(['accepted', 'rejected']), replace: z.string().optional() });
+export type Settle = z.infer<typeof Settle>;
 
 /** POST .../threads/:id/replies */
 export const NewReply = z.object({ text: z.string().min(1) });

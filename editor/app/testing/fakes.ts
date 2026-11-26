@@ -77,7 +77,7 @@ export class FakeClock implements Clock {
  * turn open until `release()` is called (or the turn is stopped), to test queueing and stopping.
  */
 export class FakeAgent implements Agent {
-  turns: { prompt: string; session?: string }[] = [];
+  turns: { prompt: string; session?: string; tools?: string }[] = [];
   #replies: string[];
   #release: (() => void) | undefined;
 
@@ -89,7 +89,7 @@ export class FakeAgent implements Agent {
     this.#release?.();
   }
 
-  async ask(turn: { prompt: string; session?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  async ask(turn: { prompt: string; session?: string; tools?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
     this.turns.push(turn);
     const reply = this.#replies.shift() ?? 'ok';
     const session = `s${this.turns.length}`;

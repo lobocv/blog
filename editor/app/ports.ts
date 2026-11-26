@@ -52,7 +52,7 @@ export interface Agent {
    * `stopped: true` and whatever it had written.
    */
   ask(
-    turn: { prompt: string; session?: string },
+    turn: { prompt: string; session?: string; /** The editor's MCP tools for this post. */ tools?: string },
     onEvent: (e: AgentEvent) => void,
     signal: AbortSignal,
   ): Promise<{ text: string; session?: string; stopped: boolean }>;

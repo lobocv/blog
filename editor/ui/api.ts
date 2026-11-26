@@ -1,4 +1,4 @@
-import { Drafts, Failure, type NewComment, type NewReply, Post, PreviewInfo, routes, type SavePost, Threads } from '../protocol.ts';
+import { Drafts, Failure, type NewComment, type NewReply, Post, PreviewInfo, routes, type SavePost, type Settle, Threads } from '../protocol.ts';
 
 async function failure(res: Response, fallback: string): Promise<Error> {
   const body = Failure.safeParse(await res.json().catch(() => null));
@@ -67,4 +67,8 @@ export async function resolveThread(slug: string, id: string) {
 
 export async function stopClaude(slug: string) {
   await fetch(routes.stop(slug), { method: 'POST' });
+}
+
+export async function settleSuggestion(slug: string, id: string, settle: Settle) {
+  return threadsFrom(await postJson(routes.suggestion(slug, id), settle), "Couldn't save the suggestion");
 }

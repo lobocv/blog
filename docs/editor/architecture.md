@@ -39,7 +39,8 @@ editor/
     json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session
     claude-agent.ts        runs the claude CLI headless and parses its stream
     testdata/              recorded claude streams and a fake claude that replays them
-    mcp-tools.ts           the suggest_edit, reply and comment tools Claude calls
+    mcp-tools.ts           the suggest_edit tool Claude calls, as a small MCP server over
+                           HTTP. Each turn gets only these tools (--strict-mcp-config)
     astro-preview.ts       starts and stops astro dev
     contracts/             one shared test suite per port
   server/
@@ -116,7 +117,8 @@ e2e/
   (Calvin's own login) with `--mcp-config` pointing at the editor's tools, and
   the post file is blocked from its Edit and Write tools. Its only way to change
   the post is `suggest_edit`, which becomes a suggestion Calvin accepts, rejects
-  or tweaks. Accepting applies the edit like his own typing. This keeps the
+  or tweaks. Accepting applies the edit like his own typing (⌘Z undoes it), and
+  the thread's quote follows the edit so the thread keeps its place. This keeps the
   three edit levels from `docs/writing.md` in the tool itself and means his
   typing and Claude's edits never collide
 - Every comment and reply Calvin sends goes to Claude, one turn at a time per

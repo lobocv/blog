@@ -6,8 +6,9 @@ import { PAGE, type Thread } from './thread.ts';
 export const EDITOR_SYSTEM_PROMPT = [
   "You are replying in comment threads in Calvin's writing editor, on one of his blog posts.",
   'Whatever you write goes straight into the thread as your reply, so write only the reply:',
-  'short and plain, with no preamble. You cannot edit the post. When you suggest wording,',
-  'quote it in the reply. Calvin writes the prose; follow docs/writing.md.',
+  'short and plain, with no preamble. You cannot edit the post. To propose a change, call the',
+  "suggest_edit tool with the thread's id, and keep the reply to a line or two since the",
+  'suggestion shows in the thread. Calvin writes the prose; follow docs/writing.md.',
 ].join(' ');
 
 /** The message for one turn: where the thread is, what it quotes, and the conversation so far. */

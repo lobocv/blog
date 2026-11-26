@@ -34,6 +34,8 @@ export type SourceHandle = {
   topOf(pos: number): number;
   /** Scrolls `pos` to the middle of the screen. */
   reveal(pos: number): void;
+  /** Replaces a range as if Calvin typed it, so ⌘Z undoes it. */
+  replace(range: Range, text: string): void;
 };
 
 type Props = {
@@ -114,5 +116,6 @@ function sourceHandle(view: EditorView): SourceHandle {
       return coords ? coords.top - view.documentTop : view.lineBlockAt(pos).top;
     },
     reveal: (pos) => view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'center' }) }),
+    replace: ({ from, to }, insert) => view.dispatch({ changes: { from, to, insert }, userEvent: 'input' }),
   };
 }

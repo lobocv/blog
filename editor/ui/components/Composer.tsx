@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 
-type Props = { label: string; onSend: (text: string) => Promise<boolean>; onCancel: () => void };
+type Props = { label: string; initial?: string; onSend: (text: string) => Promise<boolean>; onCancel: () => void };
 
 /** A message box. Enter sends, ⇧Enter starts a new line, Esc cancels. */
-export function Composer({ label, onSend, onCancel }: Props) {
+export function Composer({ label, initial, onSend, onCancel }: Props) {
   const box = useRef<HTMLTextAreaElement>(null);
   const [sending, setSending] = useState(false);
 
@@ -12,6 +12,10 @@ export function Composer({ label, onSend, onCancel }: Props) {
     const frame = requestAnimationFrame(() => {
       box.current?.focus({ preventScroll: true });
       box.current?.scrollIntoView({ block: 'nearest' });
+      if (initial) {
+        box.current?.select();
+        grow();
+      }
     });
     return () => cancelAnimationFrame(frame);
   }, []);
@@ -29,6 +33,7 @@ export function Composer({ label, onSend, onCancel }: Props) {
       class="composer"
       aria-label={label}
       rows={1}
+      defaultValue={initial}
       disabled={sending}
       onInput={grow}
       onKeyDown={async (e) => {

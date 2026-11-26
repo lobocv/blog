@@ -28,6 +28,7 @@ test.beforeEach(async () => {
   // enough to stop it part way.
   process.env.FAKE_CLAUDE_STREAM = join(import.meta.dirname, '../editor/infra/testdata/reply.jsonl');
   process.env.FAKE_CLAUDE_DELAY = '150';
+  process.env.FAKE_CLAUDE_SUGGEST = join(root, 'suggest.json');
   editor = await startEditor(root, port, '--no-preview', '--claude', join(import.meta.dirname, '../editor/infra/testdata/fake-claude.mjs'));
 });
 
@@ -143,4 +144,33 @@ test('Claude replies in the thread as it writes, and ⌃C stops it', async ({ pa
   await expect(margin.locator('.claude-working')).toContainText('Two short sentences.');
   await page.keyboard.press('Control+c');
   await expect.poll(async () => (await stored()).threads[0]?.messages.at(-1)?.text).toMatch(/^Two short sentences\..* \(stopped\)$/);
+});
+
+test('Claude suggests an edit; tweaking and accepting it changes the text, and ⌘Z undoes it', async ({ page }) => {
+  await writeFile(postPath('first'), '---\ntitle: First draft\ndraft: true\n---\nIt took incredible amounts of work.\n');
+  await writeFile(join(root, 'suggest.json'), JSON.stringify({ find: 'incredible amounts of', replace: 'a lot of', reason: 'Plainer.' }));
+  await page.goto(`${url}?post=first`);
+  const source = page.getByLabel('Post source');
+  await source.getByText('It took').click();
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByLabel('Comment').fill('too showy?');
+  await page.getByLabel('Comment').press('Enter');
+
+  // The suggestion shows in the thread as a change, with the words it replaces struck through in the text.
+  const margin = page.getByRole('complementary', { name: 'Threads' }).first();
+  await expect(margin.locator('.suggestion')).toHaveText('incredible amounts of a lot of');
+  await expect(source.locator('.cm-del')).toHaveText('incredible amounts of');
+
+  // ⌥T opens Calvin's version of it; Enter applies that instead.
+  await page.keyboard.press('Alt+t');
+  await page.getByLabel('Your version').fill('lots of');
+  await page.getByLabel('Your version').press('Enter');
+  await expect(source).toContainText('It took lots of work.');
+  await expect.poll(() => readFile(postPath('first'), 'utf8')).toContain('It took lots of work.');
+  await expect(margin.getByText('Accepted')).toBeVisible();
+
+  // Applied like typing, so ⌘Z undoes it.
+  await source.click();
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(source).toContainText('It took incredible amounts of work.');
 });

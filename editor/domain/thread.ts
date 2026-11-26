@@ -2,9 +2,11 @@
 // share them and tests need no setup.
 import { NOTE } from '../../shared/notes.ts';
 import { type Anchor, lineOf, locate } from './anchor.ts';
+import type { Suggestion } from './suggestion.ts';
 
 export type Author = 'calvin' | 'claude';
-export type Message = { author: Author; text: string; at: string };
+/** A message from Claude may carry a suggested edit (see suggestion.ts). */
+export type Message = { author: Author; text: string; at: string; suggestion?: Suggestion };
 
 /**
  * A thread pinned to quoted text, or the page thread (no anchor) for comments on the whole post.

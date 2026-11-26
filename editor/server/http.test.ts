@@ -4,6 +4,7 @@ import { listDrafts } from '../app/list-drafts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
 import { FakeClock, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
 import type { ConversationEvent } from '../app/conversation.ts';
 import { createApi, type UseCases } from './http.ts';
@@ -18,6 +19,7 @@ function setup() {
   const conversation = {
     ask: async (slug: string, id: string) => void asked.push([slug, id]),
     stop: () => {},
+    changed: () => {},
     subscribe: (_: string, l: (e: ConversationEvent) => void) => (listeners.add(l), () => listeners.delete(l)),
   };
   const uc: UseCases = {
@@ -30,6 +32,7 @@ function setup() {
     addComment: addComment(deps),
     replyToThread: replyToThread(deps),
     resolveThread: resolveThread(deps),
+    settleSuggestion: settleSuggestion(deps),
     previewOrigin: async () => 'http://127.0.0.1:4402',
   };
   return { lib, uc, asked, listeners, api: createApi(uc) };

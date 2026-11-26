@@ -15,7 +15,7 @@ async function setup(replies: string[]) {
   let threads = comment([], { id: 't1', anchor: { quote: 'One', line: 4 }, text: 'why one?', at });
   threads = comment(threads, { id: 'x', text: 'overall?', at });
   await deps.threads.save('a', threads);
-  const conversation = createConversation(deps);
+  const conversation = createConversation({ ...deps, toolsUrl: (slug) => `http://127.0.0.1:4401/mcp/${slug}` });
   const events: ConversationEvent[] = [];
   conversation.subscribe('a', (e) => events.push(e));
   return { deps, conversation, events };
@@ -39,6 +39,20 @@ describe('conversation', () => {
     expect(events.at(-1)).toEqual({ type: 'idle' });
     expect((await replies(deps))[0]).toEqual(['calvin: why one?', 'claude: Because it counts.']);
     expect(await deps.threads.session('a')).toBe('s1');
+  });
+
+  it("gives Claude the post's tools, and shows changes made during the turn while it carries on", async () => {
+    const { deps, conversation, events } = await setup(['wait']);
+    const running = conversation.ask('a', 't1');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(deps.agent.turns[0].tools).toBe('http://127.0.0.1:4401/mcp/a');
+    conversation.changed('a', []);
+    expect(events.slice(-2)).toEqual([
+      { type: 'threads', threads: [] },
+      { type: 'working', threadId: 't1', text: 'partial', tool: undefined },
+    ]);
+    deps.agent.release();
+    await running;
   });
 
   it('resumes the same session on the next turn', async () => {

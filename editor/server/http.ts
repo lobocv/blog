@@ -6,8 +6,9 @@ import type { deleteDraft } from '../app/delete-draft.ts';
 import type { listDrafts } from '../app/list-drafts.ts';
 import type { openPost } from '../app/open-post.ts';
 import type { savePost } from '../app/save-post.ts';
+import type { settleSuggestion } from '../app/suggestions.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { ClaudeEvent, Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Threads } from '../protocol.ts';
+import { ClaudeEvent, Drafts, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
 
 export type UseCases = {
   listDrafts: ReturnType<typeof listDrafts>;
@@ -18,6 +19,7 @@ export type UseCases = {
   addComment: ReturnType<typeof addComment>;
   replyToThread: ReturnType<typeof replyToThread>;
   resolveThread: ReturnType<typeof resolveThread>;
+  settleSuggestion: ReturnType<typeof settleSuggestion>;
   /** Claude's replies. Every comment and reply Calvin sends is passed on to Claude. */
   conversation: Pick<Conversation, 'ask' | 'stop' | 'subscribe'>;
   /** Waits for `astro dev` to answer. */
@@ -72,6 +74,13 @@ export function createApi(uc: UseCases) {
   api.post('/api/posts/:slug/threads/:id/resolve', async (c) =>
     c.json(threads(await uc.resolveThread(c.req.param('slug'), c.req.param('id')))),
   );
+
+  api.post('/api/posts/:slug/suggestions/:id', async (c) => {
+    const body = Settle.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: "expected { status: 'accepted' | 'rejected', replace? }" }, 400);
+    const { status, replace } = body.data;
+    return c.json(threads(await uc.settleSuggestion(c.req.param('slug'), c.req.param('id'), status, replace)));
+  });
 
   api.post('/api/posts/:slug/stop', (c) => {
     uc.conversation.stop(c.req.param('slug'));
