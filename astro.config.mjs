@@ -29,7 +29,7 @@ const editorBridge = {
   },
 };
 
-// /projects/ stays out of the sitemap until a project is published
+// /projects/ stays out of the sitemap until a project is published, and short links (/s/) always do
 const publishedProjects = fs.existsSync('src/content/projects')
   ? fs.readdirSync('src/content/projects').filter(d => {
       const f = `src/content/projects/${d}/index.mdx`;
@@ -40,7 +40,7 @@ const publishedProjects = fs.existsSync('src/content/projects')
 export default defineConfig({
   site: SITE,
   build: { format: 'directory' },
-  integrations: [...(editorPreview ? [editorBridge] : []), mdx(), sitemap({ filter: page => publishedProjects.length > 0 || !page.includes('/projects/') })],
+  integrations: [...(editorPreview ? [editorBridge] : []), mdx(), sitemap({ filter: page => (publishedProjects.length > 0 || !page.includes('/projects/')) && !page.includes('/s/') })],
   devToolbar: { enabled: !editorPreview },
   // /about/ was folded into the journey page
   redirects: { ...legacyRedirects('src/content/posts'), '/about': '/journey/' },
