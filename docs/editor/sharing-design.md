@@ -99,9 +99,18 @@ These shaped the design, so they're worth keeping in one place:
 Networks differ in more than numbers: where the fold falls, how links count,
 what media a post can carry, how the text is put together, and how a post looks
 in the feed. So each network is a module that owns its behaviour, not just a
-row of settings. Shared code only asks a network what to do; it never checks
-which network it is (no `if (network === 'linkedin')` outside the network's own
-folder).
+row of settings.
+
+The rule: shared code never branches on which network it has. No `switch` on a
+network id, no `if (network.id === 'linkedin')`, no lookup tables keyed by
+network outside the network's own folder. When a network needs to behave
+differently, the difference becomes a method or field on the `Network`
+interface, and every network implements it. `editor/architecture.test.ts`
+enforces this:
+
+- only the registry imports network modules
+- outside the network folders, the registry and the preview components, no
+  code compares a network id or names a specific network
 
 ```ts
 interface Network {
@@ -213,8 +222,11 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
 
 ### Images
 
+- Media is one choice per tab, from the network's own options (eg image, link
+  card, text only). The image picker shows only when Image is chosen, so there
+  is no separate "no image" entry
 - The picker lists the post's figures (MDX components and images, found the
-  way `domain/figure.ts` finds them today), the OG card, and "no image"
+  way `domain/figure.ts` finds them today) and the post's preview image
 - Rendering reuses the preview server: open the post, scroll the figure into
   view, hide `.fig-info` and `.side-foliage`, wait for the animation, crop the
   element and pad it to the network's image size in the figure's background colour
@@ -332,10 +344,10 @@ Each ends with something Calvin can use and a passing `make verify`.
 - The phone preview is always on
 - Pre-flight never blocks; a broken link isn't the share page's problem
 - Versions sit in a menu, not always on screen
-
-## Open questions
-
-- Whether "No image" and "Link card" collapse into one media choice (see the mock)
+- Media is a single choice from the network's options; the image picker shows
+  only for Image
+- Shared code never branches on a network; differences go on the `Network`
+  interface
 
 ## Docs to update when this lands
 
