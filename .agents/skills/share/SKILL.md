@@ -19,10 +19,16 @@ newest published post.
    - Reddit: suggest subreddits from the categories (below). Calvin checks each
      subreddit's self-promotion rules before posting
    - Changelog News: the submit page (needs a Changelog account)
-3. If Calvin drafts the social posts here, critique them the usual way (see
-   "Critique protocol" in `AGENTS.md`): length against the limits, AI tells, and
-   whether the first line gives a reason to click. Don't write them for him. The
-   one rule applies to social posts too
+3. Social posts: unlike blog posts, you may write these. Calvin decided this
+   on 2026-11-27, because working critique into a short post by hand was slower
+   than reviewing a rewrite
+   - If Calvin has a draft, critique it (length against the limits, AI tells,
+     whether the first line gives a reason to click), then write the revised post
+     with the feedback applied. Keep his phrasing wherever it already works
+   - With no draft, write one from the post itself
+   - Write in his voice (`docs/voice.md`), state only what the post or Calvin
+     says (no invented numbers or experiences), and no pitching Trellis
+   - Calvin reviews and edits before posting. Never post for him
 
 ## Subreddits by category
 
