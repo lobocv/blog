@@ -1,0 +1,30 @@
+{
+  "about": "Phrases that make writing read as AI-generated or padded. Matched case-insensitively as whole words, with curly apostrophes read as straight ones. A prefix entry also matches longer words that start with it (eg leverag: leverage, leveraging). Read by scripts/lint_post.py and shared/banned-words.ts; shared/banned-words.cases.json checks both match the same way.",
+  "phrases": [
+    { "text": "delve", "prefix": true },
+    { "text": "leverag", "prefix": true },
+    { "text": "robust", "prefix": true },
+    { "text": "seamless", "prefix": true },
+    { "text": "powerful" },
+    { "text": "unlock", "prefix": true },
+    { "text": "game changer" },
+    { "text": "game-changer" },
+    { "text": "landscape" },
+    { "text": "realm" },
+    { "text": "tapestry" },
+    { "text": "elevat", "prefix": true },
+    { "text": "crucial" },
+    { "text": "let's dive in" },
+    { "text": "dive into" },
+    { "text": "deep dive" },
+    { "text": "in today's" },
+    { "text": "in conclusion" },
+    { "text": "at the end of the day" },
+    { "text": "i hope this helps" },
+    { "text": "it's worth noting" },
+    { "text": "it is worth noting" },
+    { "text": "needless to say" },
+    { "text": "comprehensive guide" },
+    { "text": "supercharge", "prefix": true }
+  ]
+}
