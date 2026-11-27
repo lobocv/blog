@@ -229,8 +229,8 @@ describe('chooseLink', () => {
     const { choose, deps, checker } = setupLinks();
     await choose('live', 'linkedin', 'short');
     const check = preflight({ ...deps, origin: 'http://127.0.0.1:9' });
-    expect((await check('live')).at(-1)).toEqual({ ok: false, message: "/s/aaaaaa/ isn't live yet (404). It works once the site is deployed" });
+    expect((await check('live')).at(-1)).toEqual({ ok: false, message: "/s/aaaaaa/ isn't live yet (404). It works once the site is deployed", code: 'aaaaaa' });
     checker.live['http://127.0.0.1:9/s/aaaaaa/'] = '/posts/live/?utm_source=linkedin&utm_medium=social';
-    expect((await check('live')).at(-1)).toEqual({ ok: true, message: '/s/aaaaaa/ goes to /posts/live/?utm_source=linkedin&utm_medium=social' });
+    expect((await check('live')).at(-1)).toEqual({ ok: true, message: '/s/aaaaaa/ goes to /posts/live/?utm_source=linkedin&utm_medium=social', code: 'aaaaaa' });
   });
 });

@@ -152,7 +152,7 @@ export const Share = ShareState.extend({
 export type Share = z.infer<typeof Share>;
 
 /** GET /api/share/:slug/preflight: the live page's checks. For information only. */
-export const Preflight = z.object({ checks: z.array(z.object({ ok: z.boolean(), message: z.string() })) });
+export const Preflight = z.object({ checks: z.array(z.object({ ok: z.boolean(), message: z.string(), code: z.string().optional() })) });
 export type Preflight = z.infer<typeof Preflight>;
 
 /** PUT .../share/:slug/:network: what Calvin typed or chose. Answers with the ShareState. */

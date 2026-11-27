@@ -354,10 +354,11 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   const Preview = previews[network.id];
   const versions = saved?.versions ?? [];
   const pf = s.preflight.value;
-  const failedChecks = Array.isArray(pf) ? pf.filter((c) => !c.ok) : [];
+  // Short links' checks show by their link, not up top.
+  const failedChecks = Array.isArray(pf) ? pf.filter((c) => !c.ok && !c.code) : [];
   const count = network.count(assembled.text);
   // Pre-flight's word on this tab's short link, when its page isn't live (eg not deployed yet).
-  const shortNotLive = link.kind === 'short' && link.code && Array.isArray(pf) ? pf.find((c) => !c.ok && c.message.startsWith(`/s/${link.code}/`)) : undefined;
+  const shortNotLive = link.kind === 'short' && link.code && Array.isArray(pf) ? pf.find((c) => !c.ok && c.code === link.code) : undefined;
   // Claims Claude couldn't find in the post, while its version is the text on screen.
   const lastClaude = versions.findLast((v) => v.author === 'claude');
   const flags = lastClaude?.flags?.length && lastClaude.text.trim() === parts.text.trim() ? lastClaude.flags : [];

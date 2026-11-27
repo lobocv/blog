@@ -128,8 +128,8 @@ export interface ImageRenderer {
   render(target: RenderTarget, options: { theme: Theme; size: (figure: Size) => Size }): Promise<{ png: Uint8Array; figure: Size }>;
 }
 
-/** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. */
-export type LiveCheck = { ok: boolean; message: string };
+/** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. `code` marks a short link's check, so the page can show it by that link. */
+export type LiveCheck = { ok: boolean; message: string; code?: string };
 
 /** Pre-flight against the deployed site. For information only: it never blocks anything. */
 export interface LiveChecker {

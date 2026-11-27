@@ -29,8 +29,8 @@ export const preflight =
       deps.checker.check(postUrl(slug, deps.origin)),
       ...codes.map((code) =>
         links[code]
-          ? deps.checker.redirects(shortUrl(code, deps.origin), links[code].to)
-          : Promise.resolve({ ok: false, message: `${shortPath(code)} isn't in src/data/short-links.json` }),
+          ? deps.checker.redirects(shortUrl(code, deps.origin), links[code].to).then((r) => ({ ...r, code }))
+          : Promise.resolve({ ok: false, message: `${shortPath(code)} isn't in src/data/short-links.json`, code }),
       ),
     ]);
     return [...page, ...short];
