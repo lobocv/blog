@@ -25,7 +25,7 @@ import lint_post
 cases = json.load(open('shared/banned-words.cases.json'))
 print(json.dumps([[m.group(0) for m in lint_post.banned(c['text'])] for c in cases]))
 `;
-    const found = JSON.parse(execFileSync('python3', ['-c', script], { cwd: root, encoding: 'utf8' }));
+    const found = JSON.parse(execFileSync('python3', ['-c', script], { cwd: root, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } }));
     expect(found).toEqual(cases.map((c) => c.matches));
   });
 });
