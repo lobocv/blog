@@ -41,7 +41,12 @@ test.beforeEach(async ({ context }) => {
   });
   await new Promise<void>((r) => site.listen(0, '127.0.0.1', r));
   const origin = `http://127.0.0.1:${(site.address() as AddressInfo).port}`;
-  editor = await startEditor(root, port, '--no-preview', '--check-origin', origin);
+  // Claude is a fake that makes the tool calls in tools.json, then replays a recorded reply.
+  process.env.FAKE_CLAUDE_STREAM = join(import.meta.dirname, '../editor/infra/testdata/reply.jsonl');
+  process.env.FAKE_CLAUDE_DELAY = '0';
+  process.env.FAKE_CLAUDE_TOOLS = join(root, 'tools.json');
+  process.env.FAKE_CLAUDE_ARGS = join(root, 'claude-args');
+  editor = await startEditor(root, port, '--no-preview', '--check-origin', origin, '--claude', join(import.meta.dirname, '../editor/infra/testdata/fake-claude.mjs'));
 });
 
 test.afterEach(() => {
@@ -128,4 +133,47 @@ test('shares a published post: type, check, copy and record the posted URL', asy
   // Esc goes back to the posts page.
   await page.keyboard.press('Escape');
   await expect(page).toHaveURL(url);
+});
+
+/** The tool calls the fake claude makes on its next turn. */
+const tools = (calls: { name: string; arguments: object }[]) => writeFile(join(root, 'tools.json'), JSON.stringify(calls));
+
+test('D asks Claude for a draft, which lands in the text box, then for a critique of an edited one', async ({ page }) => {
+  await page.goto(`${url}?share=live`);
+  const thread = page.getByLabel('Claude', { exact: true });
+  const text = page.getByLabel('LinkedIn post text');
+  await expect(thread).toContainText('D drafts the post');
+
+  await tools([
+    { name: 'write_social_post', arguments: { network: 'linkedin', text: 'Errors in Go can carry context.', hashtags: ['Golang', 'Go', 'SoftwareEngineering'], claims_to_check: ['for over a year'] } },
+  ]);
+  await page.keyboard.press('d');
+  await expect(thread).toContainText('Draft the LinkedIn post.');
+  await expect(thread).toContainText('Two short sentences. Nothing else.');
+  await expect(text).toHaveText('Errors in Go can carry context.');
+  await expect(page.getByLabel('Claims to check')).toContainText('Not in the post, check it: for over a year');
+  expect(await readFile(shareFile('linkedin.txt'), 'utf8')).toBe(`Errors in Go can carry context.\n\n${link}\n\n#Golang #Go #SoftwareEngineering\n`);
+  expect((await shareJson()).networks.linkedin.versions).toMatchObject([{ author: 'claude', text: 'Errors in Go can carry context.', flags: ['for over a year'] }]);
+
+  // Share turns get the share prompt, only write_social_post, and docs/voice.md as the one file to edit.
+  const args: string[] = JSON.parse((await readFile(join(root, 'claude-args'), 'utf8')).split('\n')[0]);
+  expect(args[args.indexOf('--append-system-prompt') + 1]).toContain('share page');
+  expect(args.slice(args.indexOf('--allowedTools') + 1, args.indexOf('--allowedTools') + 3)).toEqual(['mcp__editor__write_social_post', 'Edit(docs/voice.md)']);
+  expect(JSON.parse(args[args.indexOf('--mcp-config') + 1]).mcpServers.editor.url).toMatch(/\/mcp-share\/live$/);
+
+  // With his edit in the box, D asks for a critique, and the rewrite replaces the text.
+  await text.click();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' And more.');
+  await tools([{ name: 'write_social_post', arguments: { network: 'linkedin', text: 'A tighter rewrite.', hashtags: ['Golang', 'Go', 'SoftwareEngineering'] } }]);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('d');
+  await expect(thread).toContainText('Critique my LinkedIn draft, then rewrite it.');
+  await expect(text).toHaveText('A tighter rewrite.');
+  await expect(page.getByLabel('Claims to check')).toHaveCount(0);
+  const versions = (await shareJson()).networks.linkedin.versions.map((v: { author: string; text: string }) => [v.author, v.text]);
+  expect(versions).toEqual([
+    ['claude', 'Errors in Go can carry context.'],
+    ['claude', 'A tighter rewrite.'],
+  ]);
 });

@@ -1,15 +1,23 @@
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { reachesEditor } from '../keymap.ts';
 
-type Props = { label: string; initial?: string; onSend: (text: string) => Promise<boolean>; onCancel: () => void };
+type Props = {
+  label: string;
+  initial?: string;
+  onSend: (text: string) => Promise<boolean>;
+  onCancel: () => void;
+  /** Focus the box when it appears. Off for a box that's always on screen (eg the share page's), so keys stay with the page. */
+  autoFocus?: boolean;
+};
 
 /** A message box. Enter sends, ⇧Enter starts a new line, Esc cancels. */
-export function Composer({ label, initial, onSend, onCancel }: Props) {
+export function Composer({ label, initial, onSend, onCancel, autoFocus = true }: Props) {
   const box = useRef<HTMLTextAreaElement>(null);
   const [sending, setSending] = useState(false);
 
   // After the margin has placed the card, so focusing scrolls to where the box really is.
   useLayoutEffect(() => {
+    if (!autoFocus) return;
     const frame = requestAnimationFrame(() => {
       box.current?.focus({ preventScroll: true });
       box.current?.scrollIntoView({ block: 'nearest' });

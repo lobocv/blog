@@ -37,6 +37,7 @@ editor/
       social-post.ts     a network's post: text, hashtags, media (and the image choice),
                          status, versions, posted, and what its image was rendered from
       figures.ts         what an image can show: the preview card and the post's figures
+      share-prompt.ts    what Claude is told on the share page, each turn
       resolve.ts         a post with the network's defaults filled in, for the page and the files
       checks.ts          length, the fold, hashtag count, banned words, em-dashes
       links.ts, hashtags.ts   tagged URLs; categories to hashtags
@@ -48,16 +49,20 @@ editor/
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
     open-share.ts, save-social-post.ts, mark-posted.ts, render-share-image.ts,
     share-post.ts      the share page
+    share-conversation.ts, write-social-post.ts   Claude on the share page: its own
+                       conversation, and the tool that saves its versions
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
     fs-post-library.ts     reads and writes posts, watches for outside edits, moves
                            deleted drafts to .trash/
-    json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session
+    json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session. The
+                           share page's thread and session go in writing/threads/share/
     fs-ideas-file.ts       writing/ideas.md, the same file /idea adds to
     claude-agent.ts        runs the claude CLI headless and parses its stream
     testdata/              recorded claude streams and a fake claude that replays them
     mcp-tools.ts           the suggest_edit tool Claude calls, as a small MCP server over
-                           HTTP. Each turn gets only these tools (--strict-mcp-config)
+                           HTTP. Each turn gets only these tools (--strict-mcp-config).
+                           The share page's write_social_post is on its own endpoint
     astro-preview.ts       starts and stops astro dev
     fs-share-store.ts      writing/share/<slug>/: share.json, a ready-to-paste <network>.txt
                            per network, and <network>.png. Updates to a post run one at a time
@@ -171,6 +176,13 @@ e2e/
   the thread's quote follows the edit so the thread keeps its place. This keeps the
   three edit levels from `docs/writing.md` in the tool itself and means his
   typing and Claude's edits never collide
+- Social posts are the exception: they're Claude's to write (`sharing-design.md`).
+  On the share page Claude runs in its own conversation (its own thread and
+  session per post, a share system prompt) and has one tool, `write_social_post`,
+  which saves a version straight away. The version replaces the text on screen
+  only when Calvin hasn't typed since Claude's turn started; otherwise it waits in
+  Versions. The one file it may edit is `docs/voice.md`, and only after Calvin
+  agrees to a voice rule in the thread
 - Every comment and reply Calvin sends goes to Claude, one turn at a time per
   post (later messages wait their turn). Each turn resumes the post's session
   (`--resume`), names the thread and quotes its words. The reply streams into

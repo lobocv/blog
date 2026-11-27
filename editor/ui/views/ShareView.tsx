@@ -6,9 +6,24 @@ import { cleanHashtag } from '../../domain/social/hashtags.ts';
 import type { MediaKind } from '../../domain/social/network.ts';
 import { networks } from '../../domain/social/networks/registry.ts';
 import { imageKey, resolvePost } from '../../domain/social/resolve.ts';
+import { draftRequest } from '../../domain/social/share-prompt.ts';
+import { PAGE, type Thread } from '../../domain/thread.ts';
 import type { ImageChoice, SocialPost } from '../../domain/social/social-post.ts';
-import { type Preflight, routes, type SaveSocialPost, type Share } from '../../protocol.ts';
-import { copiedSocialPost, loadPreflight, markPosted, renderShareImage, restoreSocialPost, saveSocialPost, unmarkPosted } from '../api.ts';
+import { type Preflight, routes, type SaveSocialPost, type Share, ShareEvent } from '../../protocol.ts';
+import {
+  copiedSocialPost,
+  loadPreflight,
+  loadShareThread,
+  markPosted,
+  renderShareImage,
+  restoreSocialPost,
+  saveSocialPost,
+  sendShareMessage,
+  stopShareClaude,
+  unmarkPosted,
+} from '../api.ts';
+import { Composer } from '../components/Composer.tsx';
+import { LiveReply } from '../components/ThreadCard.tsx';
 import { createAutosave } from '../autosave.ts';
 import { KeySheet } from '../components/KeySheet.tsx';
 import { formatAgo, formatNumber } from '../format.ts';
@@ -93,6 +108,10 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
       sheetOpen: signal(false),
       lastKey: signal<string | undefined>(undefined),
       postedUrl: signal(''),
+      // The share thread with Claude, and its reply in progress.
+      thread: signal<Thread[]>([]),
+      claudeWorking: signal<{ threadId: string; text: string; tool?: string } | undefined>(undefined),
+      claudeError: signal<string | undefined>(undefined),
       toast: signal<string | undefined>(undefined),
       error: signal<string | undefined>(undefined),
     };
@@ -136,6 +155,62 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   };
   const fail = (err: unknown) => (s.error.value = (err as Error).message);
 
+  /** Sends Calvin's message to Claude, after saving what's on screen so Claude sees it. */
+  const send = async (text: string): Promise<boolean> => {
+    s.claudeError.value = undefined;
+    try {
+      await Promise.all(Object.values(s.autosaves).map((a) => a.flush()));
+      s.thread.value = await sendShareMessage(slug, { text });
+      return true;
+    } catch (err) {
+      s.claudeError.value = (err as Error).message;
+      return false;
+    }
+  };
+
+  /**
+   * Claude wrote a version. Each tab whose text Calvin hasn't changed since its last save takes the
+   * new text; a tab he's typing in keeps his text, and Claude's waits in Versions.
+   */
+  const adopt = (next: State) => {
+    const before = s.state.peek();
+    s.state.value = next;
+    for (const n of networks) {
+      const saved = next.networks[n.id];
+      const autosave = s.autosaves[n.id];
+      const mine = s.working.peek()[n.id];
+      if (!saved || (saved.text === mine.text && JSON.stringify(saved.hashtags) === JSON.stringify(mine.hashtags))) continue;
+      const wrote = saved.versions.length > (before.networks[n.id]?.versions.length ?? 0);
+      if (autosave.unsaved() || JSON.stringify(mine) !== autosave.saved()) {
+        if (wrote) flash(`Claude's ${n.label} version is in Versions`);
+        continue;
+      }
+      const w: Working = { text: saved.text, hashtags: saved.hashtags, media: saved.media as Working['media'] };
+      autosave.markSaved(JSON.stringify(w));
+      s.working.value = { ...s.working.peek(), [n.id]: w };
+      if (n.id === s.network.peek().id) text.current?.setText(saved.text);
+    }
+  };
+
+  // The share thread, then Claude's work and versions as the server streams them.
+  useEffect(() => {
+    loadShareThread(slug).then((t) => (s.thread.value = t), (err: Error) => (s.claudeError.value = err.message));
+    const stream = new EventSource(routes.shareEvents(slug));
+    stream.onmessage = (e) => {
+      const parsed = ShareEvent.safeParse(JSON.parse(e.data));
+      if (!parsed.success) return;
+      const ev = parsed.data;
+      if (ev.type === 'threads') s.thread.value = ev.threads;
+      else if (ev.type === 'working') s.claudeWorking.value = ev;
+      else if (ev.type === 'idle') s.claudeWorking.value = undefined;
+      else if (ev.type === 'failed') {
+        s.claudeWorking.value = undefined;
+        s.claudeError.value = ev.message;
+      } else adopt(ev.state);
+    };
+    return () => stream.close();
+  }, [s]);
+
   /** Changes the image choice, keeping the rest of it. */
   const setImage = (patch: Partial<ImageChoice>, now = true) => {
     const current = s.working.value[s.network.value.id].media;
@@ -160,6 +235,11 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   };
 
   const actions = useRef({
+    /** D: a draft from the post when the box is empty, otherwise a critique and rewrite of Calvin's. */
+    draft() {
+      const n = s.network.value;
+      void send(draftRequest(n, s.working.value[n.id].text ?? ''));
+    },
     async copy() {
       const id = s.network.value.id;
       s.error.value = undefined;
@@ -204,6 +284,11 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
     const flush = () => void flushAll();
     const onKey = (e: KeyboardEvent) => {
       if (!['Meta', 'Alt', 'Control', 'Shift'].includes(e.key)) s.lastKey.value = describeKey(e);
+      if (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'KeyC' && s.claudeWorking.value) {
+        e.preventDefault();
+        void stopShareClaude(slug);
+        return;
+      }
       if (e.metaKey || e.ctrlKey || e.shiftKey) return;
       const typing = isTyping(document.activeElement);
       // A bare letter on the page, or the letter with ⌥ anywhere (in a text box, letters are text).
@@ -223,6 +308,7 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
       const digit = /^Digit([1-9])$/.exec(e.code);
       if (digit && Number(digit[1]) <= networks.length) act(() => (s.tab.value = Number(digit[1]) - 1));
       else if (e.code === 'KeyC') act(() => void actions.current.copy());
+      else if (e.code === 'KeyD' && !s.claudeWorking.value) act(() => actions.current.draft());
       else if (e.code === 'KeyP') act(() => actions.current.compose());
       else if (e.code === 'KeyI') act(saveImage);
       else if (e.code === 'KeyV' && s.state.value.networks[s.network.value.id]?.versions.length) act(() => (s.versionsOpen.value = !s.versionsOpen.value));
@@ -253,6 +339,11 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   const pf = s.preflight.value;
   const failedChecks = Array.isArray(pf) ? pf.filter((c) => !c.ok) : [];
   const count = network.count(assembled.text);
+  // Claims Claude couldn't find in the post, while its version is the text on screen.
+  const lastClaude = versions.findLast((v) => v.author === 'claude');
+  const flags = lastClaude?.flags?.length && lastClaude.text.trim() === parts.text.trim() ? lastClaude.flags : [];
+  const shareThread = s.thread.value.find((t) => t.id === PAGE);
+  const working = s.claudeWorking.value;
 
   return (
     <>
@@ -293,6 +384,10 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
               <section class="share-block">
                 <div class="share-block-head">
                   <span class="share-label">Text</span>
+                  <span class="share-block-tools">
+                  <button type="button" class="share-versions-btn" disabled={Boolean(working)} onClick={() => actions.current.draft()} title="Claude drafts, or critiques your draft (D)">
+                    {(work.text ?? '').trim() ? 'Critique' : 'Draft'} with Claude <kbd class="k">D</kbd>
+                  </button>
                   {versions.length > 0 && (
                     <div class="share-versions">
                       <button type="button" class="share-versions-btn" onClick={() => (s.versionsOpen.value = !s.versionsOpen.value)} title="Versions (V)">
@@ -316,6 +411,7 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
                       )}
                     </div>
                   )}
+                  </span>
                 </div>
                 <ShareText key={network.id} text={work.text ?? ''} label={`${network.label} post text`} marks={marks} handle={text} onChange={(t) => change({ text: t })} />
                 <div class="share-meta">
@@ -329,6 +425,13 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
                     </span>
                   )}
                 </div>
+                {flags.length > 0 && (
+                  <ul class="share-flags" aria-label="Claims to check">
+                    {flags.map((f) => (
+                      <li key={f}>Not in the post, check it: {f}</li>
+                    ))}
+                  </ul>
+                )}
                 {s.failures.value.length > 0 && (
                   <ul class="share-checks" aria-label="Failing checks">
                     {s.failures.value.map((f) => (
@@ -539,6 +642,28 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
           </div>
         </div>
       </main>
+      <aside class="page-thread share-thread" aria-label="Claude">
+        <div class="page-thread-head">
+          <div class="page-thread-row">
+            <span class="page-thread-title">Claude</span>
+            {working && <span class="page-thread-review">writing… ⌃C stops</span>}
+          </div>
+        </div>
+        <div class="page-thread-body">
+          {!shareThread && !working && <p class="share-thread-empty">D drafts the post. Or paste your own and press D for a critique.</p>}
+          {shareThread?.messages.map((m, i) => (
+            <div class="message" key={i}>
+              <span class={`message-who ${m.author}`}>{m.author === 'claude' ? 'claude' : 'you'}</span>
+              <div class="message-text">{m.text}</div>
+            </div>
+          ))}
+          {working && <LiveReply {...working} />}
+        </div>
+        {s.claudeError.value && <p class="margin-error">{s.claudeError.value}</p>}
+        <div class="page-thread-compose">
+          <Composer label="Message to Claude" autoFocus={false} onSend={send} onCancel={() => (document.activeElement as HTMLElement | null)?.blur()} />
+        </div>
+      </aside>
       <footer class="status">
         <div class="status-views">
           <button type="button" class="status-view" onClick={leave} title="Back to posts (esc)">
