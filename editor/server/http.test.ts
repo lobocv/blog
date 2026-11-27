@@ -5,11 +5,12 @@ import { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
-import { FakeClock, FakeLiveChecker, FakeRenderer, MemoryIdeasFile, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { FakeAgent, FakeClock, FakeLiveChecker, FakeRenderer, MemoryIdeasFile, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
 import { markPosted, unmarkPosted } from '../app/mark-posted.ts';
 import { openShare, preflight } from '../app/open-share.ts';
 import { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
 import { renderShareImage, shareImage } from '../app/render-share-image.ts';
+import { createShareConversation } from '../app/share-conversation.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
 import { watchPost } from '../app/watch-post.ts';
@@ -58,6 +59,7 @@ function setup() {
     unmarkPosted: unmarkPosted(deps),
     renderShareImage: renderShareImage({ ...deps, renderer: new FakeRenderer(), origin: async () => 'http://127.0.0.1:4402' }),
     shareImage: shareImage(deps),
+    shareConversation: createShareConversation({ ...deps, threads: new MemoryThreadStore(), agent: new FakeAgent(['On it.']) }),
   };
   return { lib, uc, asked, listeners, share: deps.share, api: createApi(uc) };
 }
@@ -224,6 +226,29 @@ describe('editor API', () => {
       const { api } = setup();
       const res = await api.request('/api/share/live/linkedin', send('PUT', { media: { kind: 'image', figure: { kind: 'component', source: 'src/components/post/T.astro' }, theme: 'night', alt: 'A tree.' } }));
       expect((await res.json()).state.networks.linkedin.media).toEqual({ kind: 'image', figure: { kind: 'component', source: 'src/components/post/T.astro' }, theme: 'night', alt: 'A tree.' });
+    });
+
+    it('passes a message to Claude in the share thread, and streams its reply and new state', async () => {
+      const { api, uc } = setup();
+      const res = await api.request('/api/share/live/events');
+      const reader = res.body!.getReader();
+      await reader.read(); // ': open'
+      const sent = await api.request('/api/share/live/thread', send('POST', { text: 'Draft the LinkedIn post.' }));
+      expect((await sent.json()).threads[0].messages[0]).toMatchObject({ author: 'calvin', text: 'Draft the LinkedIn post.' });
+      const seen: string[] = [];
+      while (!seen.includes('idle')) {
+        for (const line of new TextDecoder().decode((await reader.read()).value).split('\n')) {
+          if (line.startsWith('data: ')) seen.push(JSON.parse(line.slice(6)).type);
+        }
+      }
+      expect(seen).toContain('threads');
+      const thread = await (await api.request('/api/share/live/thread')).json();
+      expect(thread.threads[0].messages.map((m: { text: string }) => m.text)).toEqual(['Draft the LinkedIn post.', 'On it.']);
+      expect((await api.request('/api/share/live/thread', send('POST', { text: '' }))).status).toBe(400);
+      expect((await api.request('/api/share/a/thread', send('POST', { text: 'hi' }))).status).toBe(409);
+      expect((await api.request('/api/share/live/stop', send('POST', {}))).status).toBe(204);
+      await reader.cancel();
+      void uc;
     });
 
     it.each([

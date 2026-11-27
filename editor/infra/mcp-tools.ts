@@ -140,7 +140,7 @@ const SHARE_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        network: { type: 'string', description: 'The network id, eg "linkedin".' },
+        network: { type: 'string', description: 'The network id, as the message lists it.' },
         text: { type: 'string', description: 'The post text, without the link or hashtags.' },
         hashtags: { type: 'array', items: { type: 'string' }, description: "Without the #, within the network's range." },
         figure: { type: 'string', description: "The key of the figure the image shows, when the post carries one (eg \"preview\")." },
