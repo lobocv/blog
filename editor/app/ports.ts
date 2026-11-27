@@ -1,7 +1,8 @@
 // What the use cases need from the outside world. Adapters in infra/ implement
 // these, and testing/fakes.ts has an in-memory version of each.
 import type { PostFile } from '../domain/post.ts';
-import type { ShareState } from '../domain/social/social-post.ts';
+import type { Size } from '../domain/social/network.ts';
+import type { ShareState, Theme } from '../domain/social/social-post.ts';
 import type { Thread } from '../domain/thread.ts';
 
 /**
@@ -94,6 +95,25 @@ export interface ShareStore {
    * a time, each seeing the last one's result, so none is lost.
    */
   update(slug: string, change: (current: ShareState | undefined) => ShareUpdate): Promise<ShareState>;
+  /** Writes a network's rendered image, <network>.png. */
+  writeImage(slug: string, network: string, png: Uint8Array): Promise<void>;
+  /** Undefined when the network has no rendered image yet. */
+  readImage(slug: string, network: string): Promise<Uint8Array | undefined>;
+}
+
+/**
+ * What to render: `page` is the preview server's page for one figure (/_editor/figure). With
+ * `image`, the page shows that image (on the same server) in place of a component.
+ */
+export type RenderTarget = { page: string; image?: string };
+
+/** Renders a figure to a PNG, the way it looks in the post. */
+export interface ImageRenderer {
+  /**
+   * `size` gets the figure's own size, as laid out in the post's column, and returns the PNG's
+   * size; the figure is centred and padded to fill it. Resolves with the PNG and the figure's size.
+   */
+  render(target: RenderTarget, options: { theme: Theme; size: (figure: Size) => Size }): Promise<{ png: Uint8Array; figure: Size }>;
 }
 
 /** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. */

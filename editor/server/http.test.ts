@@ -5,10 +5,11 @@ import { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
-import { FakeClock, FakeLiveChecker, MemoryIdeasFile, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { FakeClock, FakeLiveChecker, FakeRenderer, MemoryIdeasFile, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
 import { markPosted, unmarkPosted } from '../app/mark-posted.ts';
 import { openShare, preflight } from '../app/open-share.ts';
 import { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
+import { renderShareImage, shareImage } from '../app/render-share-image.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
 import { watchPost } from '../app/watch-post.ts';
@@ -55,6 +56,8 @@ function setup() {
     restoreSocialPost: restoreSocialPost(deps),
     markPosted: markPosted(deps),
     unmarkPosted: unmarkPosted(deps),
+    renderShareImage: renderShareImage({ ...deps, renderer: new FakeRenderer(), origin: async () => 'http://127.0.0.1:4402' }),
+    shareImage: shareImage(deps),
   };
   return { lib, uc, asked, listeners, share: deps.share, api: createApi(uc) };
 }
@@ -205,9 +208,28 @@ describe('editor API', () => {
       expect(await state(await api.request('/api/share/live/linkedin/posted', send('DELETE')))).toMatchObject({ status: 'ready' });
     });
 
+    it('renders the image, serves it, and offers it as a download', async () => {
+      const { api } = setup();
+      expect((await api.request('/api/share/live/linkedin/image')).status).toBe(404);
+      const rendered = await api.request('/api/share/live/linkedin/image', send('POST', {}));
+      expect((await rendered.json()).state.networks.linkedin.rendered).toMatchObject({ shape: 'landscape', width: 1200, height: 628 });
+      const png = await api.request('/api/share/live/linkedin/image');
+      expect(png.headers.get('content-type')).toBe('image/png');
+      expect((await png.arrayBuffer()).byteLength).toBe(24);
+      const saved = await api.request('/api/share/live/linkedin/image?download=1');
+      expect(saved.headers.get('content-disposition')).toBe('attachment; filename="live-linkedin.png"');
+    });
+
+    it('saves an image choice', async () => {
+      const { api } = setup();
+      const res = await api.request('/api/share/live/linkedin', send('PUT', { media: { kind: 'image', figure: { kind: 'component', source: 'src/components/post/T.astro' }, theme: 'night', alt: 'A tree.' } }));
+      expect((await res.json()).state.networks.linkedin.media).toEqual({ kind: 'image', figure: { kind: 'component', source: 'src/components/post/T.astro' }, theme: 'night', alt: 'A tree.' });
+    });
+
     it.each([
       ['PUT', '/api/share/live/linkedin', { text: 1 }, 400],
-      ['PUT', '/api/share/live/linkedin', { media: { kind: 'image' } }, 400],
+      ['PUT', '/api/share/live/linkedin', { media: { kind: 'video' } }, 400],
+      ['PUT', '/api/share/live/linkedin', { media: { kind: 'image', theme: 'dusk' } }, 400],
       ['PUT', '/api/share/live/nope', { text: 'x' }, 404],
       ['PUT', '/api/share/a/linkedin', { text: 'x' }, 409],
       ['POST', '/api/share/live/linkedin/posted', { url: 'javascript:alert(1)' }, 400],

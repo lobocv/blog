@@ -1,5 +1,6 @@
 // Each post's share state as writing/share/<slug>/: share.json (pretty printed, so it reads well in
-// a diff, since the folder is committed) and a ready-to-paste <network>.txt per network.
+// a diff, since the folder is committed), a ready-to-paste <network>.txt per network, and
+// <network>.png when the network's post carries an image.
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -20,6 +21,7 @@ const Post = z.looseObject({
   status: z.enum(['draft', 'ready', 'posted']).default('draft'),
   versions: z.array(Version).default([]),
   posted: z.looseObject({ url: z.string(), at: z.string(), text: z.string() }).optional(),
+  rendered: z.looseObject({ key: z.string(), shape: z.string(), width: z.number(), height: z.number(), at: z.string() }).optional(),
 });
 const File = z.looseObject({ schemaVersion: z.number().int().min(1), networks: z.record(z.string(), Post) });
 
@@ -77,11 +79,28 @@ export class FsShareStore implements ShareStore {
     return next;
   }
 
+  async writeImage(slug: string, network: string, png: Uint8Array) {
+    if (!isNetworkId(network)) throw new Error(`"${network}" can't be a file name.`);
+    await mkdir(this.#dir(slug), { recursive: true });
+    await this.#write(join(this.#dir(slug), `${network}.png`), png);
+  }
+
+  async readImage(slug: string, network: string) {
+    if (!isNetworkId(network)) return undefined;
+    return readFile(join(this.#dir(slug), `${network}.png`)).then(
+      (b) => new Uint8Array(b),
+      (err: NodeJS.ErrnoException) => {
+        if (err.code === 'ENOENT') return undefined;
+        throw err;
+      },
+    );
+  }
+
   // A temporary file then rename, so a crash mid-write never leaves half a file. A unique name per
   // write, so two writes never share one.
-  async #write(path: string, text: string) {
+  async #write(path: string, data: string | Uint8Array) {
     const tmp = `${path}.${randomUUID()}.tmp`;
-    await writeFile(tmp, text, 'utf8');
+    await writeFile(tmp, data);
     await rename(tmp, path);
   }
 }
