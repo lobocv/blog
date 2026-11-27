@@ -1,4 +1,26 @@
-import { CreatedDraft, Failure, Ideas, type NewIdea, type NewDraft, type NewComment, type NewReply, Post, PostList, PreviewInfo, routes, type SavePost, type Settle, Threads } from '../protocol.ts';
+import {
+  type Copied,
+  CreatedDraft,
+  Failure,
+  Ideas,
+  type NewIdea,
+  type NewDraft,
+  type NewComment,
+  type NewReply,
+  Post,
+  PostList,
+  type Posted,
+  Preflight,
+  PreviewInfo,
+  type Restore,
+  routes,
+  type SavePost,
+  type SaveSocialPost,
+  type Settle,
+  Share,
+  ShareState,
+  Threads,
+} from '../protocol.ts';
 
 async function failure(res: Response, fallback: string): Promise<Error> {
   const body = Failure.safeParse(await res.json().catch(() => null));
@@ -94,4 +116,45 @@ export async function stopClaude(slug: string) {
 
 export async function settleSuggestion(slug: string, id: string, settle: Settle) {
   return threadsFrom(await postJson(routes.suggestion(slug, id), settle), "Couldn't save the suggestion");
+}
+
+// The share page.
+
+export async function loadShare(slug: string): Promise<Share> {
+  const res = await fetch(routes.share(slug));
+  if (!res.ok) throw await failure(res, "Couldn't open the share page");
+  return Share.parse(await res.json());
+}
+
+export async function loadPreflight(slug: string): Promise<Preflight['checks']> {
+  const res = await fetch(routes.preflight(slug));
+  if (!res.ok) throw await failure(res, "Couldn't check the live page");
+  return Preflight.parse(await res.json()).checks;
+}
+
+async function shareState(res: Response, fallback: string): Promise<ShareState['state']> {
+  if (!res.ok) throw await failure(res, fallback);
+  return ShareState.parse(await res.json()).state;
+}
+
+const json = (method: string, body?: unknown) => ({ method, headers: { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+
+export async function saveSocialPost(slug: string, network: string, change: SaveSocialPost) {
+  return shareState(await fetch(routes.socialPost(slug, network), { ...json('PUT', change), keepalive: true }), 'Save failed');
+}
+
+export async function copiedSocialPost(slug: string, network: string, copied: Copied) {
+  return shareState(await fetch(`${routes.socialPost(slug, network)}/copied`, json('POST', copied)), "Couldn't keep the copied version");
+}
+
+export async function restoreSocialPost(slug: string, network: string, restore: Restore) {
+  return shareState(await fetch(`${routes.socialPost(slug, network)}/restore`, json('POST', restore)), "Couldn't restore that version");
+}
+
+export async function markPosted(slug: string, network: string, posted: Posted) {
+  return shareState(await fetch(`${routes.socialPost(slug, network)}/posted`, json('POST', posted)), "Couldn't mark it posted");
+}
+
+export async function unmarkPosted(slug: string, network: string) {
+  return shareState(await fetch(`${routes.socialPost(slug, network)}/posted`, json('DELETE')), "Couldn't undo posted");
 }

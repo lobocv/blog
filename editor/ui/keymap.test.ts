@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeKey, reachesEditor } from './keymap.ts';
+import { describeKey, KEYMAP, reachesEditor } from './keymap.ts';
 
 const key = (code: string, mods: Partial<Record<'metaKey' | 'altKey' | 'ctrlKey' | 'shiftKey', boolean>> = {}) =>
   describeKey({ code, key: '', metaKey: false, altKey: false, ctrlKey: false, shiftKey: false, ...mods });
@@ -36,4 +36,14 @@ describe('reachesEditor', () => {
     [ev('KeyZ', { metaKey: true }), false],
     [ev('Slash', { altKey: true, shiftKey: true }), false],
   ])('%o is %s', (e, want) => expect(reachesEditor(e)).toBe(want));
+});
+
+describe('KEYMAP', () => {
+  // Esc means "close, else go back" everywhere, so it's listed more than once on purpose.
+  it.each(KEYMAP.map((g) => [g.title, g] as const))('binds each key once in %s', (_, group) => {
+    for (const column of ['keys', 'source'] as const) {
+      const keys = group.shortcuts.map((s) => s[column]).filter((k): k is string => Boolean(k) && k !== 'esc');
+      expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
+    }
+  });
 });

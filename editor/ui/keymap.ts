@@ -1,5 +1,5 @@
-// Every shortcut, for the sheet Calvin opens with ⌘/. The handlers live in EditorView; keep this
-// list in step with them.
+// Every shortcut, for the sheet Calvin opens with H. The handlers live in the views (EditorView,
+// ShareView, PostsView); keep this list in step with them.
 
 export type Shortcut = { action: string; keys: string; source?: string };
 export type Group = { title: string; columns?: [string, string]; shortcuts: Shortcut[] };
@@ -32,7 +32,31 @@ export const KEYMAP: Group[] = [
       { action: 'Hide threads', keys: 'Z', source: '⌥ Z' },
       { action: 'Critique', keys: '⇧ C', source: '⌥ ⇧ C' },
       { action: 'Action all notes', keys: '⇧ N', source: '⌥ ⇧ N' },
+      { action: 'Share page, for published posts', keys: 'S', source: '⌥ S' },
       { action: 'This sheet', keys: 'H', source: '⌥ H' },
+    ],
+  },
+  {
+    title: 'Share page',
+    columns: ['Page', 'Typing'],
+    shortcuts: [
+      { action: 'Network tab', keys: '1-9', source: '⌥ 1-9' },
+      { action: 'Copy text', keys: 'C', source: '⌥ C' },
+      { action: 'Open compose page', keys: 'P', source: '⌥ P' },
+      { action: 'Versions', keys: 'V', source: '⌥ V' },
+      { action: 'This sheet', keys: 'H', source: '⌥ H' },
+      { action: 'Leave the text box, then back to posts', keys: 'esc', source: 'esc' },
+    ],
+  },
+  {
+    title: 'Posts page',
+    shortcuts: [
+      { action: 'Next / previous post', keys: 'J K' },
+      { action: 'Open', keys: '↵' },
+      { action: 'New draft', keys: 'N' },
+      { action: 'Delete a draft', keys: '⌫' },
+      { action: 'Share a published post', keys: 'S' },
+      { action: 'Ideas', keys: 'I' },
     ],
   },
   {
