@@ -14,8 +14,10 @@ export const routes = {
   thread: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/threads/${encodeURIComponent(id)}`,
   share: (slug: string) => `/api/share/${encodeURIComponent(slug)}`,
   preflight: (slug: string) => `/api/share/${encodeURIComponent(slug)}/preflight`,
-  /** PUT saves an edit. Add /copied, /restore or /posted (POST, and DELETE for /posted). */
+  /** PUT saves an edit. Add /copied, /restore or /posted (POST, and DELETE for /posted), or /image. */
   socialPost: (slug: string, network: string) => `/api/share/${encodeURIComponent(slug)}/${encodeURIComponent(network)}`,
+  /** GET the rendered PNG (?download=1 to save it), POST to render it again. */
+  socialImage: (slug: string, network: string) => `/api/share/${encodeURIComponent(slug)}/${encodeURIComponent(network)}/image`,
 } as const;
 
 /** GET /api/posts: drafts, most recently edited first, then published posts, newest first */
@@ -111,6 +113,12 @@ export type PreviewInfo = z.infer<typeof PreviewInfo>;
 // The share page (docs/editor/sharing-design.md).
 
 const Version = z.object({ text: z.string(), hashtags: z.array(z.string()), author: z.enum(['calvin', 'claude']), at: z.string() });
+const FigureRef = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('preview') }),
+  z.object({ kind: z.literal('component'), source: z.string(), props: z.record(z.string(), z.string()).optional() }),
+  z.object({ kind: z.literal('image'), src: z.string() }),
+]);
+const Rendered = z.object({ key: z.string(), shape: z.string(), width: z.number(), height: z.number(), at: z.string() });
 const SocialPost = z.object({
   text: z.string(),
   hashtags: z.array(z.string()).optional(),
@@ -120,13 +128,15 @@ const SocialPost = z.object({
   status: z.enum(['draft', 'ready', 'posted']),
   versions: z.array(Version),
   posted: z.object({ url: z.string(), at: z.string(), text: z.string() }).optional(),
+  rendered: Rendered.optional(),
 });
 export const ShareState = z.object({ state: z.object({ schemaVersion: z.number(), networks: z.record(z.string(), SocialPost) }) });
 export type ShareState = z.infer<typeof ShareState>;
 
-/** GET /api/share/:slug: the published post and its share state. Drafts answer 409. */
+/** GET /api/share/:slug: the published post, its share state and the figures an image can show. Drafts answer 409. */
 export const Share = ShareState.extend({
   post: z.object({ slug: z.string(), title: z.string(), summary: z.string(), categories: z.array(z.string()), postUrl: z.url(), image: z.url() }),
+  figures: z.array(z.object({ key: z.string(), label: z.string(), figure: FigureRef })),
 });
 export type Share = z.infer<typeof Share>;
 
@@ -138,7 +148,13 @@ export type Preflight = z.infer<typeof Preflight>;
 export const SaveSocialPost = z.object({
   text: z.string().optional(),
   hashtags: z.array(z.string()).optional(),
-  media: z.object({ kind: z.enum(['link-card', 'text-only']) }).optional(),
+  media: z
+    .discriminatedUnion('kind', [
+      z.object({ kind: z.literal('link-card') }),
+      z.object({ kind: z.literal('text-only') }),
+      z.object({ kind: z.literal('image'), figure: FigureRef.optional(), shape: z.string().optional(), theme: z.enum(['day', 'night']).optional(), alt: z.string().optional() }),
+    ])
+    .optional(),
 });
 export type SaveSocialPost = z.infer<typeof SaveSocialPost>;
 

@@ -1,13 +1,14 @@
 import { computed, signal } from '@preact/signals';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'preact/hooks';
 import { checkPost, type MeasuredFold } from '../../domain/social/checks.ts';
+import { figureKey } from '../../domain/social/figures.ts';
 import { cleanHashtag } from '../../domain/social/hashtags.ts';
 import type { MediaKind } from '../../domain/social/network.ts';
 import { networks } from '../../domain/social/networks/registry.ts';
-import { resolvePost } from '../../domain/social/resolve.ts';
-import type { SocialPost } from '../../domain/social/social-post.ts';
-import type { Preflight, SaveSocialPost, Share } from '../../protocol.ts';
-import { copiedSocialPost, loadPreflight, markPosted, restoreSocialPost, saveSocialPost, unmarkPosted } from '../api.ts';
+import { imageKey, resolvePost } from '../../domain/social/resolve.ts';
+import type { ImageChoice, SocialPost } from '../../domain/social/social-post.ts';
+import { type Preflight, routes, type SaveSocialPost, type Share } from '../../protocol.ts';
+import { copiedSocialPost, loadPreflight, markPosted, renderShareImage, restoreSocialPost, saveSocialPost, unmarkPosted } from '../api.ts';
 import { createAutosave } from '../autosave.ts';
 import { KeySheet } from '../components/KeySheet.tsx';
 import { formatAgo, formatNumber } from '../format.ts';
@@ -64,9 +65,9 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
     const tab = signal(0);
     const folds = signal<Record<string, MeasuredFold>>({});
     const network = computed(() => networks[tab.value]);
-    const ctx = { postUrl: share.post.postUrl, categories: share.post.categories };
+    const ctx = { postUrl: share.post.postUrl, categories: share.post.categories, title: share.post.title, summary: share.post.summary };
     const resolved = computed(() => resolvePost(network.value, merged(state.value.networks[network.value.id], working.value[network.value.id]), ctx));
-    const failures = computed(() => checkPost(network.value, resolved.value.parts, folds.value[network.value.id]));
+    const failures = computed(() => checkPost(network.value, resolved.value.parts, folds.value[network.value.id], resolved.value.image));
     return {
       state,
       working,
@@ -85,6 +86,9 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
         return at >= 0 && at < parts.text.trimEnd().length ? at : undefined;
       }),
       preflight: signal<Preflight['checks'] | 'checking' | string>('checking'),
+      // The image choice being rendered, and the last one that failed (not retried until Calvin asks).
+      rendering: signal<string | undefined>(undefined),
+      renderError: signal<{ key: string; message: string } | undefined>(undefined),
       versionsOpen: signal(false),
       sheetOpen: signal(false),
       lastKey: signal<string | undefined>(undefined),
@@ -98,7 +102,26 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   const autosave = s.autosaves[network.id];
   const saved = s.state.value.networks[network.id];
   const work = s.working.value[network.id];
-  const { parts, media, assembled } = s.resolved.value;
+  const { parts, media, assembled, image } = s.resolved.value;
+  const wantKey = image && imageKey(image);
+  // The rendered image is current when it was made from the choices on screen.
+  const rendered = saved?.rendered;
+  const fresh = Boolean(rendered && rendered.key === wantKey);
+  const imageSrc = rendered && `${routes.socialImage(slug, network.id)}?v=${encodeURIComponent(rendered.at)}`;
+
+  // Renders whenever the image choice on screen differs from what was last rendered.
+  useEffect(() => {
+    const id = network.id;
+    if (!wantKey || fresh || s.rendering.value === wantKey || s.renderError.value?.key === wantKey) return;
+    s.rendering.value = wantKey;
+    (async () => {
+      await s.autosaves[id].flush();
+      s.state.value = await renderShareImage(slug, id);
+      if (s.renderError.value?.key === wantKey) s.renderError.value = undefined;
+    })()
+      .catch((err: Error) => (s.renderError.value = { key: wantKey, message: err.message }))
+      .finally(() => s.rendering.value === wantKey && (s.rendering.value = undefined));
+  }, [wantKey, fresh, network.id, s.renderError.value]);
 
   useEffect(() => {
     loadPreflight(slug).then(
@@ -112,6 +135,20 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
     setTimeout(() => s.toast.value === message && (s.toast.value = undefined), 1800);
   };
   const fail = (err: unknown) => (s.error.value = (err as Error).message);
+
+  /** Changes the image choice, keeping the rest of it. */
+  const setImage = (patch: Partial<ImageChoice>, now = true) => {
+    const current = s.working.value[s.network.value.id].media;
+    change({ media: { ...(current?.kind === 'image' ? current : {}), ...patch, kind: 'image' } }, now);
+  };
+
+  const saveImage = () => {
+    if (!s.state.value.networks[s.network.value.id]?.rendered) return;
+    const a = document.createElement('a');
+    a.href = `${routes.socialImage(slug, s.network.value.id)}?download=1`;
+    a.download = '';
+    a.click();
+  };
 
   /** Records a change on the current tab and schedules its save. `now` saves straight away (eg a chip removed). */
   const change = (patch: Working, now = false) => {
@@ -187,6 +224,7 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
       if (digit && Number(digit[1]) <= networks.length) act(() => (s.tab.value = Number(digit[1]) - 1));
       else if (e.code === 'KeyC') act(() => void actions.current.copy());
       else if (e.code === 'KeyP') act(() => actions.current.compose());
+      else if (e.code === 'KeyI') act(saveImage);
       else if (e.code === 'KeyV' && s.state.value.networks[s.network.value.id]?.versions.length) act(() => (s.versionsOpen.value = !s.versionsOpen.value));
       else if (e.code === 'KeyH') act(() => (s.sheetOpen.value = !s.sheetOpen.value));
     };
@@ -345,15 +383,89 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
                   <div class="share-block-head">
                     <span class="share-label">Media</span>
                     <div class="share-seg" role="group" aria-label="Media">
-                      {network.media
-                        .filter((m): m is 'link-card' | 'text-only' => m !== 'image')
-                        .map((m) => (
-                          <button type="button" key={m} class={m === media ? 'on' : ''} aria-pressed={m === media} onClick={() => change({ media: { kind: m } }, true)}>
-                            {MEDIA[m]}
-                          </button>
-                        ))}
+                      {network.media.map((m) => (
+                        <button
+                          type="button"
+                          key={m}
+                          class={m === media ? 'on' : ''}
+                          aria-pressed={m === media}
+                          // Image keeps its earlier choices (figure, theme, alt text) when Calvin comes back to it.
+                          onClick={() => (m === 'image' ? setImage({}) : change({ media: { kind: m } }, true))}
+                        >
+                          {MEDIA[m]}
+                        </button>
+                      ))}
                     </div>
                   </div>
+                  {image && (
+                    <div class="share-picker">
+                      <ul class="share-figures" aria-label="Figures">
+                        {share.figures.map((f) => {
+                          const on = f.key === figureKey(image.figure);
+                          return (
+                            <li key={f.key}>
+                              <button type="button" class={on ? 'on' : ''} aria-pressed={on} onClick={() => setImage({ figure: f.figure })}>
+                                {f.label}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div class="share-stage">
+                        <div class="share-stage-tools">
+                          {network.imageShapes.length > 1 && (
+                            <div class="share-seg" role="group" aria-label="Shape">
+                              {network.imageShapes.map((shape) => {
+                                const on = (image.shape ?? (fresh ? rendered?.shape : undefined)) === shape.id;
+                                return (
+                                  <button type="button" key={shape.id} class={on ? 'on' : ''} aria-pressed={on} onClick={() => setImage({ shape: shape.id })}>
+                                    {shape.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div class="share-seg" role="group" aria-label="Theme">
+                            {(['day', 'night'] as const).map((t) => (
+                              <button type="button" key={t} class={image.theme === t ? 'on' : ''} aria-pressed={image.theme === t} onClick={() => setImage({ theme: t })}>
+                                {t === 'day' ? 'Day' : 'Night'}
+                              </button>
+                            ))}
+                          </div>
+                          {fresh && rendered && (
+                            <span class="share-size">
+                              {rendered.width} × {rendered.height}
+                            </span>
+                          )}
+                        </div>
+                        <div class="share-frame">
+                          {imageSrc && <img src={imageSrc} alt={image.alt} class={fresh ? '' : 'stale'} />}
+                          {s.rendering.value === wantKey && <span class="share-frame-note">Rendering…</span>}
+                          {s.renderError.value?.key === wantKey && (
+                            <span class="share-frame-note share-frame-error">
+                              {s.renderError.value?.message}{' '}
+                              <button type="button" class="btn" onClick={() => (s.renderError.value = undefined)}>
+                                Try again
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                        {network.altText && (
+                          <label class="share-alt">
+                            <span class="share-label">Alt text</span>
+                            <textarea
+                              class="share-field"
+                              rows={2}
+                              aria-label="Alt text"
+                              placeholder="What the image shows"
+                              value={image.alt}
+                              onInput={(e) => setImage({ alt: e.currentTarget.value }, false)}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </section>
               )}
 
@@ -361,6 +473,11 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
                 <button type="button" class="btn btn-go" onClick={() => void actions.current.copy()}>
                   Copy text <kbd class="k">C</kbd>
                 </button>
+                {image && (
+                  <button type="button" class="btn" disabled={!rendered} onClick={saveImage}>
+                    Save image <kbd class="k">I</kbd>
+                  </button>
+                )}
                 <button type="button" class="btn" onClick={() => actions.current.compose()}>
                   Open {network.label} <kbd class="k">P</kbd>
                 </button>
@@ -410,6 +527,7 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
                   network={network}
                   text={assembled.text}
                   media={media}
+                  image={image && imageSrc && rendered ? { src: imageSrc, alt: image.alt, width: rendered.width, height: rendered.height } : undefined}
                   post={share.post}
                   onFold={(f) => {
                     const prev = s.folds.peek()[network.id];

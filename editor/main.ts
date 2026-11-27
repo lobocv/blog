@@ -23,6 +23,8 @@ import { openShare, preflight } from './app/open-share.ts';
 import { copiedSocialPost, restoreSocialPost, saveSocialPost } from './app/save-social-post.ts';
 import { FsShareStore } from './infra/fs-share-store.ts';
 import { HttpLiveChecker } from './infra/live-checker.ts';
+import { PlaywrightRenderer } from './infra/figure-renderer.ts';
+import { renderShareImage, shareImage } from './app/render-share-image.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
 import { FsIdeasFile } from './infra/fs-ideas-file.ts';
 import { ClaudeAgent } from './infra/claude-agent.ts';
@@ -53,10 +55,11 @@ const apiPort = port + 1;
 const root = resolve(args.root);
 
 const preview = args.preview ? new AstroPreview(root, port + 2) : undefined;
+const renderer = new PlaywrightRenderer();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {
     preview?.stop();
-    process.exit(0);
+    void renderer.close().finally(() => process.exit(0));
   });
 }
 
@@ -96,6 +99,12 @@ const api = createApi({
   restoreSocialPost: restoreSocialPost(share),
   markPosted: markPosted(share),
   unmarkPosted: unmarkPosted(share),
+  renderShareImage: renderShareImage({
+    ...share,
+    renderer,
+    origin: () => preview?.origin() ?? Promise.reject(new Error("The preview is off (--no-preview), so images can't be rendered.")),
+  }),
+  shareImage: shareImage(share),
 });
 
 // Claude reaches the MCP tools on the API port directly, not through the UI's proxy.
