@@ -30,11 +30,21 @@ editor/
     thread.ts          threads, replies, open and resolved
     suggestion.ts      proposed edits: apply, tweak, keep in place as the text changes
     review.ts          critique checklist progress
+    social/            the share page (sharing-design.md)
+      network.ts         the Network interface every network implements
+      networks/          one folder per network (eg linkedin/), and registry.ts, the
+                         enabled networks in tab order. Only the registry imports them
+      social-post.ts     a network's post: text, hashtags, media, status, versions, posted
+      resolve.ts         a post with the network's defaults filled in, for the page and the files
+      checks.ts          length, the fold, hashtag count, banned words, em-dashes
+      links.ts, hashtags.ts   tagged URLs; categories to hashtags
   app/               use cases, one per file, and the ports they need
-    ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock
+    ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock, ShareStore,
+                       LiveChecker
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
     list-posts.ts, create-draft.ts, ideas.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
+    open-share.ts, save-social-post.ts, mark-posted.ts, share-post.ts   the share page
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
     fs-post-library.ts     reads and writes posts, watches for outside edits, moves
@@ -46,28 +56,36 @@ editor/
     mcp-tools.ts           the suggest_edit tool Claude calls, as a small MCP server over
                            HTTP. Each turn gets only these tools (--strict-mcp-config)
     astro-preview.ts       starts and stops astro dev
+    fs-share-store.ts      writing/share/<slug>/: share.json and a ready-to-paste <network>.txt
+                           per network. Updates to a post run one at a time
+    live-checker.ts        pre-flight against the deployed site: page, OG tags, preview image
     contracts/             one shared test suite per port
   server/
     http.ts            routes, and server-sent events for Claude's replies. Turns
                        requests into use-case calls
   ui/
     main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post,
-                       `/?ideas` lists the ideas
+                       `/?share=<slug>` shares a published post, `/?ideas` lists the ideas
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
     thread-state.ts    the open post's threads and notes, selection and composer, as signals
     components/        Composer, ThreadCard, Margin, PageThread, StatusLine, KeySheet,
                        SectionPicker, FrontMatterForm
     views/             PostsView, IdeasView, EditorView, PreviewView (iframe plus anchors),
-                       SourceView (CodeMirror)
+                       SourceView (CodeMirror), ShareView
+    share/             the share page's text box (CodeMirror) and fold measuring, and
+                       previews/<network>.tsx, each network's phone feed
 shared/              code the blog build and the editor both use, moved here when
                      the editor first needs it
   reading.ts           word count and reading time, so the editor matches the site
   notes.ts             the `@@` note pattern
+  site.ts              the deployed site's address and a post's URL on it (astro.config.mjs reads it)
+  banned-words.json    phrases that read as AI-written, for scripts/lint_post.py and the share page
   preview.ts           the post's URL, and the bridge script Astro injects into the
                        preview page plus the messages it exchanges with the editor
 e2e/
   editor.spec.ts     posts page, typing and saving, deleting, threads
   preview.spec.ts    Source and Preview swap, on a temporary copy of the site
+  share.spec.ts      the share page: type, check, copy, restore, mark posted, files on disk
 ```
 
 ## Layers and what they may import
@@ -87,6 +105,10 @@ e2e/
 - `editor/architecture.test.ts` enforces this table by scanning each folder's
   imports. If a change needs to break a rule, change the design here first,
   then the table in the test
+- The same test enforces the share page's no-branching rule
+  (`sharing-design.md`, "Networks"): only `networks/registry.ts` imports a
+  network, and outside the network folders, the registry and
+  `ui/share/previews/`, no code names one
 - Only `infra`, `server`, `main.ts` and `shared` may import Node built-ins
   (`node:fs`, `child_process`, ...). Tests are exempt
 - The UI never imports `app` or `infra`. It talks to the server only through
