@@ -52,6 +52,9 @@ export interface Network {
   defaultLink: 'tagged' | 'short';
   utmSource: string;
 
+  /** How posts read best on this network, for Claude when it writes one. Facts about the network, not voice. */
+  guide: string;
+
   /** Checks only this network needs, run after the shared ones. */
   checks?: ((parts: Parts, assembled: Assembled) => Failure[])[];
 }
