@@ -3,7 +3,7 @@
 
 export const philosophy = {
   heading: 'How I approach engineering',
-  intro: 'I’ve learned that the technical problems are often not the hardest. The parts that slow us down happen before and in between writing software.',
+  intro: 'Technical problems are often not the hardest. The parts that slow us down happen before and in between writing software.',
   principles: [
     { prefer: 'Gladiator', over: 'spectator', text: 'Don’t just critique and bring ideas, execute and drive results.' },
     { prefer: 'Principles', over: 'playbooks', text: 'I have a deep curiosity to ask tough questions and search for answers.' },
