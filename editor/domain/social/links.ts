@@ -8,3 +8,6 @@ export function taggedUrl(postUrl: string, utmSource: string): string {
   u.searchParams.set('utm_medium', 'social');
   return u.toString();
 }
+
+// Where the post lives on the deployed site, for the layers that can't import shared/ directly.
+export { postUrl, previewImageUrl } from '../../../shared/site.ts';
