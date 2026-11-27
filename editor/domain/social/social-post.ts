@@ -3,7 +3,14 @@
 
 export const SCHEMA_VERSION = 1;
 
-export type Media = { kind: 'link-card' } | { kind: 'text-only' };
+/** What an image shows: the post's preview card, one of its figure components, or one of its images. */
+export type FigureRef = { kind: 'preview' } | { kind: 'component'; source: string; props?: Record<string, string> } | { kind: 'image'; src: string };
+export type Theme = 'day' | 'night';
+/** Calvin's image choices. Unset fields keep their defaults (the preview card, day, the network's shape for the figure). */
+export type ImageChoice = { kind: 'image'; figure?: FigureRef; shape?: string; theme?: Theme; alt?: string };
+export type Media = { kind: 'link-card' } | { kind: 'text-only' } | ImageChoice;
+/** What <network>.png holds: `key` is the choice it was rendered from (see imageKey), and the shape that was used. */
+export type Rendered = { key: string; shape: string; width: number; height: number; at: string };
 export type LinkChoice = { kind: 'tagged' };
 export type Status = 'draft' | 'ready' | 'posted';
 
@@ -21,6 +28,7 @@ export type SocialPost = {
   versions: Version[];
   /** What went out, as posted, so later edits don't change the record. */
   posted?: { url: string; at: string; text: string };
+  rendered?: Rendered;
 };
 
 export type ShareState = { schemaVersion: number; networks: Record<string, SocialPost> };
@@ -42,7 +50,7 @@ export function edit(post: SocialPost, change: Change): SocialPost {
   const changed =
     (change.text !== undefined && change.text !== post.text) ||
     (change.hashtags !== undefined && change.hashtags.join(' ') !== post.hashtags?.join(' ')) ||
-    (change.media !== undefined && change.media.kind !== post.media?.kind);
+    (change.media !== undefined && JSON.stringify(change.media) !== JSON.stringify(post.media));
   if (changed && post.status === 'ready') next.status = 'draft';
   return next;
 }

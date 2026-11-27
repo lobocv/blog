@@ -14,6 +14,7 @@ import type { addComment, listThreads, replyToThread, resolveThread } from '../a
 import type { markPosted, unmarkPosted } from '../app/mark-posted.ts';
 import type { openShare, preflight } from '../app/open-share.ts';
 import type { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
+import type { renderShareImage, shareImage } from '../app/render-share-image.ts';
 import {
   Copied,
   CreatedDraft,
@@ -65,6 +66,8 @@ export type UseCases = {
   restoreSocialPost: ReturnType<typeof restoreSocialPost>;
   markPosted: ReturnType<typeof markPosted>;
   unmarkPosted: ReturnType<typeof unmarkPosted>;
+  renderShareImage: ReturnType<typeof renderShareImage>;
+  shareImage: ReturnType<typeof shareImage>;
 };
 
 /** Turns requests from the UI into use-case calls. No logic of its own. */
@@ -202,6 +205,14 @@ export function createApi(uc: UseCases) {
     return c.json(shared(await uc.markPosted(c.req.param('slug'), c.req.param('network'), body.data.url)));
   });
   api.delete('/api/share/:slug/:network/posted', async (c) => c.json(shared(await uc.unmarkPosted(c.req.param('slug'), c.req.param('network')))));
+  api.post('/api/share/:slug/:network/image', async (c) => c.json(shared(await uc.renderShareImage(c.req.param('slug'), c.req.param('network')))));
+  api.get('/api/share/:slug/:network/image', async (c) => {
+    const [slug, network] = [c.req.param('slug'), c.req.param('network')];
+    const png = await uc.shareImage(slug, network);
+    const headers: Record<string, string> = { 'content-type': 'image/png', 'cache-control': 'no-store' };
+    if (c.req.query('download')) headers['content-disposition'] = `attachment; filename="${slug}-${network}.png"`;
+    return c.body(new Uint8Array(png), 200, headers);
+  });
 
   api.get('/api/preview', async (c) => c.json(PreviewInfo.parse({ origin: await uc.previewOrigin() })));
 

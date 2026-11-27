@@ -1,5 +1,7 @@
 // LinkedIn. The limit is from LinkedIn's help page "Post and share updates"
-// (https://www.linkedin.com/help/linkedin/answer/a528176, checked 2026-11-27). LinkedIn documents
+// (https://www.linkedin.com/help/linkedin/answer/a528176, checked 2026-11-27), and image sizes from
+// "Share photos or videos" (https://www.linkedin.com/help/linkedin/answer/a527229, checked
+// 2026-11-27): 1080px wide recommended, ratios from 3:1 to 4:5. LinkedIn documents
 // neither the fold nor hashtag advice, so those are judgment calls: its phone feed cuts posts after
 // about 3 lines, and 3 to 5 hashtags is the common advice since hashtag following was dropped.
 import type { Network, Parts } from '../../network.ts';
@@ -27,9 +29,18 @@ export const linkedin: Network = {
 
   hashtags: { min: 3, max: 5, placement: 'end' },
 
-  // Image comes with milestone 2, and becomes the default then.
-  media: ['link-card', 'text-only'],
-  defaultMedia: 'link-card',
+  // An image or a link card, never both. With an image the link in the text stays clickable.
+  media: ['image', 'link-card', 'text-only'],
+  defaultMedia: 'image',
+  imageShapes: [
+    // 1.91:1, the shape of a link card, so the preview card fits exactly.
+    { id: 'landscape', label: 'Landscape', width: 1200, height: 628 },
+    // 4:5, the tallest every version of LinkedIn's help page allows.
+    { id: 'portrait', label: 'Portrait', width: 1080, height: 1350 },
+  ],
+  // Portrait only for figures clearly taller than wide; square-ish ones read fine landscape.
+  defaultShape: ({ width, height }) => (height > width * 1.15 ? 'portrait' : 'landscape'),
+  altText: true,
 
   defaultLink: 'tagged',
   utmSource: 'linkedin',

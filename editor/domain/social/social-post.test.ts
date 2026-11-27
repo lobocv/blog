@@ -18,6 +18,12 @@ describe('edit', () => {
     expect(edit(post({ status: 'ready' }), { media: { kind: 'text-only' } }).status).toBe('draft');
   });
 
+  it('counts a changed image choice as a change', () => {
+    const ready = post({ status: 'ready', media: { kind: 'image', theme: 'day' } });
+    expect(edit(ready, { media: { kind: 'image', theme: 'night' } }).status).toBe('draft');
+    expect(edit(ready, { media: { kind: 'image', theme: 'day' } }).status).toBe('ready');
+  });
+
   it('leaves a posted post posted', () => {
     expect(edit(post({ status: 'posted' }), { text: 'b' }).status).toBe('posted');
   });

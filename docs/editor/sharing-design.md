@@ -188,9 +188,9 @@ editor/
   infra/
     fs-share-store.ts      writing/share/<slug>/ (see "Files")
     live-checker.ts        pre-flight: the live page, its OG tags and preview image
-    figure-renderer.ts     headless Chrome over the DevTools protocol against the
-                           preview server: crop the figure, hide its chrome,
-                           pad to the network's size
+    figure-renderer.ts     headless Chromium (Playwright's, which the end-to-end
+                           tests already install) against the preview server's
+                           one-figure page: hide its chrome, pad to the network's size
     mcp-tools.ts           adds write_social_post (below)
   ui/views/ShareView.tsx   /?share=<slug>
 ```
@@ -227,9 +227,10 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
   is no separate "no image" entry
 - The picker lists the post's figures (MDX components and images, found the
   way `domain/figure.ts` finds them today) and the post's preview image
-- Rendering reuses the preview server: open the post, scroll the figure into
-  view, hide `.fig-info` and `.side-foliage`, wait for the animation, crop the
-  element and pad it to the network's image size in the figure's background colour
+- Rendering reuses the preview server's one-figure page (`/_editor/figure`, the
+  same page Source shows figures from): lay the figure out at the post's column
+  width, hide `.fig-info` and `.side-foliage`, wait for its animations, then zoom
+  it and pad it in the page's background colour to the network's image size
 - Day theme by default, night as an option
 - Landscape and portrait are both supported, since the right shape depends on
   the figure (a wide diagram reads better landscape, a tall tree portrait).

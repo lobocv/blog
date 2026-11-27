@@ -14,6 +14,9 @@ const net: Network = {
   hashtags: { min: 1, max: 2, placement: 'end' },
   media: ['link-card'],
   defaultMedia: 'link-card',
+  imageShapes: [],
+  defaultShape: () => 'landscape',
+  altText: true,
   defaultLink: 'tagged',
   utmSource: 'test',
 };
@@ -78,6 +81,12 @@ describe('checkPost', () => {
       ['banned', [{ from: 3, to: 11 }]],
       ['em-dash', [{ from: 15, to: 16 }]],
     ]);
+  });
+
+  it('asks for alt text on an image, when the network takes it', () => {
+    expect(checkPost(net, parts('Fine.'), undefined, { alt: ' ' }).map((f) => f.check)).toEqual(['alt']);
+    expect(checkPost(net, parts('Fine.'), undefined, { alt: 'A tree of topics.' })).toEqual([]);
+    expect(checkPost({ ...net, altText: false }, parts('Fine.'), undefined, { alt: '' })).toEqual([]);
   });
 
   it("runs the network's own checks after the shared ones", () => {

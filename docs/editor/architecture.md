@@ -34,17 +34,20 @@ editor/
       network.ts         the Network interface every network implements
       networks/          one folder per network (eg linkedin/), and registry.ts, the
                          enabled networks in tab order. Only the registry imports them
-      social-post.ts     a network's post: text, hashtags, media, status, versions, posted
+      social-post.ts     a network's post: text, hashtags, media (and the image choice),
+                         status, versions, posted, and what its image was rendered from
+      figures.ts         what an image can show: the preview card and the post's figures
       resolve.ts         a post with the network's defaults filled in, for the page and the files
       checks.ts          length, the fold, hashtag count, banned words, em-dashes
       links.ts, hashtags.ts   tagged URLs; categories to hashtags
   app/               use cases, one per file, and the ports they need
     ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock, ShareStore,
-                       LiveChecker
+                       LiveChecker, ImageRenderer
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
     list-posts.ts, create-draft.ts, ideas.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
-    open-share.ts, save-social-post.ts, mark-posted.ts, share-post.ts   the share page
+    open-share.ts, save-social-post.ts, mark-posted.ts, render-share-image.ts,
+    share-post.ts      the share page
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
     fs-post-library.ts     reads and writes posts, watches for outside edits, moves
@@ -56,8 +59,10 @@ editor/
     mcp-tools.ts           the suggest_edit tool Claude calls, as a small MCP server over
                            HTTP. Each turn gets only these tools (--strict-mcp-config)
     astro-preview.ts       starts and stops astro dev
-    fs-share-store.ts      writing/share/<slug>/: share.json and a ready-to-paste <network>.txt
-                           per network. Updates to a post run one at a time
+    fs-share-store.ts      writing/share/<slug>/: share.json, a ready-to-paste <network>.txt
+                           per network, and <network>.png. Updates to a post run one at a time
+    figure-renderer.ts     renders a figure to a PNG with Playwright's headless Chromium, from
+                           the preview server's one-figure page (/_editor/figure)
     live-checker.ts        pre-flight against the deployed site: page, OG tags, preview image
     contracts/             one shared test suite per port
   server/
@@ -84,7 +89,8 @@ shared/              code the blog build and the editor both use, moved here whe
                        preview page plus the messages it exchanges with the editor
 e2e/
   editor.spec.ts     posts page, typing and saving, deleting, threads
-  preview.spec.ts    Source and Preview swap, on a temporary copy of the site
+  preview.spec.ts    Source and Preview swap, and a figure rendered as a share image, on a
+                     temporary copy of the site
   share.spec.ts      the share page: type, check, copy, restore, mark posted, files on disk
 ```
 
@@ -191,7 +197,7 @@ split into projects: `blog`, `editor-node` and `editor-dom`.
 |---|---|
 | `domain` | Unit tests, table-driven. Most of the tests live here, because this is where the hard logic is |
 | `app` | Each use case against the fakes in `app/testing/fakes.ts`. No disk, no network, no Claude |
-| `infra` | The contract suite for each port runs against both the fake and the real adapter (the filesystem one in a temp dir), so the fakes can't drift from reality. The Claude adapter is tested with recorded stream files. One live test runs only with `EDITOR_LIVE=1` |
+| `infra` | The contract suite for each port runs against both the fake and the real adapter (the filesystem one in a temp dir), so the fakes can't drift from reality. The Claude adapter is tested with recorded stream files. One live test runs only with `EDITOR_LIVE=1`. The figure renderer's tests run only when Playwright's Chromium is installed (`make verify-editor` installs it; the deploy's CI doesn't) |
 | `ui` | Components with Testing Library in happy-dom: the margin, thread cards, the keymap |
 | End to end | One Playwright test with a scripted fake agent: type, receive a suggestion, accept it, check the file on disk. Deterministic and free |
 

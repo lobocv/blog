@@ -158,3 +158,8 @@ export async function markPosted(slug: string, network: string, posted: Posted) 
 export async function unmarkPosted(slug: string, network: string) {
   return shareState(await fetch(`${routes.socialPost(slug, network)}/posted`, json('DELETE')), "Couldn't undo posted");
 }
+
+/** Renders the network's image again from its current choices. */
+export async function renderShareImage(slug: string, network: string) {
+  return shareState(await fetch(routes.socialImage(slug, network), json('POST', {})), "Couldn't render the image");
+}

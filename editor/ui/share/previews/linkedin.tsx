@@ -23,7 +23,7 @@ function Rich({ text }: { text: string }) {
   );
 }
 
-export function LinkedInPreview({ network, text, media, post, onFold }: PreviewProps) {
+export function LinkedInPreview({ network, text, media, image, post, onFold }: PreviewProps) {
   const feed = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
   const [cut, setCut] = useState(text.length);
@@ -96,6 +96,12 @@ export function LinkedInPreview({ network, text, media, post, onFold }: PreviewP
               )}
             </div>
           </div>
+          {media === 'image' &&
+            (image ? (
+              <img class="fp-image" src={image.src} alt={image.alt} style={{ aspectRatio: `${image.width} / ${image.height}` }} />
+            ) : (
+              <div class="fp-image fp-image-empty">No image yet</div>
+            ))}
           {media === 'link-card' && (
             <div class="card">
               <img src={post.image} alt="" onError={(e) => (e.currentTarget.style.visibility = 'hidden')} />
