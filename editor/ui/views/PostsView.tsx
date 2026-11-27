@@ -100,6 +100,21 @@ export function PostsView({ posts, onOpen, onDelete, onCreate, onIdeas, onShare 
           {!p.draft && p.date ? `published ${formatDate(p.date)}` : `edited ${formatAgo(new Date(p.modified))}`}
         </span>
       )}
+      {/* Shows on the row under the mouse or the selected one (S does the same). */}
+      {!p.draft && onShare && (
+        <button
+          type="button"
+          class="btn draft-share"
+          title="Share (S)"
+          aria-label={`Share ${p.title}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onShare(p.slug);
+          }}
+        >
+          Share
+        </button>
+      )}
     </li>
   );
   const drafts = posts.filter((p) => p.draft).length;

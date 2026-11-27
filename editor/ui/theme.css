@@ -69,7 +69,10 @@ button.status-view:hover, button.status-view:focus-visible { color: var(--ink); 
 .drafts-name { width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 12px 14px; border-radius: 10px; font: 500 15px/1.4 var(--ui); color: var(--ink); background: var(--raised); border: 1px solid var(--border); outline: none; }
 .drafts-name::placeholder { color: var(--ink-3); }
 .drafts-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.draft { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border-radius: 10px; cursor: pointer; }
+.draft { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border-radius: 10px; cursor: pointer; position: relative; }
+/* Scoped under .draft so it wins over .btn, which resets position and visibility. */
+.draft .draft-share { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); visibility: hidden; }
+.draft.on .draft-share, .draft:hover .draft-share, .draft .draft-share:focus-visible { visibility: visible; }
 .draft.on { background: var(--raised); box-shadow: inset 0 0 0 1px var(--border); }
 .draft-name { font: 500 15px/1.4 var(--ui); color: var(--ink); }
 .draft-meta { font: 400 12.5px/1.4 var(--ui); color: var(--ink-3); }

@@ -103,4 +103,20 @@ describe('PostsView', () => {
     fireEvent.keyDown(box, { key: 'Enter' });
     expect(onCreate).toHaveBeenCalledWith('New idea');
   });
+
+  it('shares a published post from its Share button or with S, and never a draft', () => {
+    const onOpen = vi.fn();
+    const onShare = vi.fn();
+    render(<PostsView posts={[...drafts, live]} onOpen={onOpen} onShare={onShare} onDelete={async () => {}} onCreate={async () => {}} />);
+    expect(screen.queryByRole('button', { name: 'Share The Plugin Pattern' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Share Event Folding' }));
+    expect(onShare).toHaveBeenCalledWith('event_folding');
+    expect(onOpen).not.toHaveBeenCalled();
+    key('KeyS');
+    expect(onShare).toHaveBeenCalledTimes(1);
+    key('KeyJ');
+    key('KeyJ');
+    key('KeyS');
+    expect(onShare).toHaveBeenLastCalledWith('event_folding');
+  });
 });
