@@ -2,7 +2,7 @@
 // listening (the open editor), with its reply added to the thread when it finishes.
 import { threadPrompt } from '../domain/prompt.ts';
 import { reply, type Thread } from '../domain/thread.ts';
-import type { Agent, Clock, PostLibrary, ThreadStore } from './ports.ts';
+import type { Agent, AgentTurn, Clock, PostLibrary, ThreadStore } from './ports.ts';
 
 export type ConversationEvent =
   /** The threads changed (eg Claude's reply was added). */
@@ -19,6 +19,10 @@ type Deps = {
   agent: Agent;
   /** The URL of the editor's MCP tools for a post (eg suggest_edit). */
   toolsUrl?: (slug: string) => string;
+  /** The message for a turn. `session` is the one being resumed (none on a session's first turn). Defaults to the post threads' prompt. */
+  prompt?: (slug: string, thread: Thread, session: string | undefined) => Promise<string>;
+  /** The system prompt addition and the tools Claude may use, when not the writing editor's. */
+  turn?: Pick<AgentTurn, 'system' | 'allow'>;
 };
 type Listener = (e: ConversationEvent) => void;
 
@@ -33,7 +37,8 @@ type PostState = {
   lastWorking?: ConversationEvent;
 };
 
-export function createConversation({ library, threads, clock, agent, toolsUrl }: Deps) {
+export function createConversation({ library, threads, clock, agent, toolsUrl, prompt, turn: options }: Deps) {
+  const promptFor = prompt ?? (async (slug: string, thread: Thread) => threadPrompt(library.pathOf(slug), thread, (await library.read(slug))?.text));
   const posts = new Map<string, PostState>();
   const stateOf = (slug: string) => {
     let s = posts.get(slug);
@@ -52,8 +57,9 @@ export function createConversation({ library, threads, clock, agent, toolsUrl }:
     if (!thread) return;
     publish(slug, { type: 'working', threadId, text: '' });
     let text = '';
+    const session = await threads.session(slug);
     const result = await agent.ask(
-      { prompt: threadPrompt(library.pathOf(slug), thread, (await library.read(slug))?.text), session: await threads.session(slug), tools: toolsUrl?.(slug) },
+      { prompt: await promptFor(slug, thread, session), session, tools: toolsUrl?.(slug), ...options },
       (e) => {
         if (e.type === 'text') text = e.text;
         publish(slug, { type: 'working', threadId, text, tool: e.type === 'tool' ? e.name : undefined });

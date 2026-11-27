@@ -7,7 +7,7 @@ import type { ShareState } from '../../domain/social/social-post.ts';
 import { Refused } from '../errors.ts';
 import type { Size } from '../../domain/social/network.ts';
 import type { Theme } from '../../domain/social/social-post.ts';
-import type { Agent, AgentEvent, Clock, IdeasFile, ImageRenderer, LiveCheck, LiveChecker, PostLibrary, RenderTarget, ShareStore, ShareUpdate, ThreadStore } from '../ports.ts';
+import type { Agent, AgentEvent, AgentTurn, Clock, IdeasFile, ImageRenderer, LiveCheck, LiveChecker, PostLibrary, RenderTarget, ShareStore, ShareUpdate, ThreadStore } from '../ports.ts';
 
 export class MemoryPostLibrary implements PostLibrary {
   posts = new Map<string, PostFile>();
@@ -95,7 +95,7 @@ export class FakeClock implements Clock {
  * turn open until `release()` is called (or the turn is stopped), to test queueing and stopping.
  */
 export class FakeAgent implements Agent {
-  turns: { prompt: string; session?: string; tools?: string }[] = [];
+  turns: AgentTurn[] = [];
   #replies: string[];
   #release: (() => void) | undefined;
 
@@ -107,7 +107,7 @@ export class FakeAgent implements Agent {
     this.#release?.();
   }
 
-  async ask(turn: { prompt: string; session?: string; tools?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  async ask(turn: AgentTurn, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
     this.turns.push(turn);
     const reply = this.#replies.shift() ?? 'ok';
     const session = `s${this.turns.length}`;

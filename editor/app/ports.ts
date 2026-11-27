@@ -63,6 +63,17 @@ export interface Clock {
 /** What Claude is doing while it works on a reply. */
 export type AgentEvent = { type: 'text'; text: string } | { type: 'tool'; name: string };
 
+export type AgentTurn = {
+  prompt: string;
+  session?: string;
+  /** The URL of the editor's MCP tools for this post. */
+  tools?: string;
+  /** Replaces the agent's default system prompt addition (the writing editor's). */
+  system?: string;
+  /** Replaces the tools Claude may use without asking (eg `mcp__editor__write_social_post`, `Edit(docs/voice.md)`). */
+  allow?: string[];
+};
+
 /** Claude, run once per turn. */
 export interface Agent {
   /**
@@ -71,7 +82,7 @@ export interface Agent {
    * `stopped: true` and whatever it had written.
    */
   ask(
-    turn: { prompt: string; session?: string; /** The editor's MCP tools for this post. */ tools?: string },
+    turn: AgentTurn,
     onEvent: (e: AgentEvent) => void,
     signal: AbortSignal,
   ): Promise<{ text: string; session?: string; stopped: boolean }>;
