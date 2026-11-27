@@ -14,3 +14,10 @@ it('writes writing/threads/<slug>.json', async () => {
   await new JsonThreadStore(root).save('a', []);
   expect(await readFile(join(root, 'writing/threads/a.json'), 'utf8')).toBe('{\n  "threads": []\n}\n');
 });
+
+it('keeps the share threads in their own folder', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'threads-'));
+  await new JsonThreadStore(root, 'writing/threads/share').save('a', []);
+  expect(await readFile(join(root, 'writing/threads/share/a.json'), 'utf8')).toBe('{\n  "threads": []\n}\n');
+  expect(await new JsonThreadStore(root).load('a')).toEqual([]);
+});
