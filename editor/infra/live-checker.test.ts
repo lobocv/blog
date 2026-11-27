@@ -21,6 +21,7 @@ const pages: Record<string, (res: import('node:http').ServerResponse) => void> =
   '/query-image/': (res) => res.end(card('/og/q.png?v=1&amp;w=2')),
   '/og/q.png': (res) => res.writeHead(200, { 'content-type': 'image/png' }).end('png'),
   '/bare/': (res) => res.end('<html><head><title>No card</title></head></html>'),
+  '/s/k3x9q2/': (res) => res.end('<meta charset="utf-8"><meta http-equiv="refresh" content="0; url=https://www.lobocv.com/posts/a/?utm_source=bluesky&amp;utm_medium=social">'),
 };
 
 let server: Server;
@@ -40,12 +41,24 @@ afterAll(() => {
   server.close();
 });
 
-liveCheckerContract('fake', async () => ({
-  checker: new FakeLiveChecker({ 'https://site/good/': [{ ok: true, message: 'page loads (200)' }] }),
-  good: 'https://site/good/',
-  bad: 'https://site/bad/',
-}));
-liveCheckerContract('http', async () => ({ checker: new HttpLiveChecker(2000), good: `${origin}/good/`, bad: 'http://127.0.0.1:9/' }));
+const to = '/posts/a/?utm_source=bluesky&utm_medium=social';
+liveCheckerContract('fake', async () => {
+  const checker = new FakeLiveChecker({ 'https://site/good/': [{ ok: true, message: 'page loads (200)' }] });
+  checker.live['https://site/s/k3x9q2/'] = to;
+  return { checker, good: 'https://site/good/', bad: 'https://site/bad/', redirect: { url: 'https://site/s/k3x9q2/', to } };
+});
+liveCheckerContract('http', async () => ({ checker: new HttpLiveChecker(2000), good: `${origin}/good/`, bad: 'http://127.0.0.1:9/', redirect: { url: `${origin}/s/k3x9q2/`, to } }));
+
+describe('HttpLiveChecker redirects', () => {
+  const checker = () => new HttpLiveChecker(2000);
+  it('reads the meta refresh, decoding &amp;, and says where it goes', async () => {
+    expect(await checker().redirects(`${origin}/s/k3x9q2/`, to)).toEqual({ ok: true, message: `/s/k3x9q2/ goes to ${to}` });
+  });
+  it("says a page that isn't deployed yet isn't live, and a page without a refresh doesn't redirect", async () => {
+    expect(await checker().redirects(`${origin}/s/zzzzzz/`, to)).toEqual({ ok: false, message: "/s/zzzzzz/ isn't live yet (404). It works once the site is deployed" });
+    expect((await checker().redirects(`${origin}/good/`, to)).message).toBe("/good/ loads but doesn't redirect");
+  });
+});
 
 describe('HttpLiveChecker', () => {
   const check = (path: string, timeout = 2000) => new HttpLiveChecker(timeout).check(`${origin}${path}`);

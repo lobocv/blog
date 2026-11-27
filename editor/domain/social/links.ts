@@ -11,3 +11,4 @@ export function taggedUrl(postUrl: string, utmSource: string): string {
 
 // Where the post lives on the deployed site, for the layers that can't import shared/ directly.
 export { postUrl, previewImageUrl } from '../../../shared/site.ts';
+export { codeFrom, shortPath, shortUrl, sitePath, type ShortLink } from '../../../shared/short-links.ts';

@@ -4,14 +4,21 @@ import { markPosted, unmarkPosted } from './mark-posted.ts';
 import { openShare, preflight } from './open-share.ts';
 import { copiedSocialPost, restoreSocialPost, saveSocialPost } from './save-social-post.ts';
 import { renderShareImage, shareImage } from './render-share-image.ts';
-import { FakeClock, FakeLiveChecker, FakeRenderer, MemoryPostLibrary, MemoryShareStore } from './testing/fakes.ts';
+import { chooseLink } from './choose-link.ts';
+import { FakeClock, FakeLiveChecker, FakeRenderer, MemoryPostLibrary, MemoryShareStore, MemoryShortLinks } from './testing/fakes.ts';
 
 const live = '---\ntitle: "Live post"\nsummary: "What it says."\ndraft: false\ndate: 2026-11-24\ncategories: ["AI", "Architecture"]\n---\nBody.';
 const draft = '---\ntitle: Draft\ndraft: true\n---\n';
 const link = 'https://www.lobocv.com/posts/live/?utm_source=linkedin&utm_medium=social';
 
 function setup() {
-  const deps = { library: new MemoryPostLibrary({ live, draft }), share: new MemoryShareStore(), clock: new FakeClock(), checker: new FakeLiveChecker({ 'http://127.0.0.1:9/posts/live/': [{ ok: true, message: 'page loads (200)' }] }) };
+  const deps = {
+    library: new MemoryPostLibrary({ live, draft }),
+    share: new MemoryShareStore(),
+    clock: new FakeClock(),
+    checker: new FakeLiveChecker({ 'http://127.0.0.1:9/posts/live/': [{ ok: true, message: 'page loads (200)' }] }),
+    links: new MemoryShortLinks(),
+  };
   return { ...deps, deps };
 }
 
@@ -182,5 +189,48 @@ describe('openShare figures', () => {
     const { deps } = setup();
     await deps.library.write('live', `${live}\nimport Tree from '../../../components/post/Tree.astro';\n\n<Tree />\n`);
     expect((await openShare(deps)('live')).figures.map((f) => f.label)).toEqual(['Preview card', 'Tree']);
+  });
+});
+
+describe('chooseLink', () => {
+  const setupLinks = () => {
+    const s = setup();
+    const links = new MemoryShortLinks({ taken1: { post: 'other', to: '/posts/other/' } });
+    // Byte 0 makes "aaaaaa", then "bbbbbb", and so on: deterministic codes.
+    let n = 0;
+    const deps = { ...s.deps, links, randomBytes: (len: number) => new Uint8Array(len).fill(n++) };
+    return { ...s, links, deps, choose: chooseLink(deps) };
+  };
+
+  it('makes a short link the first time, adds it to the data file, and puts it in the text', async () => {
+    const { choose, links, share } = setupLinks();
+    const state = await choose('live', 'linkedin', 'short');
+    expect(state.networks.linkedin.link).toEqual({ kind: 'short', code: 'aaaaaa' });
+    expect(links.links.aaaaaa).toEqual({ post: 'live', to: '/posts/live/?utm_source=linkedin&utm_medium=social' });
+    expect(share.texts.get('live')?.linkedin).toContain('https://www.lobocv.com/s/aaaaaa/');
+  });
+
+  it('keeps the code when switching back to tagged, and reuses it', async () => {
+    const { choose, links } = setupLinks();
+    await choose('live', 'linkedin', 'short');
+    expect((await choose('live', 'linkedin', 'tagged')).networks.linkedin.link).toEqual({ kind: 'tagged', code: 'aaaaaa' });
+    expect((await choose('live', 'linkedin', 'short')).networks.linkedin.link).toEqual({ kind: 'short', code: 'aaaaaa' });
+    expect(Object.keys(links.links)).toEqual(['taken1', 'aaaaaa']);
+  });
+
+  it('skips codes already taken', async () => {
+    const { choose, links, deps } = setupLinks();
+    await links.add('aaaaaa', { post: 'other', to: '/posts/other/' });
+    expect((await choose('live', 'linkedin', 'short')).networks.linkedin.link?.code).toBe('bbbbbb');
+    void deps;
+  });
+
+  it('pre-flight checks each short link is live', async () => {
+    const { choose, deps, checker } = setupLinks();
+    await choose('live', 'linkedin', 'short');
+    const check = preflight({ ...deps, origin: 'http://127.0.0.1:9' });
+    expect((await check('live')).at(-1)).toEqual({ ok: false, message: "/s/aaaaaa/ isn't live yet (404). It works once the site is deployed" });
+    checker.live['http://127.0.0.1:9/s/aaaaaa/'] = '/posts/live/?utm_source=linkedin&utm_medium=social';
+    expect((await check('live')).at(-1)).toEqual({ ok: true, message: '/s/aaaaaa/ goes to /posts/live/?utm_source=linkedin&utm_medium=social' });
   });
 });

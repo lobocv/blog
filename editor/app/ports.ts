@@ -3,6 +3,7 @@
 import type { PostFile } from '../domain/post.ts';
 import type { Size } from '../domain/social/network.ts';
 import type { ShareState, Theme } from '../domain/social/social-post.ts';
+import type { ShortLink } from '../domain/social/links.ts';
 import type { Thread } from '../domain/thread.ts';
 
 /**
@@ -134,4 +135,13 @@ export type LiveCheck = { ok: boolean; message: string };
 export interface LiveChecker {
   /** Never rejects: a page that doesn't load is a failed check. */
   check(url: string): Promise<LiveCheck[]>;
+  /** Whether a short link's page is live and sends the browser to `to` (a site path with its query). Never rejects. */
+  redirects(url: string, to: string): Promise<LiveCheck>;
+}
+
+/** The short link codes, in src/data/short-links.json, which the blog builds a page for each of. */
+export interface ShortLinks {
+  all(): Promise<Record<string, ShortLink>>;
+  /** Rejects with Refused when the code is taken. Adds made at once all land. */
+  add(code: string, link: ShortLink): Promise<void>;
 }

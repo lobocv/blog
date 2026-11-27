@@ -11,7 +11,8 @@ export type ImageChoice = { kind: 'image'; figure?: FigureRef; shape?: string; t
 export type Media = { kind: 'link-card' } | { kind: 'text-only' } | ImageChoice;
 /** What <network>.png holds: `key` is the choice it was rendered from (see imageKey), and the shape that was used. */
 export type Rendered = { key: string; shape: string; width: number; height: number; at: string };
-export type LinkChoice = { kind: 'tagged' };
+/** Tagged or short. A network's short link code stays with it when Calvin switches back to tagged, so switching again reuses it. */
+export type LinkChoice = { kind: 'tagged' | 'short'; code?: string };
 export type Status = 'draft' | 'ready' | 'posted';
 
 /**
@@ -45,7 +46,7 @@ export function withNetworks(state: ShareState, ids: string[]): ShareState {
   return { ...state, networks };
 }
 
-export type Change = { text?: string; hashtags?: string[]; media?: Media };
+export type Change = { text?: string; hashtags?: string[]; media?: Media; link?: LinkChoice };
 
 /** Calvin's edit. A ready post goes back to draft; a posted one stays posted, since that's a record. */
 export function edit(post: SocialPost, change: Change): SocialPost {
@@ -53,7 +54,8 @@ export function edit(post: SocialPost, change: Change): SocialPost {
   const changed =
     (change.text !== undefined && change.text !== post.text) ||
     (change.hashtags !== undefined && change.hashtags.join(' ') !== post.hashtags?.join(' ')) ||
-    (change.media !== undefined && JSON.stringify(change.media) !== JSON.stringify(post.media));
+    (change.media !== undefined && JSON.stringify(change.media) !== JSON.stringify(post.media)) ||
+    (change.link !== undefined && JSON.stringify(change.link) !== JSON.stringify(post.link));
   if (changed && post.status === 'ready') next.status = 'draft';
   return next;
 }

@@ -49,3 +49,18 @@ describe('resolvePost', () => {
     expect(imageKey(a)).not.toBe(imageKey({ ...a, shape: 'wide' }));
   });
 });
+
+describe('resolvePost links', () => {
+  const net2 = { ...net, defaultLink: 'tagged' } as Network;
+  it('uses the short link once chosen and coded, and keeps the tagged one as its destination', () => {
+    const r = resolvePost(net2, { ...emptyPost(), link: { kind: 'short', code: 'k3x9q2' } }, ctx);
+    expect(r.link).toEqual({ kind: 'short', url: 'https://www.lobocv.com/s/k3x9q2/', tagged: 'https://www.lobocv.com/posts/a/?utm_source=n&utm_medium=social', code: 'k3x9q2' });
+    expect(r.parts.link).toBe('https://www.lobocv.com/s/k3x9q2/');
+  });
+
+  it('falls back to tagged without a code, even for a network whose default is short', () => {
+    expect(resolvePost({ ...net2, defaultLink: 'short' } as Network, emptyPost(), ctx).link.kind).toBe('tagged');
+    expect(resolvePost({ ...net2, defaultLink: 'short' } as Network, { ...emptyPost(), link: { kind: 'tagged', code: 'k3x9q2' } }, ctx).link).toMatchObject({ kind: 'tagged', code: 'k3x9q2' });
+    expect(resolvePost({ ...net2, defaultLink: 'short' } as Network, { ...emptyPost(), link: { kind: 'short', code: 'k3x9q2' } }, ctx).link.kind).toBe('short');
+  });
+});

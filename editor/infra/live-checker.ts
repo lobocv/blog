@@ -75,4 +75,21 @@ export class HttpLiveChecker implements LiveChecker {
     }
     return out;
   }
+
+  async redirects(url: string, to: string): Promise<LiveCheck> {
+    const path = new URL(url).pathname;
+    try {
+      const res = await this.#fetch(url);
+      const html = await res.text();
+      if (!res.ok) return { ok: false, message: `${path} isn't live yet (${res.status}). It works once the site is deployed` };
+      const refresh = [...html.matchAll(/<meta\b[^>]*>/gi)].map(([tag]) => tag).find((tag) => /http-equiv\s*=\s*["']?refresh/i.test(tag));
+      const target = refresh && /content\s*=\s*["'][^"']*?url=([^"']+)["']/i.exec(refresh)?.[1];
+      if (!target) return { ok: false, message: `${path} loads but doesn't redirect` };
+      const goes = new URL(decodeEntities(target.trim()), res.url || url);
+      const got = `${goes.pathname}${goes.search}`;
+      return got === to ? { ok: true, message: `${path} goes to ${to}` } : { ok: false, message: `${path} goes to ${got}, not ${to}` };
+    } catch (err) {
+      return { ok: false, message: `${path}: ${this.#why(err)}` };
+    }
+  }
 }
