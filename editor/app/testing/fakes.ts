@@ -7,7 +7,8 @@ import type { ShareState } from '../../domain/social/social-post.ts';
 import { Refused } from '../errors.ts';
 import type { Size } from '../../domain/social/network.ts';
 import type { Theme } from '../../domain/social/social-post.ts';
-import type { Agent, AgentEvent, AgentTurn, Clock, IdeasFile, ImageRenderer, LiveCheck, LiveChecker, PostLibrary, RenderTarget, ShareStore, ShareUpdate, ThreadStore } from '../ports.ts';
+import type { ShortLink } from '../../domain/social/links.ts';
+import type { Agent, AgentEvent, AgentTurn, Clock, IdeasFile, ImageRenderer, LiveCheck, LiveChecker, PostLibrary, RenderTarget, ShareStore, ShareUpdate, ShortLinks, ThreadStore } from '../ports.ts';
 
 export class MemoryPostLibrary implements PostLibrary {
   posts = new Map<string, PostFile>();
@@ -194,6 +195,33 @@ export class FakeLiveChecker implements LiveChecker {
   async check(url: string) {
     this.urls.push(url);
     return structuredClone(this.results[url] ?? [{ ok: false, message: 'page loads: unreachable' }]);
+  }
+
+  /** Short link pages that are live, by URL, and the path each sends to. */
+  live: Record<string, string> = {};
+
+  async redirects(url: string, to: string) {
+    const path = new URL(url).pathname;
+    const goes = this.live[url];
+    if (goes === undefined) return { ok: false, message: `${path} isn't live yet (404). It works once the site is deployed` };
+    return goes === to ? { ok: true, message: `${path} goes to ${to}` } : { ok: false, message: `${path} goes to ${goes}, not ${to}` };
+  }
+}
+
+export class MemoryShortLinks implements ShortLinks {
+  links: Record<string, ShortLink>;
+
+  constructor(links: Record<string, ShortLink> = {}) {
+    this.links = structuredClone(links);
+  }
+
+  async all() {
+    return structuredClone(this.links);
+  }
+
+  async add(code: string, link: ShortLink) {
+    if (code in this.links) throw new Refused(`The short link code "${code}" is taken.`);
+    this.links[code] = { ...link };
   }
 }
 

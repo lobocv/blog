@@ -5,7 +5,8 @@ import { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
-import { FakeAgent, FakeClock, FakeLiveChecker, FakeRenderer, MemoryIdeasFile, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { chooseLink } from '../app/choose-link.ts';
+import { FakeAgent, FakeClock, FakeLiveChecker, FakeRenderer, MemoryIdeasFile, MemoryShortLinks, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
 import { markPosted, unmarkPosted } from '../app/mark-posted.ts';
 import { openShare, preflight } from '../app/open-share.ts';
 import { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
@@ -22,7 +23,7 @@ const draft = '---\ntitle: A draft\ndraft: true\n---\none two';
 function setup() {
   const lib = new MemoryPostLibrary({ a: draft, live: '---\ndraft: false\n---\n' });
   const ideasFile = new MemoryIdeasFile('## Ideas\n\n- 2026-11-21: Old\n');
-  const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock(), share: new MemoryShareStore() };
+  const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock(), share: new MemoryShareStore(), links: new MemoryShortLinks() };
   const checker = new FakeLiveChecker({ 'https://www.lobocv.com/posts/live/': [{ ok: false, message: 'og:image: missing' }] });
   const asked: [string, string][] = [];
   const listeners = new Set<(e: ConversationEvent) => void>();
@@ -51,7 +52,8 @@ function setup() {
     previewOrigin: async () => 'http://127.0.0.1:4402',
     watchFigures: () => () => {},
     openShare: openShare(deps),
-    preflight: preflight({ library: lib, checker }),
+    preflight: preflight({ ...deps, checker }),
+    chooseLink: chooseLink({ ...deps, randomBytes: (n) => new Uint8Array(n) }),
     saveSocialPost: saveSocialPost(deps),
     copiedSocialPost: copiedSocialPost(deps),
     restoreSocialPost: restoreSocialPost(deps),
@@ -220,6 +222,15 @@ describe('editor API', () => {
       expect((await png.arrayBuffer()).byteLength).toBe(24);
       const saved = await api.request('/api/share/live/linkedin/image?download=1');
       expect(saved.headers.get('content-disposition')).toBe('attachment; filename="live-linkedin.png"');
+    });
+
+    it('switches to a short link and back', async () => {
+      const { api } = setup();
+      const short = await api.request('/api/share/live/linkedin/link', send('POST', { kind: 'short' }));
+      expect((await short.json()).state.networks.linkedin.link).toEqual({ kind: 'short', code: 'aaaaaa' });
+      const tagged = await api.request('/api/share/live/linkedin/link', send('POST', { kind: 'tagged' }));
+      expect((await tagged.json()).state.networks.linkedin.link).toEqual({ kind: 'tagged', code: 'aaaaaa' });
+      expect((await api.request('/api/share/live/linkedin/link', send('POST', { kind: 'long' }))).status).toBe(400);
     });
 
     it('saves an image choice', async () => {

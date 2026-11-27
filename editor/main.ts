@@ -27,6 +27,8 @@ import { PlaywrightRenderer } from './infra/figure-renderer.ts';
 import { renderShareImage, shareImage } from './app/render-share-image.ts';
 import { createShareConversation } from './app/share-conversation.ts';
 import { writeSocialPost } from './app/write-social-post.ts';
+import { chooseLink } from './app/choose-link.ts';
+import { FsShortLinks } from './infra/fs-short-links.ts';
 import { SHARE_SYSTEM_PROMPT } from './domain/social/share-prompt.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
 import { FsIdeasFile } from './infra/fs-ideas-file.ts';
@@ -70,6 +72,7 @@ const library = new FsPostLibrary(root);
 const threads = new JsonThreadStore(root);
 const ideasFile = new FsIdeasFile(root);
 const share = { library, share: new FsShareStore(root), clock: { now: () => new Date(), id: randomUUID } };
+const shortLinks = new FsShortLinks(root);
 const deps = { library, threads, clock: { now: () => new Date(), id: randomUUID } };
 const agent = new ClaudeAgent(root, args.claude);
 const conversation = createConversation({
@@ -110,7 +113,8 @@ const api = createApi({
   previewOrigin: () => preview?.origin() ?? Promise.reject(new Error('The preview is off (--no-preview).')),
   watchFigures: (onChange) => preview?.watchFigures(onChange) ?? (() => {}),
   openShare: openShare(share),
-  preflight: preflight({ library, checker: new HttpLiveChecker(), origin: args['check-origin'] }),
+  preflight: preflight({ library, checker: new HttpLiveChecker(), share: share.share, links: shortLinks, origin: args['check-origin'] }),
+  chooseLink: chooseLink({ ...share, links: shortLinks, randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)) }),
   saveSocialPost: saveSocialPost(share),
   copiedSocialPost: copiedSocialPost(share),
   restoreSocialPost: restoreSocialPost(share),

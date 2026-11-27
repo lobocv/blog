@@ -3,6 +3,7 @@
 import type { PostFile } from '../domain/post.ts';
 import type { Size } from '../domain/social/network.ts';
 import type { ShareState, Theme } from '../domain/social/social-post.ts';
+import type { ShortLink } from '../domain/social/links.ts';
 import type { Thread } from '../domain/thread.ts';
 
 /**
@@ -127,11 +128,20 @@ export interface ImageRenderer {
   render(target: RenderTarget, options: { theme: Theme; size: (figure: Size) => Size }): Promise<{ png: Uint8Array; figure: Size }>;
 }
 
-/** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. */
-export type LiveCheck = { ok: boolean; message: string };
+/** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. `code` marks a short link's check, so the page can show it by that link. */
+export type LiveCheck = { ok: boolean; message: string; code?: string };
 
 /** Pre-flight against the deployed site. For information only: it never blocks anything. */
 export interface LiveChecker {
   /** Never rejects: a page that doesn't load is a failed check. */
   check(url: string): Promise<LiveCheck[]>;
+  /** Whether a short link's page is live and sends the browser to `to` (a site path with its query). Never rejects. */
+  redirects(url: string, to: string): Promise<LiveCheck>;
+}
+
+/** The short link codes, in src/data/short-links.json, which the blog builds a page for each of. */
+export interface ShortLinks {
+  all(): Promise<Record<string, ShortLink>>;
+  /** Rejects with Refused when the code is taken. Adds made at once all land. */
+  add(code: string, link: ShortLink): Promise<void>;
 }

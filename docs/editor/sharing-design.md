@@ -242,7 +242,8 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
 - Tagged: `<post URL>?utm_source=<network.utmSource>&utm_medium=social`
 - Short links are first-party: `https://www.lobocv.com/s/<code>`, with a random
   code (eg `k3x9q2`) that points at one network's tagged URL. The codes live in
-  a data file (`src/data/short-links.ts`) the editor writes to
+  a data file (`src/data/short-links.json`, JSON so the editor can write it
+  safely) the editor writes to
 - Why first-party: no third-party account or API, links stay on Calvin's domain,
   and a destination can be fixed after posting (eg a wrong tag) by editing the
   data file
@@ -354,6 +355,9 @@ Each ends with something Calvin can use and a passing `make verify`.
   This gives him the chance to paste his own draft first (2026-11-27)
 - The share thread and its Claude session are gitignored
   (`writing/threads/share/<slug>.json`), like the post threads (2026-11-27)
+- Short link codes are six characters from an alphabet without look-alikes, and
+  live in `src/data/short-links.json` (see
+  `docs/decisions/2026-11-27-first-party-short-links.md`) (2026-11-27)
 - When Calvin agrees to a voice rule in the thread, Claude adds it to
   `docs/voice.md` itself; it's the one file Claude may edit from the share page
   (2026-11-27)
