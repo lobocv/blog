@@ -1,7 +1,7 @@
 # Common tasks for the blog. Run `make` (or `make help`) to list them.
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build preview test typecheck check-urls check-links verify verify-editor write lint share clean deploy
+.PHONY: help install dev build preview test typecheck check-urls check-links verify verify-editor write lint clean deploy
 
 POST ?=
 
@@ -47,9 +47,6 @@ write: node_modules ## Open the writing editor on the posts page, or a post with
 
 lint: ## Lint a post: make lint POST=<slug> (defaults to the active draft)
 	python3 scripts/lint_post.py $(if $(POST),$(POST),--active)
-
-share: ## Share kit for a published post: make share POST=<slug> (defaults to the newest)
-	python3 scripts/share.py $(POST)
 
 clean: ## Remove build output and caches
 	rm -rf dist .astro node_modules/.astro

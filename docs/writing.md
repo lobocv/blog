@@ -96,9 +96,11 @@ before the scope is set). Calvin may skip steps, but you don't skip them for him
 6. Figures (`/diagram`), once the structure has settled
 7. `/critique line` (and `/critique audience` if useful), then Calvin revises
 8. `/ship` runs the final checks before Calvin publishes
-9. `/share` after the deploy: tagged links, preview card checks and a
-   per-platform checklist. Claude may write the social posts (see the `/share`
-   skill), and Calvin reviews them. The one rule still applies to blog posts
+9. `/share` after the deploy: the editor's share page (S on a published post)
+   for LinkedIn, with pre-flight, checks and a phone preview, plus tagged links
+   and a checklist for the other networks. Claude may write the social posts
+   (see the `/share` skill), and Calvin reviews them. The one rule still applies
+   to blog posts
 
 Structure comes before figures and line edits, so neither gets built for a
 section that later gets cut. A figure placeholder (a note saying what it should

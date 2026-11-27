@@ -187,7 +187,7 @@ editor/
     mark-posted.ts         records the posted URL and time
   infra/
     fs-share-store.ts      writing/share/<slug>/ (see "Files")
-    live-checker.ts        the checks scripts/share.py runs today, in TypeScript
+    live-checker.ts        pre-flight: the live page, its OG tags and preview image
     figure-renderer.ts     headless Chrome over the DevTools protocol against the
                            preview server: crop the figure, hide its chrome,
                            pad to the network's size

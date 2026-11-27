@@ -1,6 +1,6 @@
 // Share links for the end of a post. Each network's link carries utm tags so analytics can
 // tell reader shares (utm_medium=share) apart from Calvin's own posts (utm_medium=social,
-// added by scripts/share.py).
+// added by the editor's share page).
 
 export type ShareNetwork = 'linkedin' | 'x' | 'bluesky';
 

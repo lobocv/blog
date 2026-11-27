@@ -1,5 +1,5 @@
 // Pre-flight against the deployed site: the page loads, its preview card tags are there, and the
-// preview image loads. Ported from scripts/share.py.
+// preview image loads.
 import type { LiveCheck, LiveChecker } from '../app/ports.ts';
 
 const TAGS = ['og:title', 'og:description', 'og:image', 'twitter:card', 'twitter:site'];
