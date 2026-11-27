@@ -1,0 +1,27 @@
+---
+// Share links at the end of a post. Network links are utm-tagged (see src/lib/share.ts);
+// "Copy link" copies the clean URL, since it gets pasted anywhere.
+import { shareLinks } from '../lib/share';
+import { xHandle } from '../data/social';
+interface Props { url: string; title: string }
+const { url, title } = Astro.props;
+const links = shareLinks(url, title, xHandle);
+---
+<div class="share">
+  <span class="share-label">Share</span>
+  {links.map(l => <a href={l.href} target="_blank" rel="noopener" data-network={l.network}>{l.label}</a>)}
+  <button type="button" class="share-copy" data-url={url}>Copy link</button>
+</div>
+<script>
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('.share-copy')) {
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.url!);
+        btn.textContent = 'Copied';
+      } catch {
+        btn.textContent = 'Copy failed';
+      }
+      setTimeout(() => { btn.textContent = 'Copy link'; }, 1600);
+    });
+  }
+</script>

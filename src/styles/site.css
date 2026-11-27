@@ -244,6 +244,12 @@ body { position: relative; }
 .page-side ~ :is(article, main, .footer) { position: relative; z-index: 1; }
 
 .post-end { max-width: 720px; margin-top: 72px; display: grid; gap: 40px; }
+.share { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; padding-bottom: 32px; border-bottom: 1px solid var(--line); font-family: "JetBrains Mono", monospace; font-size: 13px; }
+.share-label { color: var(--ink-3); letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+.share a, .share-copy { color: var(--accent); text-decoration: none; }
+.share-copy { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
+.share a:hover, .share-copy:hover { text-decoration: underline; text-underline-offset: 4px; }
+.share a:focus-visible, .share-copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .pager a { padding: 20px 22px; border: 1px solid var(--line); border-radius: 16px; transition: border-color .2s; }
 .pager a:hover { border-color: var(--accent); }
