@@ -5,6 +5,10 @@
 
 export type MediaKind = 'image' | 'link-card' | 'text-only';
 
+export type Size = { width: number; height: number };
+/** An image size the network shows well, eg { id: 'landscape', label: 'Landscape', width: 1200, height: 628 }. */
+export type Shape = { id: string; label: string } & Size;
+
 /** Where the feed cuts the post behind "…see more", if it does. */
 export type Fold = { kind: 'none' } | { kind: 'lines'; lines: number; viewport: 'phone' };
 
@@ -38,6 +42,12 @@ export interface Network {
   /** What a post can carry, and the default when Calvin hasn't chosen. */
   media: MediaKind[];
   defaultMedia: MediaKind;
+  /** The sizes an image can be rendered at. Empty when the network takes no images. */
+  imageShapes: Shape[];
+  /** The shape (its id) for a figure of this size, when Calvin hasn't chosen. */
+  defaultShape(figure: Size): string;
+  /** Whether the network takes alt text for an image. */
+  altText: boolean;
 
   defaultLink: 'tagged' | 'short';
   utmSource: string;

@@ -20,7 +20,8 @@ export function hookEnd(text: string): number {
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 
-export function checkPost(network: Network, parts: Parts, fold?: MeasuredFold): Failure[] {
+/** `image` is the post's image when it carries one. */
+export function checkPost(network: Network, parts: Parts, fold?: MeasuredFold, image?: { alt: string }): Failure[] {
   const assembled = network.assemble(parts);
   const out: Failure[] = [];
 
@@ -51,6 +52,8 @@ export function checkPost(network: Network, parts: Parts, fold?: MeasuredFold): 
 
   const dashes = [...parts.text.matchAll(/—/g)].map((m) => ({ from: m.index, to: m.index + 1 }));
   if (dashes.length) out.push({ check: 'em-dash', message: plural(dashes.length, 'em-dash'), ranges: dashes });
+
+  if (image && network.altText && !image.alt.trim()) out.push({ check: 'alt', message: 'The image has no alt text', ranges: [] });
 
   for (const check of network.checks ?? []) out.push(...check(parts, assembled));
   return out;

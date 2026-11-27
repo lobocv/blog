@@ -26,4 +26,12 @@ describe('linkedin', () => {
   it('offers only media it supports, with its default among them', () => {
     expect(linkedin.media).toContain(linkedin.defaultMedia);
   });
+
+  it('suggests portrait only for figures clearly taller than wide', () => {
+    expect(linkedin.defaultShape({ width: 1200, height: 630 })).toBe('landscape');
+    expect(linkedin.defaultShape({ width: 680, height: 700 })).toBe('landscape');
+    expect(linkedin.defaultShape({ width: 680, height: 900 })).toBe('portrait');
+    for (const s of linkedin.imageShapes) expect(s.width / s.height).toBeLessThanOrEqual(3);
+    for (const s of linkedin.imageShapes) expect(s.width / s.height).toBeGreaterThanOrEqual(4 / 5);
+  });
 });
