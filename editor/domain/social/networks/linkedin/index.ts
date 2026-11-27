@@ -44,4 +44,12 @@ export const linkedin: Network = {
 
   defaultLink: 'tagged',
   utmSource: 'linkedin',
+
+  guide: [
+    'Plain text: LinkedIn shows no Markdown, so no **bold**, headings or bullet syntax.',
+    'The phone feed shows about 3 lines (roughly 120 characters) before "…more", so the first',
+    'paragraph has to give a reason to tap on its own. Short paragraphs, with blank lines between.',
+    'The link goes after the text and the hashtags at the end; the editor adds both, so leave them',
+    'out of the text unless the link reads better inside a sentence.',
+  ].join(' '),
 };

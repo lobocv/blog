@@ -15,6 +15,7 @@ import type { markPosted, unmarkPosted } from '../app/mark-posted.ts';
 import type { openShare, preflight } from '../app/open-share.ts';
 import type { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
 import type { renderShareImage, shareImage } from '../app/render-share-image.ts';
+import type { ShareConversation } from '../app/share-conversation.ts';
 import {
   Copied,
   CreatedDraft,
@@ -34,7 +35,9 @@ import {
   SavePost,
   SaveSocialPost,
   Settle,
+  NewShareMessage,
   Share,
+  ShareEvent,
   ShareState,
   Threads,
 } from '../protocol.ts';
@@ -68,7 +71,38 @@ export type UseCases = {
   unmarkPosted: ReturnType<typeof unmarkPosted>;
   renderShareImage: ReturnType<typeof renderShareImage>;
   shareImage: ReturnType<typeof shareImage>;
+  /** Claude on the share page. Every message Calvin sends there is passed on to Claude. */
+  shareConversation: Pick<ShareConversation, 'list' | 'send' | 'stop' | 'subscribe' | 'subscribeState'>;
 };
+
+type Schema<E> = { parse: (e: unknown) => E };
+
+/**
+ * Server-sent events: one `data:` line of JSON per event, from every source until the page goes away.
+ * Each source starts listening when called with `push` and returns a function that stops it.
+ */
+function events<E>(c: Parameters<typeof streamSSE>[0], schema: Schema<E>, sources: ((push: (e: E) => void) => () => void)[]) {
+  return streamSSE(c, async (stream) => {
+    const queue: E[] = [];
+    let wake: (() => void) | undefined;
+    const push = (e: E) => {
+      queue.push(e);
+      wake?.();
+    };
+    const stops = sources.map((start) => start(push));
+    stream.onAbort(() => {
+      for (const stop of stops) stop();
+      wake?.();
+    });
+    // A comment line, which EventSource ignores, so the response starts straight away.
+    await stream.write(': open\n\n');
+    while (!stream.aborted) {
+      const e = queue.shift();
+      if (e) await stream.writeSSE({ data: JSON.stringify(schema.parse(e)) });
+      else await new Promise<void>((r) => (wake = r));
+    }
+  });
+}
 
 /** Turns requests from the UI into use-case calls. No logic of its own. */
 export function createApi(uc: UseCases) {
@@ -150,34 +184,15 @@ export function createApi(uc: UseCases) {
     return c.body(null, 204);
   });
 
-  // Claude's work and outside edits, as server-sent events: one `data:` line of PostEvent JSON each.
-  api.get('/api/posts/:slug/events', (c) =>
-    streamSSE(c, async (stream) => {
-      const slug = c.req.param('slug');
-      const queue: PostEvent[] = [];
-      let wake: (() => void) | undefined;
-      const push = (e: PostEvent) => {
-        queue.push(e);
-        wake?.();
-      };
-      const stops = [
-        uc.conversation.subscribe(slug, push),
-        uc.watchPost(slug, (text) => push({ type: 'outside', text })),
-        uc.watchFigures(() => push({ type: 'figures' })),
-      ];
-      stream.onAbort(() => {
-        for (const stop of stops) stop();
-        wake?.();
-      });
-      // A comment line, which EventSource ignores, so the response starts straight away.
-      await stream.write(': open\n\n');
-      while (!stream.aborted) {
-        const e = queue.shift();
-        if (e) await stream.writeSSE({ data: JSON.stringify(PostEvent.parse(e)) });
-        else await new Promise<void>((r) => (wake = r));
-      }
-    }),
-  );
+  // Claude's work and outside edits, as server-sent events.
+  api.get('/api/posts/:slug/events', (c) => {
+    const slug = c.req.param('slug');
+    return events(c, PostEvent, [
+      (push) => uc.conversation.subscribe(slug, push),
+      (push) => uc.watchPost(slug, (text) => push({ type: 'outside', text })),
+      (push) => uc.watchFigures(() => push({ type: 'figures' })),
+    ]);
+  });
 
   // The share page.
   api.get('/api/share/:slug', async (c) => c.json(Share.parse(await uc.openShare(c.req.param('slug')))));
@@ -205,6 +220,24 @@ export function createApi(uc: UseCases) {
     return c.json(shared(await uc.markPosted(c.req.param('slug'), c.req.param('network'), body.data.url)));
   });
   api.delete('/api/share/:slug/:network/posted', async (c) => c.json(shared(await uc.unmarkPosted(c.req.param('slug'), c.req.param('network')))));
+  // Claude on the share page: its thread, its work as it happens, and the state when it writes a version.
+  api.get('/api/share/:slug/thread', async (c) => c.json(threads(await uc.shareConversation.list(c.req.param('slug')))));
+  api.post('/api/share/:slug/thread', async (c) => {
+    const body = NewShareMessage.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text }' }, 400);
+    return c.json(threads((await uc.shareConversation.send(c.req.param('slug'), body.data.text)).threads));
+  });
+  api.post('/api/share/:slug/stop', (c) => {
+    uc.shareConversation.stop(c.req.param('slug'));
+    return c.body(null, 204);
+  });
+  api.get('/api/share/:slug/events', (c) => {
+    const slug = c.req.param('slug');
+    return events(c, ShareEvent, [
+      (push) => uc.shareConversation.subscribe(slug, push),
+      (push) => uc.shareConversation.subscribeState(slug, (state) => push({ type: 'state', state })),
+    ]);
+  });
   api.post('/api/share/:slug/:network/image', async (c) => c.json(shared(await uc.renderShareImage(c.req.param('slug'), c.req.param('network')))));
   api.get('/api/share/:slug/:network/image', async (c) => {
     const [slug, network] = [c.req.param('slug'), c.req.param('network')];

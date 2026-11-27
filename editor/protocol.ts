@@ -16,6 +16,10 @@ export const routes = {
   preflight: (slug: string) => `/api/share/${encodeURIComponent(slug)}/preflight`,
   /** PUT saves an edit. Add /copied, /restore or /posted (POST, and DELETE for /posted), or /image. */
   socialPost: (slug: string, network: string) => `/api/share/${encodeURIComponent(slug)}/${encodeURIComponent(network)}`,
+  /** GET the share thread, POST a message to Claude in it. */
+  shareThread: (slug: string) => `/api/share/${encodeURIComponent(slug)}/thread`,
+  shareEvents: (slug: string) => `/api/share/${encodeURIComponent(slug)}/events`,
+  shareStop: (slug: string) => `/api/share/${encodeURIComponent(slug)}/stop`,
   /** GET the rendered PNG (?download=1 to save it), POST to render it again. */
   socialImage: (slug: string, network: string) => `/api/share/${encodeURIComponent(slug)}/${encodeURIComponent(network)}/image`,
 } as const;
@@ -112,7 +116,14 @@ export type PreviewInfo = z.infer<typeof PreviewInfo>;
 
 // The share page (docs/editor/sharing-design.md).
 
-const Version = z.object({ text: z.string(), hashtags: z.array(z.string()), author: z.enum(['calvin', 'claude']), at: z.string() });
+const Version = z.object({
+  text: z.string(),
+  hashtags: z.array(z.string()),
+  author: z.enum(['calvin', 'claude']),
+  at: z.string(),
+  flags: z.array(z.string()).optional(),
+  noted: z.boolean().optional(),
+});
 const FigureRef = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('preview') }),
   z.object({ kind: z.literal('component'), source: z.string(), props: z.record(z.string(), z.string()).optional() }),
@@ -168,6 +179,23 @@ export type Restore = z.infer<typeof Restore>;
 /** POST .../posted records the post's URL; DELETE takes it back off. */
 export const Posted = z.object({ url: z.url({ protocol: /^https?$/ }) });
 export type Posted = z.infer<typeof Posted>;
+
+/** POST /api/share/:slug/thread: Calvin's message to Claude. Answers with the share thread (as Threads). */
+export const NewShareMessage = z.object({ text: z.string().min(1) });
+export type NewShareMessage = z.infer<typeof NewShareMessage>;
+
+/**
+ * GET /api/share/:slug/events streams these: Claude's work in the share thread, and the share state
+ * when Claude writes a version. POST /api/share/:slug/stop stops Claude.
+ */
+export const ShareEvent = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('threads'), threads: z.array(Thread) }),
+  z.object({ type: z.literal('working'), threadId: z.string(), text: z.string(), tool: z.string().optional() }),
+  z.object({ type: z.literal('idle') }),
+  z.object({ type: z.literal('failed'), threadId: z.string(), message: z.string() }),
+  z.object({ type: z.literal('state'), state: ShareState.shape.state }),
+]);
+export type ShareEvent = z.infer<typeof ShareEvent>;
 
 /** Any failed request */
 export const Failure = z.object({ error: z.string() });

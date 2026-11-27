@@ -6,7 +6,7 @@ import type { Clock } from './ports.ts';
 import { changePost, type Deps } from './share-post.ts';
 
 /** Hashtags as typed, cleaned, without blanks or repeats. */
-const clean = (tags: string[]) => [...new Map(tags.map(cleanHashtag).filter(Boolean).map((t) => [t.toLowerCase(), t])).values()];
+export const clean = (tags: string[]) => [...new Map(tags.map(cleanHashtag).filter(Boolean).map((t) => [t.toLowerCase(), t])).values()];
 
 const tidy = (change: Change): Change => (change.hashtags ? { ...change, hashtags: clean(change.hashtags) } : change);
 

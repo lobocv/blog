@@ -14,8 +14,11 @@ export type Rendered = { key: string; shape: string; width: number; height: numb
 export type LinkChoice = { kind: 'tagged' };
 export type Status = 'draft' | 'ready' | 'posted';
 
-/** A saved copy of the text. Claude's drafts become versions too, in milestone 3. */
-export type Version = { text: string; hashtags: string[]; author: 'calvin' | 'claude'; at: string };
+/**
+ * A saved copy of the text. Claude's versions can carry `flags`: claims it couldn't find in the post
+ * or brief, for Calvin to check. `noted` marks a Claude version whose rewrite by Calvin it has asked about.
+ */
+export type Version = { text: string; hashtags: string[]; author: 'calvin' | 'claude'; at: string; flags?: string[]; noted?: boolean };
 
 export type SocialPost = {
   text: string;
@@ -86,4 +89,26 @@ export function markPosted(post: SocialPost, posted: { url: string; at: string; 
 export function clearPosted(post: SocialPost): SocialPost {
   const { posted: _, ...rest } = post;
   return { ...rest, status: 'ready' };
+}
+
+/**
+ * Claude wrote a version. It's always kept; it replaces the text on screen only when `replace` (ie
+ * Calvin hasn't typed since Claude started), so his typing is never lost.
+ */
+export function claudeWrote(post: SocialPost, written: { text: string; hashtags: string[]; media?: Media; flags?: string[] }, at: string, replace: boolean): SocialPost {
+  const version: Version = { text: written.text, hashtags: written.hashtags, author: 'claude', at, ...(written.flags?.length && { flags: written.flags }) };
+  const kept = { ...post, versions: [...post.versions, version] };
+  return replace ? edit(kept, { text: written.text, hashtags: written.hashtags, ...(written.media && { media: written.media }) }) : kept;
+}
+
+/** Claude's latest version, if Calvin has since changed its text and Claude hasn't asked about it yet. */
+export function unnotedRewrite(post: SocialPost): { index: number; version: Version } | undefined {
+  const index = post.versions.findLastIndex((v) => v.author === 'claude');
+  const version = post.versions[index];
+  if (!version || version.noted || !post.text.trim() || post.text.trim() === version.text.trim()) return undefined;
+  return { index, version };
+}
+
+export function markNoted(post: SocialPost, index: number): SocialPost {
+  return { ...post, versions: post.versions.map((v, i) => (i === index ? { ...v, noted: true } : v)) };
 }

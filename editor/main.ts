@@ -25,12 +25,15 @@ import { FsShareStore } from './infra/fs-share-store.ts';
 import { HttpLiveChecker } from './infra/live-checker.ts';
 import { PlaywrightRenderer } from './infra/figure-renderer.ts';
 import { renderShareImage, shareImage } from './app/render-share-image.ts';
+import { createShareConversation } from './app/share-conversation.ts';
+import { writeSocialPost } from './app/write-social-post.ts';
+import { SHARE_SYSTEM_PROMPT } from './domain/social/share-prompt.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
 import { FsIdeasFile } from './infra/fs-ideas-file.ts';
 import { ClaudeAgent } from './infra/claude-agent.ts';
 import { FsPostLibrary } from './infra/fs-post-library.ts';
 import { JsonThreadStore } from './infra/json-thread-store.ts';
-import { createMcpHandler } from './infra/mcp-tools.ts';
+import { createMcpHandler, createShareMcpHandler, SHARE_TOOL_NAMES } from './infra/mcp-tools.ts';
 import { createApi } from './server/http.ts';
 
 const { values: args } = parseArgs({
@@ -68,10 +71,24 @@ const threads = new JsonThreadStore(root);
 const ideasFile = new FsIdeasFile(root);
 const share = { library, share: new FsShareStore(root), clock: { now: () => new Date(), id: randomUUID } };
 const deps = { library, threads, clock: { now: () => new Date(), id: randomUUID } };
+const agent = new ClaudeAgent(root, args.claude);
 const conversation = createConversation({
   ...deps,
-  agent: new ClaudeAgent(root, args.claude),
+  agent,
   toolsUrl: (slug) => `http://127.0.0.1:${apiPort}/mcp/${slug}`,
+});
+// The share page's own conversation: its own threads and sessions, only write_social_post, and
+// docs/voice.md as the one file it may edit (when Calvin agrees to a voice rule).
+const shareConversation = createShareConversation({
+  ...share,
+  threads: new JsonThreadStore(root, 'writing/threads/share'),
+  agent,
+  toolsUrl: (slug) => `http://127.0.0.1:${apiPort}/mcp-share/${slug}`,
+  turn: { system: SHARE_SYSTEM_PROMPT, allow: [...SHARE_TOOL_NAMES, 'Edit(docs/voice.md)'] },
+});
+const shareMcp = createShareMcpHandler({
+  writeSocialPost: writeSocialPost({ ...share, turnStart: shareConversation.turnStart }),
+  changed: shareConversation.publishState,
 });
 const mcp = createMcpHandler({ suggestEdit: suggestEdit(deps), reportReview: reportReview(deps), changed: conversation.changed });
 const api = createApi({
@@ -105,10 +122,12 @@ const api = createApi({
     origin: () => preview?.origin() ?? Promise.reject(new Error("The preview is off (--no-preview), so images can't be rendered.")),
   }),
   shareImage: shareImage(share),
+  shareConversation,
 });
 
 // Claude reaches the MCP tools on the API port directly, not through the UI's proxy.
 api.all('/mcp/:slug', (c) => mcp(c.req.param('slug'), c.req.raw));
+api.all('/mcp-share/:slug', (c) => shareMcp(c.req.param('slug'), c.req.raw));
 serve({ fetch: api.fetch, port: apiPort, hostname: '127.0.0.1' });
 
 const ui = await createServer({

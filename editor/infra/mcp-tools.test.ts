@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Thread } from '../domain/thread.ts';
-import { createMcpHandler } from './mcp-tools.ts';
+import type { ShareState } from '../domain/social/social-post.ts';
+import { createMcpHandler, createShareMcpHandler, SHARE_TOOL_NAMES } from './mcp-tools.ts';
 
 function setup(fail?: string) {
   const calls: unknown[] = [];
@@ -66,5 +67,48 @@ describe('MCP tools', () => {
 
   it('only takes POST', async () => {
     expect((await setup().mcp('a', new Request('http://x/mcp/a'))).status).toBe(405);
+  });
+});
+
+describe('share MCP tool', () => {
+  function share(replaced = true, fail?: string) {
+    const writes: unknown[] = [];
+    const changed: string[] = [];
+    const state = { schemaVersion: 1, networks: {} } as ShareState;
+    const mcp = createShareMcpHandler({
+      writeSocialPost: async (slug, w) => {
+        writes.push([slug, w]);
+        if (fail) throw new Error(fail);
+        return { state, replaced };
+      },
+      changed: (slug) => changed.push(slug),
+    });
+    const rpc = async (body: object) => (await mcp('a', new Request('http://x/mcp-share/a', { method: 'POST', body: JSON.stringify(body) }))).json();
+    const write = (a: object) => rpc({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'write_social_post', arguments: a } });
+    return { rpc, write, writes, changed };
+  }
+  const text = (r: { result: { content: { text: string }[] } }) => r.result.content[0].text;
+
+  it('lists only write_social_post, so share turns never see suggest_edit', async () => {
+    const { rpc } = share();
+    const list = await rpc({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
+    expect(list.result.tools.map((t: { name: string }) => t.name)).toEqual(['write_social_post']);
+    expect(SHARE_TOOL_NAMES).toEqual(['mcp__editor__write_social_post']);
+  });
+
+  it('saves the post, tells the page, and says where it went', async () => {
+    const { write, writes, changed } = share();
+    const res = await write({ network: 'linkedin', text: 'Hook.', hashtags: ['AI'], figure: 'preview', alt: 'Card.', claims_to_check: ['over a year'] });
+    expect(text(res)).toBe('Saved; it shows in the text box.');
+    expect(writes).toEqual([['a', { network: 'linkedin', text: 'Hook.', hashtags: ['AI'], figure: 'preview', alt: 'Card.', claims: ['over a year'] }]]);
+    expect(changed).toEqual(['a']);
+    expect(text(await share(false).write({ network: 'linkedin', text: 'Hook.', hashtags: [] }))).toMatch(/Versions menu/);
+  });
+
+  it('answers bad arguments and refusals as tool errors Claude can act on', async () => {
+    const bad = await share().write({ network: 'linkedin', text: 'Hook.', hashtags: 'AI' });
+    expect(bad.result.isError).toBe(true);
+    const refused = await share(true, 'No figure "x".').write({ network: 'linkedin', text: 'Hook.', hashtags: [], figure: 'x' });
+    expect(refused.result).toMatchObject({ isError: true, content: [{ text: 'No figure "x".' }] });
   });
 });

@@ -349,6 +349,14 @@ Each ends with something Calvin can use and a passing `make verify`.
   only for Image
 - Shared code never branches on a network; differences go on the `Network`
   interface
+- Claude drafts when Calvin presses D, never on its own: with the text box empty
+  it drafts from the post, and with his text in it, it critiques and rewrites it.
+  This gives him the chance to paste his own draft first (2026-11-27)
+- The share thread and its Claude session are gitignored
+  (`writing/threads/share/<slug>.json`), like the post threads (2026-11-27)
+- When Calvin agrees to a voice rule in the thread, Claude adds it to
+  `docs/voice.md` itself; it's the one file Claude may edit from the share page
+  (2026-11-27)
 
 ## Docs to update when this lands
 

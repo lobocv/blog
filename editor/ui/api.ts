@@ -7,6 +7,7 @@ import {
   type NewDraft,
   type NewComment,
   type NewReply,
+  type NewShareMessage,
   Post,
   PostList,
   type Posted,
@@ -162,4 +163,17 @@ export async function unmarkPosted(slug: string, network: string) {
 /** Renders the network's image again from its current choices. */
 export async function renderShareImage(slug: string, network: string) {
   return shareState(await fetch(routes.socialImage(slug, network), json('POST', {})), "Couldn't render the image");
+}
+
+/** The share thread: Calvin's messages to Claude on the share page, and its replies. */
+export async function loadShareThread(slug: string) {
+  return threadsFrom(await fetch(routes.shareThread(slug)), "Couldn't load the share thread");
+}
+
+export async function sendShareMessage(slug: string, message: NewShareMessage) {
+  return threadsFrom(await postJson(routes.shareThread(slug), message), "Couldn't send the message");
+}
+
+export async function stopShareClaude(slug: string) {
+  await fetch(routes.shareStop(slug), { method: 'POST' });
 }

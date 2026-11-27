@@ -11,13 +11,16 @@ type File = { threads: Thread[]; session?: string };
 
 export class JsonThreadStore implements ThreadStore {
   readonly #root: string;
+  readonly #folder: string;
 
-  constructor(root: string) {
+  /** `folder` is relative to the repo: writing/threads for the posts, writing/threads/share for the share page. */
+  constructor(root: string, folder = 'writing/threads') {
     this.#root = root;
+    this.#folder = folder;
   }
 
   #path(slug: string) {
-    return join(this.#root, 'writing/threads', `${slug}.json`);
+    return join(this.#root, this.#folder, `${slug}.json`);
   }
 
   async #read(slug: string): Promise<File> {

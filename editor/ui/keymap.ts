@@ -41,6 +41,7 @@ export const KEYMAP: Group[] = [
     columns: ['Page', 'Typing'],
     shortcuts: [
       { action: 'Network tab', keys: '1-9', source: '⌥ 1-9' },
+      { action: 'Claude drafts (or critiques your draft)', keys: 'D', source: '⌥ D' },
       { action: 'Copy text', keys: 'C', source: '⌥ C' },
       { action: 'Save image', keys: 'I', source: '⌥ I' },
       { action: 'Open compose page', keys: 'P', source: '⌥ P' },

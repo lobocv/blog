@@ -357,3 +357,18 @@ button.status-keys:hover, button.status-keys:focus-visible { color: var(--ink); 
 .fp-image { display: block; width: 100%; background: #e6e4df; }
 .fp-image-empty { aspect-ratio: 1200 / 628; display: grid; place-items: center; font-size: 12px; color: #888; }
 @media (max-width: 600px) { .share-picker { grid-template-columns: minmax(0, 1fr); } }
+
+/* The share page's thread with Claude, on the right like the page thread. */
+.share-page { margin-right: 380px; }
+.share-thread .page-thread-body { justify-content: flex-start; }
+.share-thread-empty { margin: 0; color: var(--ink-3); }
+.share-block-tools { display: inline-flex; align-items: center; gap: 4px; }
+.share-versions-btn[disabled] { opacity: .4; cursor: not-allowed; }
+.share-flags { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.share-flags li { display: flex; gap: 9px; align-items: baseline; font-size: 13px; color: var(--amber); }
+.share-flags li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); flex-shrink: 0; transform: translateY(-1px); }
+@media (max-width: 1180px) {
+  .share-page { margin-right: 0; }
+  .share-thread { position: static; width: auto; border: 1px solid var(--border); border-radius: 12px; margin: 0 32px 60px; }
+}
+.share-frame-note .btn { white-space: nowrap; flex-shrink: 0; }

@@ -17,6 +17,7 @@ const net: Network = {
   imageShapes: [],
   defaultShape: () => 'landscape',
   altText: true,
+  guide: '',
   defaultLink: 'tagged',
   utmSource: 'test',
 };
