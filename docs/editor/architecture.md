@@ -43,12 +43,12 @@ editor/
       links.ts, hashtags.ts   tagged URLs; categories to hashtags
   app/               use cases, one per file, and the ports they need
     ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock, ShareStore,
-                       LiveChecker, ImageRenderer
+                       LiveChecker, ImageRenderer, ShortLinks
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
     list-posts.ts, create-draft.ts, ideas.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
     open-share.ts, save-social-post.ts, mark-posted.ts, render-share-image.ts,
-    share-post.ts      the share page
+    choose-link.ts, share-post.ts   the share page
     share-conversation.ts, write-social-post.ts   Claude on the share page: its own
                        conversation, and the tool that saves its versions
     testing/fakes.ts   in-memory implementation of every port
@@ -68,7 +68,9 @@ editor/
                            per network, and <network>.png. Updates to a post run one at a time
     figure-renderer.ts     renders a figure to a PNG with Playwright's headless Chromium, from
                            the preview server's one-figure page (/_editor/figure)
-    live-checker.ts        pre-flight against the deployed site: page, OG tags, preview image
+    live-checker.ts        pre-flight against the deployed site: page, OG tags, preview image,
+                           and that each short link's page redirects where it should
+    fs-short-links.ts      src/data/short-links.json, the short link codes the blog builds pages for
     contracts/             one shared test suite per port
   server/
     http.ts            routes, and server-sent events for Claude's replies. Turns
@@ -89,6 +91,7 @@ shared/              code the blog build and the editor both use, moved here whe
   reading.ts           word count and reading time, so the editor matches the site
   notes.ts             the `@@` note pattern
   site.ts              the deployed site's address and a post's URL on it (astro.config.mjs reads it)
+  short-links.ts       short link codes and URLs, for the blog's /s/ pages and the share page
   banned-words.json    phrases that read as AI-written, for scripts/lint_post.py and the share page
   preview.ts           the post's URL, and the bridge script Astro injects into the
                        preview page plus the messages it exchanges with the editor

@@ -11,6 +11,7 @@ import { PAGE, type Thread } from '../../domain/thread.ts';
 import type { ImageChoice, SocialPost } from '../../domain/social/social-post.ts';
 import { type Preflight, routes, type SaveSocialPost, type Share, ShareEvent } from '../../protocol.ts';
 import {
+  chooseLink,
   copiedSocialPost,
   loadPreflight,
   loadShareThread,
@@ -121,7 +122,7 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   const autosave = s.autosaves[network.id];
   const saved = s.state.value.networks[network.id];
   const work = s.working.value[network.id];
-  const { parts, media, assembled, image } = s.resolved.value;
+  const { parts, media, assembled, image, link } = s.resolved.value;
   const wantKey = image && imageKey(image);
   // The rendered image is current when it was made from the choices on screen.
   const rendered = saved?.rendered;
@@ -142,12 +143,28 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
       .finally(() => s.rendering.value === wantKey && (s.rendering.value = undefined));
   }, [wantKey, fresh, network.id, s.renderError.value]);
 
-  useEffect(() => {
+  const runPreflight = () =>
     loadPreflight(slug).then(
       (checks) => (s.preflight.value = checks),
       (err: Error) => (s.preflight.value = err.message),
     );
-  }, [s]);
+  useEffect(() => void runPreflight(), [s]);
+
+  /** Tagged or short link. A short link's page is checked again straight away, since it's live only once deployed. */
+  const pickLink = async (kind: 'tagged' | 'short') => {
+    s.error.value = undefined;
+    try {
+      adopt(await chooseLink(slug, s.network.value.id, { kind }));
+      if (kind === 'short') void runPreflight();
+    } catch (err) {
+      fail(err);
+    }
+  };
+
+  // A network whose default is a short link gets its code the first time its tab opens.
+  useEffect(() => {
+    if (network.defaultLink === 'short' && !saved?.link) void pickLink('short');
+  }, [network.id]);
 
   const flash = (message: string) => {
     s.toast.value = message;
@@ -339,6 +356,8 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
   const pf = s.preflight.value;
   const failedChecks = Array.isArray(pf) ? pf.filter((c) => !c.ok) : [];
   const count = network.count(assembled.text);
+  // Pre-flight's word on this tab's short link, when its page isn't live (eg not deployed yet).
+  const shortNotLive = link.kind === 'short' && link.code && Array.isArray(pf) ? pf.find((c) => !c.ok && c.message.startsWith(`/s/${link.code}/`)) : undefined;
   // Claims Claude couldn't find in the post, while its version is the text on screen.
   const lastClaude = versions.findLast((v) => v.author === 'claude');
   const flags = lastClaude?.flags?.length && lastClaude.text.trim() === parts.text.trim() ? lastClaude.flags : [];
@@ -472,6 +491,13 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
               <section class="share-block">
                 <div class="share-block-head">
                   <span class="share-label">Link</span>
+                  <div class="share-seg" role="group" aria-label="Link">
+                    {(['tagged', 'short'] as const).map((k) => (
+                      <button type="button" key={k} class={link.kind === k ? 'on' : ''} aria-pressed={link.kind === k} onClick={() => void pickLink(k)}>
+                        {k === 'tagged' ? 'Tagged' : 'Short'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div class="share-link">
                   <code>{parts.link}</code>
@@ -479,6 +505,7 @@ export function ShareView({ share, onPosts }: { share: Share; onPosts: () => voi
                     Copy link
                   </button>
                 </div>
+                {shortNotLive && <p class="share-link-note">{shortNotLive.message}</p>}
               </section>
 
               {network.media.length > 1 && (

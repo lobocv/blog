@@ -135,7 +135,7 @@ const SocialPost = z.object({
   hashtags: z.array(z.string()).optional(),
   // Any kind: a later version's choice is passed through, and the page falls back to the network's default.
   media: z.looseObject({ kind: z.string() }).optional(),
-  link: z.looseObject({ kind: z.string() }).optional(),
+  link: z.looseObject({ kind: z.string(), code: z.string().optional() }).optional(),
   status: z.enum(['draft', 'ready', 'posted']),
   versions: z.array(Version),
   posted: z.object({ url: z.string(), at: z.string(), text: z.string() }).optional(),
@@ -196,6 +196,10 @@ export const ShareEvent = z.discriminatedUnion('type', [
   z.object({ type: z.literal('state'), state: ShareState.shape.state }),
 ]);
 export type ShareEvent = z.infer<typeof ShareEvent>;
+
+/** POST .../share/:slug/:network/link: tagged or short. Answers with the ShareState. */
+export const ChooseLink = z.object({ kind: z.enum(['tagged', 'short']) });
+export type ChooseLink = z.infer<typeof ChooseLink>;
 
 /** Any failed request */
 export const Failure = z.object({ error: z.string() });

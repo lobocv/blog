@@ -1,4 +1,5 @@
 import type { ChildProcess } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -13,11 +14,14 @@ const link = 'https://www.lobocv.com/posts/live/?utm_source=linkedin&utm_medium=
 let editor: ChildProcess;
 let site: Server;
 let root: string;
+/** Whether the stand-in site serves short link pages yet, as it would once deployed. */
+let deployed = false;
 
 const shareFile = (name: string) => join(root, 'writing/share/live', name);
 const shareJson = async () => JSON.parse(await readFile(shareFile('share.json'), 'utf8'));
 
 test.beforeEach(async ({ context }) => {
+  deployed = false;
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   // A throwaway repo with one draft and one published post.
   root = await mkdtemp(join(tmpdir(), 'editor-share-'));
@@ -37,6 +41,13 @@ test.beforeEach(async ({ context }) => {
           '<meta property="og:image" content="/og/live.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@x">',
       );
     } else if (req.url === '/og/live.png') res.writeHead(200, { 'content-type': 'image/png' }).end('png');
+    else if (deployed && req.url?.startsWith('/s/')) {
+      // A short link page as the blog builds it, from the repo's data file.
+      const links = JSON.parse(readFileSync(join(root, 'src/data/short-links.json'), 'utf8'));
+      const link = links[req.url.split('/')[2]];
+      if (link) res.end(`<meta http-equiv="refresh" content="0; url=https://www.lobocv.com${link.to.replace(/&/g, '&amp;')}">`);
+      else res.writeHead(404).end();
+    }
     else res.writeHead(404).end();
   });
   await new Promise<void>((r) => site.listen(0, '127.0.0.1', r));
@@ -176,4 +187,28 @@ test('D asks Claude for a draft, which lands in the text box, then for a critiqu
     ['claude', 'Errors in Go can carry context.'],
     ['claude', 'A tighter rewrite.'],
   ]);
+});
+
+test('a short link replaces the tagged one, and pre-flight says when its page is live', async ({ page }) => {
+  await page.goto(`${url}?share=live`);
+  const linkGroup = page.getByRole('group', { name: 'Link' });
+  await expect(linkGroup.getByRole('button', { name: 'Tagged' })).toHaveAttribute('aria-pressed', 'true');
+
+  await linkGroup.getByRole('button', { name: 'Short' }).click();
+  await expect.poll(async () => Object.keys(JSON.parse(await readFile(join(root, 'src/data/short-links.json'), 'utf8').catch(() => '{}')))).toHaveLength(1);
+  const [[code, entry]] = Object.entries(JSON.parse(await readFile(join(root, 'src/data/short-links.json'), 'utf8')));
+  expect(entry).toEqual({ post: 'live', to: '/posts/live/?utm_source=linkedin&utm_medium=social' });
+  const short = `https://www.lobocv.com/s/${code}/`;
+  await expect(page.locator('.share-link code')).toHaveText(short);
+  await expect.poll(() => readFile(shareFile('linkedin.txt'), 'utf8')).toContain(short);
+  await expect(page.getByText(`/s/${code}/ isn't live yet (404). It works once the site is deployed`).first()).toBeVisible();
+
+  // Once deployed, switching back and forth reuses the code, and pre-flight finds it live.
+  deployed = true;
+  await linkGroup.getByRole('button', { name: 'Tagged' }).click();
+  await expect(page.locator('.share-link code')).toHaveText(link);
+  await linkGroup.getByRole('button', { name: 'Short' }).click();
+  await expect(page.locator('.share-link code')).toHaveText(short);
+  await expect(page.getByText(`isn't live yet`)).toHaveCount(0);
+  expect(Object.keys(JSON.parse(await readFile(join(root, 'src/data/short-links.json'), 'utf8')))).toEqual([code]);
 });

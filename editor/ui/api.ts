@@ -8,6 +8,7 @@ import {
   type NewComment,
   type NewReply,
   type NewShareMessage,
+  type ChooseLink,
   Post,
   PostList,
   type Posted,
@@ -176,4 +177,9 @@ export async function sendShareMessage(slug: string, message: NewShareMessage) {
 
 export async function stopShareClaude(slug: string) {
   await fetch(routes.shareStop(slug), { method: 'POST' });
+}
+
+/** Tagged or short link for a network's post. A short link gets its code the first time. */
+export async function chooseLink(slug: string, network: string, choice: ChooseLink) {
+  return shareState(await fetch(`${routes.socialPost(slug, network)}/link`, json('POST', choice)), "Couldn't change the link");
 }

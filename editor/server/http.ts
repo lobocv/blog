@@ -15,8 +15,10 @@ import type { markPosted, unmarkPosted } from '../app/mark-posted.ts';
 import type { openShare, preflight } from '../app/open-share.ts';
 import type { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
 import type { renderShareImage, shareImage } from '../app/render-share-image.ts';
+import type { chooseLink } from '../app/choose-link.ts';
 import type { ShareConversation } from '../app/share-conversation.ts';
 import {
+  ChooseLink,
   Copied,
   CreatedDraft,
   Idea,
@@ -71,6 +73,7 @@ export type UseCases = {
   unmarkPosted: ReturnType<typeof unmarkPosted>;
   renderShareImage: ReturnType<typeof renderShareImage>;
   shareImage: ReturnType<typeof shareImage>;
+  chooseLink: ReturnType<typeof chooseLink>;
   /** Claude on the share page. Every message Calvin sends there is passed on to Claude. */
   shareConversation: Pick<ShareConversation, 'list' | 'send' | 'stop' | 'subscribe' | 'subscribeState'>;
 };
@@ -237,6 +240,11 @@ export function createApi(uc: UseCases) {
       (push) => uc.shareConversation.subscribe(slug, push),
       (push) => uc.shareConversation.subscribeState(slug, (state) => push({ type: 'state', state })),
     ]);
+  });
+  api.post('/api/share/:slug/:network/link', async (c) => {
+    const body = ChooseLink.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: "expected { kind: 'tagged' | 'short' }" }, 400);
+    return c.json(shared(await uc.chooseLink(c.req.param('slug'), c.req.param('network'), body.data.kind)));
   });
   api.post('/api/share/:slug/:network/image', async (c) => c.json(shared(await uc.renderShareImage(c.req.param('slug'), c.req.param('network')))));
   api.get('/api/share/:slug/:network/image', async (c) => {
