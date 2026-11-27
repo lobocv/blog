@@ -11,7 +11,32 @@ import type { savePost } from '../app/save-post.ts';
 import type { settleSuggestion } from '../app/suggestions.ts';
 import type { watchPost } from '../app/watch-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { CreatedDraft, Idea, Ideas, NewDraft, NewIdea, PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
+import type { markPosted, unmarkPosted } from '../app/mark-posted.ts';
+import type { openShare, preflight } from '../app/open-share.ts';
+import type { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
+import {
+  Copied,
+  CreatedDraft,
+  Idea,
+  Ideas,
+  NewDraft,
+  NewIdea,
+  PostEvent,
+  PostList,
+  NewComment,
+  NewReply,
+  Post,
+  Posted,
+  Preflight,
+  PreviewInfo,
+  Restore,
+  SavePost,
+  SaveSocialPost,
+  Settle,
+  Share,
+  ShareState,
+  Threads,
+} from '../protocol.ts';
 
 export type UseCases = {
   listPosts: ReturnType<typeof listPosts>;
@@ -33,6 +58,13 @@ export type UseCases = {
   /** Waits for `astro dev` to answer. */
   previewOrigin: () => Promise<string>;
   watchFigures: (onChange: () => void) => () => void;
+  openShare: ReturnType<typeof openShare>;
+  preflight: ReturnType<typeof preflight>;
+  saveSocialPost: ReturnType<typeof saveSocialPost>;
+  copiedSocialPost: ReturnType<typeof copiedSocialPost>;
+  restoreSocialPost: ReturnType<typeof restoreSocialPost>;
+  markPosted: ReturnType<typeof markPosted>;
+  unmarkPosted: ReturnType<typeof unmarkPosted>;
 };
 
 /** Turns requests from the UI into use-case calls. No logic of its own. */
@@ -143,6 +175,33 @@ export function createApi(uc: UseCases) {
       }
     }),
   );
+
+  // The share page.
+  api.get('/api/share/:slug', async (c) => c.json(Share.parse(await uc.openShare(c.req.param('slug')))));
+  api.get('/api/share/:slug/preflight', async (c) => c.json(Preflight.parse({ checks: await uc.preflight(c.req.param('slug')) })));
+
+  const shared = (state: ShareState['state']) => ShareState.parse({ state });
+  api.put('/api/share/:slug/:network', async (c) => {
+    const body = SaveSocialPost.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text?, hashtags?, media? }' }, 400);
+    return c.json(shared(await uc.saveSocialPost(c.req.param('slug'), c.req.param('network'), body.data)));
+  });
+  api.post('/api/share/:slug/:network/copied', async (c) => {
+    const body = Copied.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text, hashtags? }' }, 400);
+    return c.json(shared(await uc.copiedSocialPost(c.req.param('slug'), c.req.param('network'), body.data)));
+  });
+  api.post('/api/share/:slug/:network/restore', async (c) => {
+    const body = Restore.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { index, current: { text, hashtags? } }' }, 400);
+    return c.json(shared(await uc.restoreSocialPost(c.req.param('slug'), c.req.param('network'), body.data.index, body.data.current)));
+  });
+  api.post('/api/share/:slug/:network/posted', async (c) => {
+    const body = Posted.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { url } with an http(s) link' }, 400);
+    return c.json(shared(await uc.markPosted(c.req.param('slug'), c.req.param('network'), body.data.url)));
+  });
+  api.delete('/api/share/:slug/:network/posted', async (c) => c.json(shared(await uc.unmarkPosted(c.req.param('slug'), c.req.param('network')))));
 
   api.get('/api/preview', async (c) => c.json(PreviewInfo.parse({ origin: await uc.previewOrigin() })));
 

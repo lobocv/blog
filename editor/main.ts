@@ -18,6 +18,11 @@ import { reportReview } from './app/review.ts';
 import { settleSuggestion, suggestEdit } from './app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
 import { watchPost } from './app/watch-post.ts';
+import { markPosted, unmarkPosted } from './app/mark-posted.ts';
+import { openShare, preflight } from './app/open-share.ts';
+import { copiedSocialPost, restoreSocialPost, saveSocialPost } from './app/save-social-post.ts';
+import { FsShareStore } from './infra/fs-share-store.ts';
+import { HttpLiveChecker } from './infra/live-checker.ts';
 import { AstroPreview } from './infra/astro-preview.ts';
 import { FsIdeasFile } from './infra/fs-ideas-file.ts';
 import { ClaudeAgent } from './infra/claude-agent.ts';
@@ -37,6 +42,8 @@ const { values: args } = parseArgs({
     claude: { type: 'string', default: 'claude' },
     // The repo to edit. Tests point it at a temporary copy.
     root: { type: 'string', default: resolve(import.meta.dirname, '..') },
+    // Where pre-flight checks the live page. Tests point it at a local server. Links stay on the real site.
+    'check-origin': { type: 'string' },
   },
   allowNegative: true,
 });
@@ -56,6 +63,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 const library = new FsPostLibrary(root);
 const threads = new JsonThreadStore(root);
 const ideasFile = new FsIdeasFile(root);
+const share = { library, share: new FsShareStore(root), clock: { now: () => new Date(), id: randomUUID } };
 const deps = { library, threads, clock: { now: () => new Date(), id: randomUUID } };
 const conversation = createConversation({
   ...deps,
@@ -81,6 +89,13 @@ const api = createApi({
   conversation,
   previewOrigin: () => preview?.origin() ?? Promise.reject(new Error('The preview is off (--no-preview).')),
   watchFigures: (onChange) => preview?.watchFigures(onChange) ?? (() => {}),
+  openShare: openShare(share),
+  preflight: preflight({ library, checker: new HttpLiveChecker(), origin: args['check-origin'] }),
+  saveSocialPost: saveSocialPost(share),
+  copiedSocialPost: copiedSocialPost(share),
+  restoreSocialPost: restoreSocialPost(share),
+  markPosted: markPosted(share),
+  unmarkPosted: unmarkPosted(share),
 });
 
 // Claude reaches the MCP tools on the API port directly, not through the UI's proxy.

@@ -5,7 +5,10 @@ import { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
-import { FakeClock, MemoryIdeasFile, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { FakeClock, FakeLiveChecker, MemoryIdeasFile, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { markPosted, unmarkPosted } from '../app/mark-posted.ts';
+import { openShare, preflight } from '../app/open-share.ts';
+import { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
 import { watchPost } from '../app/watch-post.ts';
@@ -17,7 +20,8 @@ const draft = '---\ntitle: A draft\ndraft: true\n---\none two';
 function setup() {
   const lib = new MemoryPostLibrary({ a: draft, live: '---\ndraft: false\n---\n' });
   const ideasFile = new MemoryIdeasFile('## Ideas\n\n- 2026-11-21: Old\n');
-  const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock() };
+  const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock(), share: new MemoryShareStore() };
+  const checker = new FakeLiveChecker({ 'https://www.lobocv.com/posts/live/': [{ ok: false, message: 'og:image: missing' }] });
   const asked: [string, string][] = [];
   const listeners = new Set<(e: ConversationEvent) => void>();
   const conversation = {
@@ -44,8 +48,15 @@ function setup() {
     watchPost: watchPost(lib),
     previewOrigin: async () => 'http://127.0.0.1:4402',
     watchFigures: () => () => {},
+    openShare: openShare(deps),
+    preflight: preflight({ library: lib, checker }),
+    saveSocialPost: saveSocialPost(deps),
+    copiedSocialPost: copiedSocialPost(deps),
+    restoreSocialPost: restoreSocialPost(deps),
+    markPosted: markPosted(deps),
+    unmarkPosted: unmarkPosted(deps),
   };
-  return { lib, uc, asked, listeners, api: createApi(uc) };
+  return { lib, uc, asked, listeners, share: deps.share, api: createApi(uc) };
 }
 
 const put = (body: unknown) => ({ method: 'PUT', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
@@ -166,6 +177,44 @@ describe('editor API', () => {
     const res = await setup().api.request(path, { method });
     expect(res.status).toBe(status);
     expect((await res.json()).error).toBeTruthy();
+  });
+
+  describe('share page', () => {
+    const send = (method: string, body?: unknown) => ({ method, body: body === undefined ? undefined : JSON.stringify(body), headers: { 'content-type': 'application/json' } });
+
+    it('opens a published post, and refuses a draft', async () => {
+      const { api } = setup();
+      const res = await api.request('/api/share/live');
+      expect(await res.json()).toMatchObject({ post: { slug: 'live', postUrl: 'https://www.lobocv.com/posts/live/' }, state: { networks: { linkedin: { text: '' } } } });
+      expect((await api.request('/api/share/a')).status).toBe(409);
+      expect((await api.request('/api/share/missing')).status).toBe(404);
+    });
+
+    it('runs pre-flight on its own route', async () => {
+      expect(await (await setup().api.request('/api/share/live/preflight')).json()).toEqual({ checks: [{ ok: false, message: 'og:image: missing' }] });
+    });
+
+    it('saves, copies, restores and marks posted', async () => {
+      const { api, share } = setup();
+      const state = async (res: Response) => (await res.json()).state.networks.linkedin;
+      expect(await state(await api.request('/api/share/live/linkedin', send('PUT', { text: 'One.' })))).toMatchObject({ text: 'One.' });
+      expect(share.texts.get('live')?.linkedin).toMatch(/^One\./);
+      expect(await state(await api.request('/api/share/live/linkedin/copied', send('POST', { text: 'Two.' })))).toMatchObject({ status: 'ready', versions: [{ text: 'Two.' }] });
+      expect(await state(await api.request('/api/share/live/linkedin/restore', send('POST', { index: 0, current: { text: 'Three.' } })))).toMatchObject({ text: 'Two.' });
+      expect(await state(await api.request('/api/share/live/linkedin/posted', send('POST', { url: 'https://www.linkedin.com/feed/update/1/' })))).toMatchObject({ status: 'posted' });
+      expect(await state(await api.request('/api/share/live/linkedin/posted', send('DELETE')))).toMatchObject({ status: 'ready' });
+    });
+
+    it.each([
+      ['PUT', '/api/share/live/linkedin', { text: 1 }, 400],
+      ['PUT', '/api/share/live/linkedin', { media: { kind: 'image' } }, 400],
+      ['PUT', '/api/share/live/nope', { text: 'x' }, 404],
+      ['PUT', '/api/share/a/linkedin', { text: 'x' }, 409],
+      ['POST', '/api/share/live/linkedin/posted', { url: 'javascript:alert(1)' }, 400],
+      ['POST', '/api/share/live/linkedin/restore', { index: -1, current: { text: '' } }, 400],
+    ])('%s %s %j is %i', async (method, path, body, status) => {
+      expect((await setup().api.request(path, send(method, body))).status).toBe(status);
+    });
   });
 
   it('reports a failed save', async () => {

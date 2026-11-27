@@ -12,6 +12,10 @@ export const routes = {
   suggestion: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/suggestions/${encodeURIComponent(id)}`,
   stop: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/stop`,
   thread: (slug: string, id: string) => `/api/posts/${encodeURIComponent(slug)}/threads/${encodeURIComponent(id)}`,
+  share: (slug: string) => `/api/share/${encodeURIComponent(slug)}`,
+  preflight: (slug: string) => `/api/share/${encodeURIComponent(slug)}/preflight`,
+  /** PUT saves an edit. Add /copied, /restore or /posted (POST, and DELETE for /posted). */
+  socialPost: (slug: string, network: string) => `/api/share/${encodeURIComponent(slug)}/${encodeURIComponent(network)}`,
 } as const;
 
 /** GET /api/posts: drafts, most recently edited first, then published posts, newest first */
@@ -103,6 +107,51 @@ export type NewReply = z.infer<typeof NewReply>;
 /** GET /api/preview, once `astro dev` answers */
 export const PreviewInfo = z.object({ origin: z.url() });
 export type PreviewInfo = z.infer<typeof PreviewInfo>;
+
+// The share page (docs/editor/sharing-design.md).
+
+const Version = z.object({ text: z.string(), hashtags: z.array(z.string()), author: z.enum(['calvin', 'claude']), at: z.string() });
+const SocialPost = z.object({
+  text: z.string(),
+  hashtags: z.array(z.string()).optional(),
+  // Any kind: a later version's choice is passed through, and the page falls back to the network's default.
+  media: z.looseObject({ kind: z.string() }).optional(),
+  link: z.looseObject({ kind: z.string() }).optional(),
+  status: z.enum(['draft', 'ready', 'posted']),
+  versions: z.array(Version),
+  posted: z.object({ url: z.string(), at: z.string(), text: z.string() }).optional(),
+});
+export const ShareState = z.object({ state: z.object({ schemaVersion: z.number(), networks: z.record(z.string(), SocialPost) }) });
+export type ShareState = z.infer<typeof ShareState>;
+
+/** GET /api/share/:slug: the published post and its share state. Drafts answer 409. */
+export const Share = ShareState.extend({
+  post: z.object({ slug: z.string(), title: z.string(), summary: z.string(), categories: z.array(z.string()), postUrl: z.url(), image: z.url() }),
+});
+export type Share = z.infer<typeof Share>;
+
+/** GET /api/share/:slug/preflight: the live page's checks. For information only. */
+export const Preflight = z.object({ checks: z.array(z.object({ ok: z.boolean(), message: z.string() })) });
+export type Preflight = z.infer<typeof Preflight>;
+
+/** PUT .../share/:slug/:network: what Calvin typed or chose. Answers with the ShareState. */
+export const SaveSocialPost = z.object({
+  text: z.string().optional(),
+  hashtags: z.array(z.string()).optional(),
+  media: z.object({ kind: z.enum(['link-card', 'text-only']) }).optional(),
+});
+export type SaveSocialPost = z.infer<typeof SaveSocialPost>;
+
+const Snapshot = z.object({ text: z.string(), hashtags: z.array(z.string()).optional() });
+/** POST .../copied: the text as copied, which becomes a version. */
+export const Copied = Snapshot;
+export type Copied = z.infer<typeof Copied>;
+/** POST .../restore: the version to bring back, and the text on screen to keep first. */
+export const Restore = z.object({ index: z.number().int().min(0), current: Snapshot });
+export type Restore = z.infer<typeof Restore>;
+/** POST .../posted records the post's URL; DELETE takes it back off. */
+export const Posted = z.object({ url: z.url({ protocol: /^https?$/ }) });
+export type Posted = z.infer<typeof Posted>;
 
 /** Any failed request */
 export const Failure = z.object({ error: z.string() });
