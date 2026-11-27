@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "networks": {
+    "linkedin": {
+      "text": "Hook.\n\nMore.",
+      "hashtags": ["AI", "SoftwareArchitecture", "SystemDesign"],
+      "media": { "kind": "link-card" },
+      "status": "posted",
+      "versions": [
+        { "text": "Hook.", "hashtags": ["AI"], "author": "calvin", "at": "2026-11-27T10:00:00.000Z" }
+      ],
+      "posted": { "url": "https://www.linkedin.com/feed/update/urn:li:activity:1/", "at": "2026-11-27T11:00:00.000Z", "text": "Hook.\n\nMore." }
+    }
+  }
+}

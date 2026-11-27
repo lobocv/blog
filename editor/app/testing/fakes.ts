@@ -167,17 +167,20 @@ export class MemoryShareStore implements ShareStore {
   }
 }
 
-/** Answers every check with `results`, and records the URLs it was asked about. */
+/**
+ * Answers with the results set for each URL. Any other URL fails, as an unreachable page would.
+ * Records the URLs it was asked about.
+ */
 export class FakeLiveChecker implements LiveChecker {
   urls: string[] = [];
-  results: LiveCheck[];
+  results: Record<string, LiveCheck[]>;
 
-  constructor(results: LiveCheck[] = [{ ok: true, message: 'page loads (200)' }]) {
+  constructor(results: Record<string, LiveCheck[]> = {}) {
     this.results = results;
   }
 
   async check(url: string) {
     this.urls.push(url);
-    return structuredClone(this.results);
+    return structuredClone(this.results[url] ?? [{ ok: false, message: 'page loads: unreachable' }]);
   }
 }

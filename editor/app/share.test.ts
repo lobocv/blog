@@ -10,7 +10,7 @@ const draft = '---\ntitle: Draft\ndraft: true\n---\n';
 const link = 'https://www.lobocv.com/posts/live/?utm_source=linkedin&utm_medium=social';
 
 function setup() {
-  const deps = { library: new MemoryPostLibrary({ live, draft }), share: new MemoryShareStore(), clock: new FakeClock(), checker: new FakeLiveChecker() };
+  const deps = { library: new MemoryPostLibrary({ live, draft }), share: new MemoryShareStore(), clock: new FakeClock(), checker: new FakeLiveChecker({ 'http://127.0.0.1:9/posts/live/': [{ ok: true, message: 'page loads (200)' }] }) };
   return { ...deps, deps };
 }
 
