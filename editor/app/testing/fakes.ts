@@ -5,7 +5,9 @@ import type { PostFile } from '../../domain/post.ts';
 import type { Thread } from '../../domain/thread.ts';
 import type { ShareState } from '../../domain/social/social-post.ts';
 import { Refused } from '../errors.ts';
-import type { Agent, AgentEvent, Clock, IdeasFile, LiveCheck, LiveChecker, PostLibrary, ShareStore, ShareUpdate, ThreadStore } from '../ports.ts';
+import type { Size } from '../../domain/social/network.ts';
+import type { Theme } from '../../domain/social/social-post.ts';
+import type { Agent, AgentEvent, Clock, IdeasFile, ImageRenderer, LiveCheck, LiveChecker, PostLibrary, RenderTarget, ShareStore, ShareUpdate, ThreadStore } from '../ports.ts';
 
 export class MemoryPostLibrary implements PostLibrary {
   posts = new Map<string, PostFile>();
@@ -145,6 +147,16 @@ export class MemoryShareStore implements ShareStore {
   texts = new Map<string, Record<string, string>>();
   /** Slugs whose saved state can't be read. */
   broken = new Set<string>();
+  images = new Map<string, Uint8Array>();
+
+  async writeImage(slug: string, network: string, png: Uint8Array) {
+    this.images.set(`${slug}/${network}`, new Uint8Array(png));
+  }
+
+  async readImage(slug: string, network: string) {
+    const png = this.images.get(`${slug}/${network}`);
+    return png && new Uint8Array(png);
+  }
 
   async load(slug: string) {
     if (this.broken.has(slug)) throw new Refused(`writing/share/${slug}/share.json can't be read.`);
@@ -182,5 +194,31 @@ export class FakeLiveChecker implements LiveChecker {
   async check(url: string) {
     this.urls.push(url);
     return structuredClone(this.results[url] ?? [{ ok: false, message: 'page loads: unreachable' }]);
+  }
+}
+
+/** The start of a PNG: the signature and the header chunk, which holds the size. Enough to read back its size. */
+export function pngHeader({ width, height }: Size): Uint8Array {
+  const out = new Uint8Array(24);
+  out.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+  new DataView(out.buffer).setUint32(16, width);
+  new DataView(out.buffer).setUint32(20, height);
+  return out;
+}
+
+/** "Renders" every figure as `figure` sized, recording what it was asked. Rejects with `fail` when set. */
+export class FakeRenderer implements ImageRenderer {
+  calls: { target: RenderTarget; theme: Theme }[] = [];
+  figure: Size;
+  fail: Error | undefined;
+
+  constructor(figure: Size = { width: 680, height: 340 }) {
+    this.figure = figure;
+  }
+
+  async render(target: RenderTarget, options: { theme: Theme; size: (figure: Size) => Size }) {
+    this.calls.push({ target, theme: options.theme });
+    if (this.fail) throw this.fail;
+    return { png: pngHeader(options.size(this.figure)), figure: this.figure };
   }
 }

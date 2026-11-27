@@ -59,5 +59,15 @@ export function shareStoreContract(name: string, make: () => Promise<ShareStore>
       saved.networks.net.text = 'changed too';
       expect((await store.load('a'))!.networks.net.text).toBe('x');
     });
+
+    it('writes and reads back images, per post and network', async () => {
+      const store = await make();
+      expect(await store.readImage('a', 'net')).toBeUndefined();
+      await store.writeImage('a', 'net', new Uint8Array([1, 2, 3]));
+      await store.writeImage('a', 'net', new Uint8Array([4, 5]));
+      expect([...(await store.readImage('a', 'net'))!]).toEqual([4, 5]);
+      expect(await store.readImage('b', 'net')).toBeUndefined();
+      expect(await store.readImage('a', 'other')).toBeUndefined();
+    });
   });
 }

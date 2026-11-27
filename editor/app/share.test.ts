@@ -3,7 +3,8 @@ import { NotFound, Refused } from './errors.ts';
 import { markPosted, unmarkPosted } from './mark-posted.ts';
 import { openShare, preflight } from './open-share.ts';
 import { copiedSocialPost, restoreSocialPost, saveSocialPost } from './save-social-post.ts';
-import { FakeClock, FakeLiveChecker, MemoryPostLibrary, MemoryShareStore } from './testing/fakes.ts';
+import { renderShareImage, shareImage } from './render-share-image.ts';
+import { FakeClock, FakeLiveChecker, FakeRenderer, MemoryPostLibrary, MemoryShareStore } from './testing/fakes.ts';
 
 const live = '---\ntitle: "Live post"\nsummary: "What it says."\ndraft: false\ndate: 2026-11-24\ncategories: ["AI", "Architecture"]\n---\nBody.';
 const draft = '---\ntitle: Draft\ndraft: true\n---\n';
@@ -117,5 +118,69 @@ describe('markPosted', () => {
 
   it('refuses something that isn\'t a link', async () => {
     await expect(markPosted(setup().deps)('live', 'linkedin', 'not a url')).rejects.toBeInstanceOf(Refused);
+  });
+});
+
+describe('renderShareImage', () => {
+  const setupRender = () => {
+    const s = setup();
+    const renderer = new FakeRenderer({ width: 680, height: 340 });
+    const deps = { ...s.deps, renderer, origin: async () => 'http://127.0.0.1:4402' };
+    return { ...s, renderer, render: renderShareImage(deps), deps };
+  };
+  const size = (png: Uint8Array) => [new DataView(png.buffer).getUint32(16), new DataView(png.buffer).getUint32(20)];
+
+  it('renders the preview card by default, landscape and day, and records it', async () => {
+    const { render, renderer, share } = setupRender();
+    const state = await render('live', 'linkedin');
+    expect(renderer.calls).toEqual([{ target: { page: 'http://127.0.0.1:4402/_editor/figure', image: 'http://127.0.0.1:4402/og/live.png' }, theme: 'day' }]);
+    expect(size(share.images.get('live/linkedin')!)).toEqual([1200, 628]);
+    expect(state.networks.linkedin.rendered).toEqual({ key: '["preview","day","auto"]', shape: 'landscape', width: 1200, height: 628, at: '2026-11-25T12:00:00.000Z' });
+  });
+
+  it('renders a chosen component, picking portrait for a tall one', async () => {
+    const { render, renderer, deps, share } = setupRender();
+    renderer.figure = { width: 680, height: 1000 };
+    await saveSocialPost(deps)('live', 'linkedin', { media: { kind: 'image', figure: { kind: 'component', source: 'src/components/post/Tree.astro', props: { steps: '3' } }, theme: 'night' } });
+    const state = await render('live', 'linkedin');
+    expect(renderer.calls[0]).toEqual({
+      target: { page: 'http://127.0.0.1:4402/_editor/figure?src=src%2Fcomponents%2Fpost%2FTree.astro&props=%7B%22steps%22%3A%223%22%7D' },
+      theme: 'night',
+    });
+    expect(state.networks.linkedin.rendered?.shape).toBe('portrait');
+    expect(size(share.images.get('live/linkedin')!)).toEqual([1080, 1350]);
+  });
+
+  it("uses Calvin's shape over the suggested one", async () => {
+    const { render, renderer, deps } = setupRender();
+    renderer.figure = { width: 680, height: 1000 };
+    await saveSocialPost(deps)('live', 'linkedin', { media: { kind: 'image', shape: 'landscape' } });
+    expect((await render('live', 'linkedin')).networks.linkedin.rendered?.shape).toBe('landscape');
+  });
+
+  it('refuses when the post carries no image, and writes nothing when rendering fails', async () => {
+    const { render, renderer, deps, share } = setupRender();
+    await saveSocialPost(deps)('live', 'linkedin', { media: { kind: 'link-card' } });
+    await expect(render('live', 'linkedin')).rejects.toBeInstanceOf(Refused);
+    await saveSocialPost(deps)('live', 'linkedin', { media: { kind: 'image' } });
+    renderer.fail = new Error('The preview is off');
+    await expect(render('live', 'linkedin')).rejects.toThrow('The preview is off');
+    expect(share.images.size).toBe(0);
+    expect((await openShare(deps)('live')).state.networks.linkedin.rendered).toBeUndefined();
+  });
+
+  it('serves the rendered image, and says when there is none', async () => {
+    const { render, deps } = setupRender();
+    await expect(shareImage(deps)('live', 'linkedin')).rejects.toBeInstanceOf(NotFound);
+    await render('live', 'linkedin');
+    expect((await shareImage(deps)('live', 'linkedin')).length).toBe(24);
+  });
+});
+
+describe('openShare figures', () => {
+  it('lists the preview card and the post\'s figures', async () => {
+    const { deps } = setup();
+    await deps.library.write('live', `${live}\nimport Tree from '../../../components/post/Tree.astro';\n\n<Tree />\n`);
+    expect((await openShare(deps)('live')).figures.map((f) => f.label)).toEqual(['Preview card', 'Tree']);
   });
 });
