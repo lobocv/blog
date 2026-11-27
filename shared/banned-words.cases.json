@@ -1,0 +1,10 @@
+[
+  { "text": "We leverage it, then Leveraging it again.", "matches": ["leverage", "Leveraging"] },
+  { "text": "Let’s dive in to the new landscape.", "matches": ["Let's dive in", "landscape"] },
+  { "text": "A game-changer and a game changer.", "matches": ["game-changer", "game changer"] },
+  { "text": "Robustness matters; the realms differ.", "matches": ["Robustness"] },
+  { "text": "Powerfully, not crucially.", "matches": [] },
+  { "text": "It's worth noting the café is in today’s news.", "matches": ["It's worth noting", "in today's"] },
+  { "text": "relocked and élevate stay quiet, but unlocked_state doesn't.", "matches": ["unlocked_state"] },
+  { "text": "", "matches": [] }
+]

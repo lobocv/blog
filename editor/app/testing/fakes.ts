@@ -3,7 +3,9 @@
 // like the real adapters.
 import type { PostFile } from '../../domain/post.ts';
 import type { Thread } from '../../domain/thread.ts';
-import type { Agent, AgentEvent, Clock, IdeasFile, PostLibrary, ThreadStore } from '../ports.ts';
+import type { ShareState } from '../../domain/social/social-post.ts';
+import { Refused } from '../errors.ts';
+import type { Agent, AgentEvent, Clock, IdeasFile, LiveCheck, LiveChecker, PostLibrary, ShareStore, ShareUpdate, ThreadStore } from '../ports.ts';
 
 export class MemoryPostLibrary implements PostLibrary {
   posts = new Map<string, PostFile>();
@@ -134,5 +136,51 @@ export class MemoryIdeasFile implements IdeasFile {
 
   async write(text: string) {
     this.text = text;
+  }
+}
+
+export class MemoryShareStore implements ShareStore {
+  states = new Map<string, ShareState>();
+  /** The ready-to-paste files, by slug then network id. */
+  texts = new Map<string, Record<string, string>>();
+  /** Slugs whose saved state can't be read. */
+  broken = new Set<string>();
+
+  async load(slug: string) {
+    if (this.broken.has(slug)) throw new Refused(`writing/share/${slug}/share.json can't be read.`);
+    const s = this.states.get(slug);
+    return s && structuredClone(s);
+  }
+
+  #queue = new Map<string, Promise<unknown>>();
+
+  update(slug: string, change: (current: ShareState | undefined) => ShareUpdate) {
+    const run = async () => {
+      const { state, texts } = change(await this.load(slug));
+      this.states.set(slug, structuredClone(state));
+      this.texts.set(slug, { ...texts });
+      return structuredClone(state);
+    };
+    const next = (this.#queue.get(slug) ?? Promise.resolve()).then(run, run);
+    this.#queue.set(slug, next);
+    return next;
+  }
+}
+
+/**
+ * Answers with the results set for each URL. Any other URL fails, as an unreachable page would.
+ * Records the URLs it was asked about.
+ */
+export class FakeLiveChecker implements LiveChecker {
+  urls: string[] = [];
+  results: Record<string, LiveCheck[]>;
+
+  constructor(results: Record<string, LiveCheck[]> = {}) {
+    this.results = results;
+  }
+
+  async check(url: string) {
+    this.urls.push(url);
+    return structuredClone(this.results[url] ?? [{ ok: false, message: 'page loads: unreachable' }]);
   }
 }

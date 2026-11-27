@@ -15,6 +15,7 @@ Exit code is 1 when any check fails, 0 otherwise. Warnings don't fail.
 """
 
 import math
+import json
 import re
 import sys
 import urllib.request
@@ -28,18 +29,20 @@ WORDS_PER_MINUTE = 213  # Hugo's reading-time rate
 HARD_CAP = 2000         # about 10 minutes
 SOFT_CAP = 1800
 
-# Phrases that make writing read as AI-generated or padded. Matched
-# case-insensitively, outside code blocks. "harness" is deliberately absent
-# because it is a real topic on this blog.
-BANNED = [
-    r"delve\w*", r"leverag\w*", r"robust\w*", r"seamless\w*", r"powerful",
-    r"unlock\w*", r"game[- ]changer", r"landscape", r"realm", r"tapestry",
-    r"elevat\w*", r"crucial", r"let's dive in", r"dive into", r"deep dive",
-    r"in today's", r"in conclusion", r"at the end of the day",
-    r"i hope this helps", r"it's worth noting", r"it is worth noting",
-    r"needless to say", r"comprehensive guide", r"supercharge\w*",
-]
-BANNED_RE = re.compile(r"\b(" + "|".join(BANNED) + r")\b", re.IGNORECASE)
+# Phrases that make writing read as AI-generated or padded, shared with the
+# editor. "harness" is deliberately absent because it is a real topic on this blog.
+BANNED = json.loads((ROOT / "shared" / "banned-words.json").read_text())["phrases"]
+BANNED_RE = re.compile(
+    r"(?<!\w)(?:"
+    + "|".join(re.escape(p["text"]) + (r"\w*" if p.get("prefix") else "") for p in BANNED)
+    + r")(?!\w)",
+    re.IGNORECASE,
+)
+
+
+def banned(line):
+    """Banned phrases in a line, matched with curly apostrophes read as straight ones."""
+    return BANNED_RE.finditer(line.replace("\u2018", "'").replace("\u2019", "'"))
 
 
 def drafts():
@@ -141,7 +144,7 @@ def main():
         ln = n + offset
         if "—" in line:
             fails.append(f"line {ln}: em-dash")
-        for m in BANNED_RE.finditer(line):
+        for m in banned(line):
             warns.append(f"line {ln}: \"{m.group(0)}\"")
 
     # Drafting notes for Claude (@@ ...), which must be resolved before publishing

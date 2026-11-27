@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/ho
 import { anchorAt, anchorNear, lineOf } from '../../domain/anchor.ts';
 import { type Section, sections, stats } from '../../domain/document.ts';
 import { merge } from '../../domain/merge.ts';
+import { isDraft } from '../../domain/post.ts';
 import { openMechanical, openSuggestion, type Suggestion, target } from '../../domain/suggestion.ts';
 import { PostEvent, type Post, routes } from '../../protocol.ts';
 import { loadPreviewOrigin, savePost } from '../api.ts';
@@ -21,7 +22,7 @@ import { type SourceHandle, SourceView } from './SourceView.tsx';
 import type { Mark } from './thread-marks.ts';
 
 /** One post: Source or Preview, the thread margin and the status line. */
-export function EditorView({ post, onPosts }: { post: Post; onPosts: () => void }) {
+export function EditorView({ post, onPosts, onShare }: { post: Post; onPosts: () => void; /** The share page (S, ⌥S), for published posts. */ onShare?: () => void }) {
   const { text, postStats, autosave, view, threads, layout, marks, clash, sheetOpen, lastKey, picking } = useMemo(() => {
     const text = signal(post.text);
     const threads = createThreadState(post.slug, text);
@@ -243,6 +244,8 @@ export function EditorView({ post, onPosts }: { post: Post; onPosts: () => void 
         });
       } else if (e.code === 'Escape' && only('none') && !e.shiftKey && clash.value === undefined) act(() => void leave());
       else if (threadKey && e.code === 'KeyG') act(openSections);
+      // The draft flag as it is now, since the form can change it.
+      else if (threadKey && e.code === 'KeyS' && onShare && !isDraft(text.value)) act(() => void autosave.flush().then(onShare));
       else if (threadKey && e.code === 'KeyZ') act(() => (threads.hidden.value = !threads.hidden.value));
       else if (threadKey && (e.code === 'KeyJ' || e.code === 'KeyK')) {
         act(() => {

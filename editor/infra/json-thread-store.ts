@@ -1,5 +1,6 @@
 // Threads and the post's Claude session as writing/threads/<slug>.json: pretty printed, so they
 // are easy to read by hand. The folder is gitignored.
+import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { ThreadStore } from '../app/ports.ts';
@@ -43,12 +44,13 @@ export class JsonThreadStore implements ThreadStore {
     await this.#write(slug, { ...(await this.#read(slug)), session });
   }
 
-  // Temporary file then rename, so a crash mid-write never leaves half a file.
+  // Temporary file then rename, so a crash mid-write never leaves half a file. A unique name per
+  // write, so two writes at once never share one.
   async #write(slug: string, file: File) {
     const { threads, session } = file;
     const path = this.#path(slug);
     await mkdir(dirname(path), { recursive: true });
-    const tmp = `${path}.${process.pid}.tmp`;
+    const tmp = `${path}.${randomUUID()}.tmp`;
     await writeFile(tmp, `${JSON.stringify({ threads, session }, null, 2)}\n`, 'utf8');
     await rename(tmp, path);
   }

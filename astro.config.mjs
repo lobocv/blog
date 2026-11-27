@@ -10,6 +10,7 @@ import { shikiConfig } from './src/lib/shiki.mjs';
 import { legacyRedirects } from './src/lib/redirects.mjs';
 import { rehypeNotes } from './src/lib/notes.mjs';
 import { rehypeSourceLines } from './src/lib/source-lines.mjs';
+import { SITE } from './shared/site.ts';
 
 // `astro dev` shows drafting notes (@@ ...) on the page; a build drops or rejects them
 const dev = process.argv.includes('dev');
@@ -37,7 +38,7 @@ const publishedProjects = fs.existsSync('src/content/projects')
   : [];
 
 export default defineConfig({
-  site: 'https://www.lobocv.com',
+  site: SITE,
   build: { format: 'directory' },
   integrations: [...(editorPreview ? [editorBridge] : []), mdx(), sitemap({ filter: page => publishedProjects.length > 0 || !page.includes('/projects/') })],
   devToolbar: { enabled: !editorPreview },

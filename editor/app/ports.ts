@@ -1,6 +1,7 @@
 // What the use cases need from the outside world. Adapters in infra/ implement
 // these, and testing/fakes.ts has an in-memory version of each.
 import type { PostFile } from '../domain/post.ts';
+import type { ShareState } from '../domain/social/social-post.ts';
 import type { Thread } from '../domain/thread.ts';
 
 /**
@@ -73,4 +74,33 @@ export interface Agent {
     onEvent: (e: AgentEvent) => void,
     signal: AbortSignal,
   ): Promise<{ text: string; session?: string; stopped: boolean }>;
+}
+
+/** A change to a post's share state: the new state, and the ready-to-paste text per network id. */
+export type ShareUpdate = { state: ShareState; texts: Record<string, string> };
+
+/**
+ * Each published post's share state, in writing/share/<slug>/: share.json, and a <network>.txt per
+ * network that's always ready to paste. Callers check slugs with `isSlug` first.
+ */
+export interface ShareStore {
+  /**
+   * Undefined when the post hasn't been shared yet. Rejects with Refused when the saved state
+   * can't be read (eg broken JSON, or a newer format), so nothing overwrites it.
+   */
+  load(slug: string): Promise<ShareState | undefined>;
+  /**
+   * `change` gets the current state and returns the new one. Updates to the same post run one at
+   * a time, each seeing the last one's result, so none is lost.
+   */
+  update(slug: string, change: (current: ShareState | undefined) => ShareUpdate): Promise<ShareState>;
+}
+
+/** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. */
+export type LiveCheck = { ok: boolean; message: string };
+
+/** Pre-flight against the deployed site. For information only: it never blocks anything. */
+export interface LiveChecker {
+  /** Never rejects: a page that doesn't load is a failed check. */
+  check(url: string): Promise<LiveCheck[]>;
 }
