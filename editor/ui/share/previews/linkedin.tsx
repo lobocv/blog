@@ -44,10 +44,15 @@ export function LinkedInPreview({ network, text, media, post, onFold }: PreviewP
         return report.current({ text, offset: text.length });
       }
       const max = lines * lineHeight + 1;
-      const k = longestFitting(text.length, (n) => {
+      let k = longestFitting(text.length, (n) => {
         el.textContent = n === text.length ? text : `${text.slice(0, n).trimEnd()} ${MORE}`;
         return el.getBoundingClientRect().height <= max;
       });
+      // The feed cuts between words, so a word the label doesn't leave room for goes below the fold.
+      if (k < text.length && /\S/.test(text[k] ?? '') && /\S/.test(text[k - 1] ?? '')) {
+        const space = text.slice(0, k).search(/\s\S*$/);
+        if (space > 0) k = space + 1;
+      }
       setCut(k);
       report.current({ text, offset: k });
     };

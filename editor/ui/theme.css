@@ -253,7 +253,9 @@ button.status-keys:hover, button.status-keys:focus-visible { color: var(--ink); 
 
 .share-text { border: 1px solid #343a42; border-radius: 10px; background: #111316; }
 .share-text:focus-within { border-color: var(--ink-3); }
-.share-text .cm-editor { background: transparent; color: var(--ink); font: 400 15px/1.65 var(--ui); min-height: 140px; }
+.share-text .cm-editor { background: transparent; color: var(--ink); min-height: 140px; }
+/* CodeMirror sets a monospace font on its scroller by default; posts are prose. */
+.share-text .cm-scroller { font: 400 15px/1.65 var(--ui); }
 .share-text .cm-editor.cm-focused { outline: none; }
 .share-text .cm-content { padding: 14px 16px; caret-color: var(--ink); }
 .share-text .cm-line { padding: 0; }

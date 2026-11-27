@@ -90,7 +90,7 @@ test('shares a published post: type, check, copy and record the posted URL', asy
 
   // A hook that runs well past the fold is flagged; the short one wasn't.
   await page.keyboard.type(' It can carry the operation, the IDs involved, what the caller should do next, and whether retrying could ever help, which is a lot to say before anyone taps to read more.'.repeat(2));
-  await expect(page.getByLabel('Failing checks')).toContainText('The first paragraph runs past');
+  await expect(page.getByLabel('Failing checks')).toContainText('The first paragraph runs past the fold');
   await page.keyboard.press('ControlOrMeta+a');
   await page.keyboard.type('Errors in Go can carry more than a message.\n\nHere is how.');
   await expect(page.getByLabel('Failing checks')).toHaveCount(0);

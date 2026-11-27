@@ -33,7 +33,7 @@ export function checkPost(network: Network, parts: Parts, fold?: MeasuredFold): 
     const end = hookEnd(parts.text);
     const foldInBody = fold.offset - assembled.shift;
     if (end > foldInBody) {
-      out.push({ check: 'fold', message: 'The first paragraph runs past "…see more"', ranges: [{ from: Math.max(0, foldInBody), to: end }] });
+      out.push({ check: 'fold', message: 'The first paragraph runs past the fold', ranges: [{ from: Math.max(0, foldInBody), to: end }] });
     }
   }
 
