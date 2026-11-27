@@ -54,7 +54,8 @@ These shaped the design, so they're worth keeping in one place:
 - Every rule that can be checked without judgment is checked live as Calvin
   types (length, fold, hashtag count, banned words, em-dashes)
 - Output is plain files Calvin can copy from, plus copy buttons
-- Adding a network is a profile (data) plus, later, a publisher adapter
+- Each network is its own module, so each one can be tuned to how it works.
+  Adding a network is a module plus, later, a publisher adapter
 
 ## Non-goals
 
@@ -76,10 +77,10 @@ These shaped the design, so they're worth keeping in one place:
 1. Calvin opens a published post's share page (S on the posts page, or ⌥S in
    the editor). Drafts can't be shared
 2. Pre-flight runs: the live page loads, the OG tags are present, the preview
-   image loads, and every short link resolves. A failure blocks the copy buttons
-   and says why (eg "deploy hasn't finished")
+   image loads, and every short link resolves. The results are for
+   information only and never block anything
 3. On first open, the editor fills in each enabled network:
-   - the link (tagged, and shortened where the profile asks for it)
+   - the link, tagged or short as the network's default says
    - an image: Claude picks the figure that best shows the post's argument, and
      the editor renders it at the network's size, with alt text
    - hashtags, from the post's categories and a hand-kept map, within the
@@ -93,36 +94,67 @@ These shaped the design, so they're worth keeping in one place:
 5. Copy text, save image, open the network's compose page. After posting,
    Calvin pastes the post's URL and the network is marked posted
 
-## Network profiles
+## Networks
 
-A profile is data in `editor/domain/social/networks/<id>.ts`, so adding a
-network means adding a file and its tests:
+Networks differ in more than numbers: where the fold falls, how links count,
+what media a post can carry, how the text is put together, and how a post looks
+in the feed. So each network is a module that owns its behaviour, not just a
+row of settings. Shared code only asks a network what to do; it never checks
+which network it is (no `if (network === 'linkedin')` outside the network's own
+folder).
 
 ```ts
-interface NetworkProfile {
-  id: 'linkedin' | 'x' | 'bluesky';
+interface Network {
+  id: string;                        // 'linkedin', 'x', 'bluesky'
   label: string;
-  text: {
-    limit: number;              // characters, as the network counts them
-    urlCost: number | 'full';   // X counts any URL as 23
-    fold?: number;              // where "…see more" cuts (LinkedIn), approximate
-  };
+  composeUrl: string;
+
+  // Text
+  count(text: string): number;       // the network's own counting (X: any URL is 23)
+  limit: number;
+  fold: Fold;                        // where the feed cuts the post, if it does
+  assemble(post: SocialPost): string; // text, link and hashtags in the network's order
+
+  // Hashtags
   hashtags: { min: number; max: number; placement: 'end' | 'inline' };
-  media: {
-    mode: 'image-or-card';      // one or the other, never both
-    preferred: 'image' | 'card';
-    images?: { landscape: Size; portrait: Size; maxBytes: number };
-    altText: boolean;
-  };
-  link: { utmSource: string; shorten: boolean; display: 'inline' | 'card' };
-  composeUrl: string;           // where "Open LinkedIn" goes
+
+  // Media: what a post can carry, and the default
+  media: MediaOption[];              // eg ['image', 'link-card', 'text-only']
+  defaultMedia: MediaOption;
+  imageShapes: Shape[];              // eg landscape and portrait, with sizes
+  defaultShape(figure: Size): Shape; // from the figure's proportions
+  altText: boolean;
+
+  // Links
+  defaultLink: 'tagged' | 'short';
+  utmSource: string;
+
+  // Checks only this network needs, on top of the shared ones
+  checks?: Check[];
 }
+
+type Fold =
+  | { kind: 'none' }
+  | { kind: 'lines'; lines: number; viewport: 'phone' };  // eg LinkedIn: about 3 lines on a phone
 ```
 
-Starting values for LinkedIn: about 3,000 characters, a fold near 200, three to
-five hashtags at the end, image preferred over the card in both landscape and
-portrait, alt text on, and the link inline. Image sizes and limits get checked against each network's own docs
-when the profile is written, not taken from memory.
+- Each network lives in `editor/domain/social/networks/<id>/`, with its own
+  tests. A registry lists the enabled networks in tab order
+- Its phone preview is a UI component next to the others
+  (`editor/ui/share/previews/<id>.tsx`), styled like that network's feed (width,
+  font, line height, where the "…see more" goes)
+- The fold is measured in lines, because that's how feeds cut posts. Lines
+  depend on rendering, so the phone preview measures where the cut falls and
+  reports it back; the fold check ("the hook ends before the fold") uses that
+- Every choice gets a per-network default (media, link, image shape), and a
+  choice made on one tab doesn't carry over to another
+- Numbers (limits, fold lines, image sizes) get checked against each network's
+  own docs when its module is written, not taken from memory
+
+LinkedIn's starting point: about 3,000 characters, a fold at about 3 lines on a
+phone, three to five hashtags at the end, image by default, both landscape and
+portrait, alt text, and the tagged link inline (LinkedIn wraps links in its own
+shortener anyway).
 
 ## Architecture
 
@@ -131,10 +163,11 @@ New code follows the existing layers. Nothing here changes the import rules.
 ```
 editor/
   domain/social/
-    networks/linkedin.ts   the profile. x.ts and bluesky.ts come later
+    networks/linkedin/     the LinkedIn module and its tests. x/ and bluesky/ later
+    networks/registry.ts   the enabled networks, in tab order
     social-post.ts         a network's post: text, hashtags, link, image, alt text,
                            status (draft, ready, posted) and its versions
-    checks.ts              length (with the profile's URL rule), fold, hashtag
+    checks.ts              length (with the network's counting), fold, hashtag
                            count, banned words and em-dashes. Runs in the browser
     links.ts               tagged URLs and short-link codes
     hashtags.ts            categories to candidate hashtags, trimmed to the limit
@@ -170,7 +203,8 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
   edits are versions too, so nothing is lost and either can be restored
 - The share page has its own Claude session per post, separate from the
   writing session, so share talk doesn't fill up the post's conversation. Its
-  first message carries the post, the brief, `docs/voice.md` and the profile
+  first message carries the post, the brief, `docs/voice.md` and the network's
+  rules
 - Claude must flag any claim that isn't in the post or brief (eg how long
   Trellis has existed) rather than state it
 - When Calvin rewrites part of Claude's text, Claude asks once whether the
@@ -183,7 +217,7 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
   way `domain/figure.ts` finds them today), the OG card, and "no image"
 - Rendering reuses the preview server: open the post, scroll the figure into
   view, hide `.fig-info` and `.side-foliage`, wait for the animation, crop the
-  element and pad it to the profile's size in the figure's background colour
+  element and pad it to the network's image size in the figure's background colour
 - Day theme by default, night as an option
 - Landscape and portrait are both supported, since the right shape depends on
   the figure (a wide diagram reads better landscape, a tall tree portrait).
@@ -192,7 +226,7 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
 
 ### Links
 
-- Tagged: `<post URL>?utm_source=<profile.utmSource>&utm_medium=social`
+- Tagged: `<post URL>?utm_source=<network.utmSource>&utm_medium=social`
 - Short links are first-party: `https://www.lobocv.com/s/<code>`, with a random
   code (eg `k3x9q2`) that points at one network's tagged URL. The codes live in
   a data file (`src/data/short-links.ts`) the editor writes to
@@ -212,10 +246,10 @@ New ports in `app/ports.ts`, each with a fake and a contract suite:
   the post's title, summary and preview image into its OG tags before
   redirecting, so the card looks the same as the post's own
 - The short link only works once the site is deployed. The editor never commits
-  (see `architecture.md`), so pre-flight checks that each short link resolves
-  and tells Calvin to push first if it doesn't
-- LinkedIn and X wrap links in their own shorteners anyway, so their profiles
-  can leave `shorten` off. It matters most where the URL is shown and counted,
+  (see `architecture.md`), so pre-flight shows whether each short link
+  resolves yet
+- LinkedIn and X wrap links in their own shorteners anyway, so their default
+  is the tagged link. It matters most where the URL is shown and counted,
   like Bluesky
 
 ## Files
@@ -236,14 +270,20 @@ images included, so nothing that was posted is lost (decided 2026-11-27).
 
 ## UI
 
+Mock: https://claude.ai/artifact/JNbriQdY6PtPWk1X7KqEDe
+
 - Top: the post's title, summary and preview card, and the pre-flight results
 - One tab per enabled network. Each tab has:
   - the text, with the character count by the network's rules and a line where
     the fold falls
+  - a phone preview beside the text, always on, in that network's feed style.
+    Most people read on their phones, so this is how Calvin judges the hook
   - hashtags as chips (remove, add)
-  - the link, with copy
-  - the image picker with a preview, theme toggle and alt text
+  - the link (the network's default, tagged or short), with copy
+  - the media choice from the network's options, then the image picker with a
+    preview, shape and theme toggles, and alt text
   - Copy text, Save image, Open compose page, and a field for the posted URL
+  - versions in a menu by the text, each with Restore
 - The share page thread on the right, like the page thread in the editor
 - Keyboard first, following `architecture.md`: tabs by number, C copies the
   text, I saves the image, O opens the compose page
@@ -267,7 +307,8 @@ button press.
 
 Each ends with something Calvin can use and a passing `make verify`.
 
-1. Share page for LinkedIn without Claude or images: profile, links, pre-flight
+1. Share page for LinkedIn without Claude or images: the network module and
+   registry, the phone preview, links, pre-flight
    (ported from `scripts/share.py`), checks as you type, files on disk, copy
    buttons. Then retire `scripts/share.py` and `make share`, and point the
    `/share` skill at the share page
@@ -275,8 +316,8 @@ Each ends with something Calvin can use and a passing `make verify`.
 3. Claude: the share session, `write_social_post`, first drafts, critique of a
    pasted draft, hashtags, alt text, and claim flagging
 4. Short links: the data file, static redirects, pre-flight that they resolve
-5. X and Bluesky profiles. No new code outside `networks/` should be needed;
-   if it is, the profile shape is wrong
+5. X and Bluesky modules and previews. No new code outside their own folders
+   should be needed; if it is, the `Network` interface is wrong
 6. Later: the Bluesky publisher, then LinkedIn and X
 
 ## Decided
@@ -285,11 +326,16 @@ Each ends with something Calvin can use and a passing `make verify`.
 - `scripts/share.py` is retired once milestone 1 covers it. It wasn't used
 - Landscape and portrait images are both supported, chosen per post
 - Short-link codes are random
+- Each network is a module with its own defaults (fold, media, link, image
+  shape). Choices don't carry over between tabs
+- The fold is measured in lines, per network, by its phone preview
+- The phone preview is always on
+- Pre-flight never blocks; a broken link isn't the share page's problem
+- Versions sit in a menu, not always on screen
 
 ## Open questions
 
-- The UI. A mock comes first, and the milestones start once Calvin is happy
-  with it
+- Whether "No image" and "Link card" collapse into one media choice (see the mock)
 
 ## Docs to update when this lands
 
