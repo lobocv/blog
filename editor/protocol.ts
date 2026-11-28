@@ -5,6 +5,7 @@ import { z } from 'zod';
 export const routes = {
   posts: '/api/posts',
   ideas: '/api/ideas',
+  scopeIdea: '/api/ideas/scope',
   post: (slug: string) => `/api/posts/${encodeURIComponent(slug)}`,
   preview: '/api/preview',
   threads: (slug: string) => `/api/posts/${encodeURIComponent(slug)}/threads`,
@@ -46,6 +47,9 @@ export const Ideas = z.object({ ideas: z.array(Idea) });
 export type Ideas = z.infer<typeof Ideas>;
 export const NewIdea = z.object({ text: z.string() });
 export type NewIdea = z.infer<typeof NewIdea>;
+/** POST /api/ideas/scope starts a draft from an idea with a working title, and runs /scope in its page thread. Answers with a CreatedDraft. */
+export const ScopeIdea = z.object({ idea: Idea, title: z.string() });
+export type ScopeIdea = z.infer<typeof ScopeIdea>;
 
 /** POST /api/posts starts a draft from a title, and answers with its slug. */
 export const NewDraft = z.object({ title: z.string() });

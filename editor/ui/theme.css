@@ -225,11 +225,12 @@ button.status-keys:hover, button.status-keys:focus-visible { color: var(--ink); 
 
 /* Ideas page: each idea a card, so long ones don't run into each other */
 .ideas-list { gap: 10px; }
-.idea { cursor: default; gap: 8px; padding: 14px 16px; background: #1b1f24; border: 1px solid var(--border); border-radius: 10px; }
+.idea { cursor: pointer; gap: 8px; padding: 14px 16px; background: #1b1f24; border: 1px solid var(--border); border-radius: 10px; }
 .idea.on { background: #23282e; border-color: #4a525c; box-shadow: none; }
 .idea-meta { display: flex; align-items: center; gap: 8px; }
 .idea-text { font: 400 14.5px/1.55 var(--ui); color: var(--ink-2); }
 .idea.on .idea-text { color: var(--ink); }
+.idea-title { margin: 4px 0 0; }
 .idea-series { padding: 1px 7px; border-radius: 5px; color: var(--amber); background: rgba(232, 184, 96, .10); }
 
 /* Share page: the post, pre-flight and network tabs, then the text column beside the phone preview. */

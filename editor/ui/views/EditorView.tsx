@@ -21,11 +21,23 @@ import { type PreviewHandle, PreviewView } from './PreviewView.tsx';
 import { type SourceHandle, SourceView } from './SourceView.tsx';
 import type { Mark } from './thread-marks.ts';
 
-/** One post: Source or Preview, the thread margin and the status line. */
-export function EditorView({ post, onPosts, onShare }: { post: Post; onPosts: () => void; /** The share page (S, ⌥S), for published posts. */ onShare?: () => void }) {
+/** One post: Source or Preview, the thread margin and the status line. `openPage` starts with the page thread open. */
+export function EditorView({
+  post,
+  openPage,
+  onPosts,
+  onShare,
+}: {
+  post: Post;
+  openPage?: boolean;
+  onPosts: () => void;
+  /** The share page (S, ⌥S), for published posts. */
+  onShare?: () => void;
+}) {
   const { text, postStats, autosave, view, threads, layout, marks, clash, sheetOpen, lastKey, picking } = useMemo(() => {
     const text = signal(post.text);
     const threads = createThreadState(post.slug, text);
+    threads.pageOpen.value = Boolean(openPage);
     return {
       text,
       threads,
