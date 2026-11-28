@@ -40,7 +40,7 @@ describe('ClaudeAgent, with a fake claude', () => {
     process.env = { ...env };
   });
 
-  async function ask(opts: { stream: string; delay?: number; session?: string; tools?: string; failResume?: boolean; stopOnText?: boolean }) {
+  async function ask(opts: { stream: string; delay?: number; session?: string; tools?: string; system?: string; allow?: string[]; failResume?: boolean; stopOnText?: boolean }) {
     const argsFile = join(await mkdtemp(join(tmpdir(), 'claude-')), 'args');
     Object.assign(process.env, {
       FAKE_CLAUDE_STREAM: join(data, opts.stream),
@@ -54,7 +54,7 @@ describe('ClaudeAgent, with a fake claude', () => {
       events.push(e);
       if (opts.stopOnText && e.type === 'text') controller.abort();
     };
-    const result = await new ClaudeAgent(tmpdir(), fake).ask({ prompt: 'hi', session: opts.session, tools: opts.tools }, onEvent, controller.signal);
+    const result = await new ClaudeAgent(tmpdir(), fake).ask({ prompt: 'hi', session: opts.session, tools: opts.tools, system: opts.system, allow: opts.allow }, onEvent, controller.signal);
     const calls = (await readFile(argsFile, 'utf8')).split('\n').filter(Boolean).map((l) => JSON.parse(l) as string[]);
     return { result, events, calls };
   }
@@ -71,6 +71,15 @@ describe('ClaudeAgent, with a fake claude', () => {
     const config = calls[0][calls[0].indexOf('--mcp-config') + 1];
     expect(JSON.parse(config)).toEqual({ mcpServers: { editor: { type: 'http', url: 'http://127.0.0.1:4401/mcp/a' } } });
     expect(calls[0]).toEqual(expect.arrayContaining(['--strict-mcp-config', 'mcp__editor__suggest_edit']));
+  });
+
+  it('takes another system prompt and tool list (eg the share page\'s)', async () => {
+    const { calls } = await ask({ stream: 'reply.jsonl', tools: 'http://127.0.0.1:4401/mcp-share/a', system: 'SHARE', allow: ['mcp__editor__write_social_post', 'Edit(docs/voice.md)'] });
+    expect(calls[0][calls[0].indexOf('--append-system-prompt') + 1]).toBe('SHARE');
+    const allowed = calls[0].slice(calls[0].indexOf('--allowedTools') + 1);
+    expect(allowed.slice(0, 2)).toEqual(['mcp__editor__write_social_post', 'Edit(docs/voice.md)']);
+    expect(allowed).not.toContain('Edit(src/components/**)');
+    expect(allowed).not.toContain('mcp__editor__suggest_edit');
   });
 
   it('resumes the session it is given', async () => {

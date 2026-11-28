@@ -12,7 +12,39 @@ import type { scopeIdea } from '../app/scope-idea.ts';
 import type { settleSuggestion } from '../app/suggestions.ts';
 import type { watchPost } from '../app/watch-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { CreatedDraft, Idea, Ideas, NewDraft, NewIdea, PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, ScopeIdea, Settle, Threads } from '../protocol.ts';
+import type { markPosted, unmarkPosted } from '../app/mark-posted.ts';
+import type { openShare, preflight } from '../app/open-share.ts';
+import type { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
+import type { renderShareImage, shareImage } from '../app/render-share-image.ts';
+import type { chooseLink } from '../app/choose-link.ts';
+import type { ShareConversation } from '../app/share-conversation.ts';
+import {
+  ChooseLink,
+  Copied,
+  CreatedDraft,
+  Idea,
+  Ideas,
+  NewDraft,
+  NewIdea,
+  PostEvent,
+  PostList,
+  NewComment,
+  NewReply,
+  Post,
+  Posted,
+  Preflight,
+  PreviewInfo,
+  Restore,
+  SavePost,
+  SaveSocialPost,
+  ScopeIdea,
+  Settle,
+  NewShareMessage,
+  Share,
+  ShareEvent,
+  ShareState,
+  Threads,
+} from '../protocol.ts';
 
 export type UseCases = {
   listPosts: ReturnType<typeof listPosts>;
@@ -35,7 +67,48 @@ export type UseCases = {
   /** Waits for `astro dev` to answer. */
   previewOrigin: () => Promise<string>;
   watchFigures: (onChange: () => void) => () => void;
+  openShare: ReturnType<typeof openShare>;
+  preflight: ReturnType<typeof preflight>;
+  saveSocialPost: ReturnType<typeof saveSocialPost>;
+  copiedSocialPost: ReturnType<typeof copiedSocialPost>;
+  restoreSocialPost: ReturnType<typeof restoreSocialPost>;
+  markPosted: ReturnType<typeof markPosted>;
+  unmarkPosted: ReturnType<typeof unmarkPosted>;
+  renderShareImage: ReturnType<typeof renderShareImage>;
+  shareImage: ReturnType<typeof shareImage>;
+  chooseLink: ReturnType<typeof chooseLink>;
+  /** Claude on the share page. Every message Calvin sends there is passed on to Claude. */
+  shareConversation: Pick<ShareConversation, 'list' | 'send' | 'stop' | 'subscribe' | 'subscribeState'>;
 };
+
+type Schema<E> = { parse: (e: unknown) => E };
+
+/**
+ * Server-sent events: one `data:` line of JSON per event, from every source until the page goes away.
+ * Each source starts listening when called with `push` and returns a function that stops it.
+ */
+function events<E>(c: Parameters<typeof streamSSE>[0], schema: Schema<E>, sources: ((push: (e: E) => void) => () => void)[]) {
+  return streamSSE(c, async (stream) => {
+    const queue: E[] = [];
+    let wake: (() => void) | undefined;
+    const push = (e: E) => {
+      queue.push(e);
+      wake?.();
+    };
+    const stops = sources.map((start) => start(push));
+    stream.onAbort(() => {
+      for (const stop of stops) stop();
+      wake?.();
+    });
+    // A comment line, which EventSource ignores, so the response starts straight away.
+    await stream.write(': open\n\n');
+    while (!stream.aborted) {
+      const e = queue.shift();
+      if (e) await stream.writeSSE({ data: JSON.stringify(schema.parse(e)) });
+      else await new Promise<void>((r) => (wake = r));
+    }
+  });
+}
 
 /** Turns requests from the UI into use-case calls. No logic of its own. */
 export function createApi(uc: UseCases) {
@@ -124,34 +197,73 @@ export function createApi(uc: UseCases) {
     return c.body(null, 204);
   });
 
-  // Claude's work and outside edits, as server-sent events: one `data:` line of PostEvent JSON each.
-  api.get('/api/posts/:slug/events', (c) =>
-    streamSSE(c, async (stream) => {
-      const slug = c.req.param('slug');
-      const queue: PostEvent[] = [];
-      let wake: (() => void) | undefined;
-      const push = (e: PostEvent) => {
-        queue.push(e);
-        wake?.();
-      };
-      const stops = [
-        uc.conversation.subscribe(slug, push),
-        uc.watchPost(slug, (text) => push({ type: 'outside', text })),
-        uc.watchFigures(() => push({ type: 'figures' })),
-      ];
-      stream.onAbort(() => {
-        for (const stop of stops) stop();
-        wake?.();
-      });
-      // A comment line, which EventSource ignores, so the response starts straight away.
-      await stream.write(': open\n\n');
-      while (!stream.aborted) {
-        const e = queue.shift();
-        if (e) await stream.writeSSE({ data: JSON.stringify(PostEvent.parse(e)) });
-        else await new Promise<void>((r) => (wake = r));
-      }
-    }),
-  );
+  // Claude's work and outside edits, as server-sent events.
+  api.get('/api/posts/:slug/events', (c) => {
+    const slug = c.req.param('slug');
+    return events(c, PostEvent, [
+      (push) => uc.conversation.subscribe(slug, push),
+      (push) => uc.watchPost(slug, (text) => push({ type: 'outside', text })),
+      (push) => uc.watchFigures(() => push({ type: 'figures' })),
+    ]);
+  });
+
+  // The share page.
+  api.get('/api/share/:slug', async (c) => c.json(Share.parse(await uc.openShare(c.req.param('slug')))));
+  api.get('/api/share/:slug/preflight', async (c) => c.json(Preflight.parse({ checks: await uc.preflight(c.req.param('slug')) })));
+
+  const shared = (state: ShareState['state']) => ShareState.parse({ state });
+  api.put('/api/share/:slug/:network', async (c) => {
+    const body = SaveSocialPost.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text?, hashtags?, media? }' }, 400);
+    return c.json(shared(await uc.saveSocialPost(c.req.param('slug'), c.req.param('network'), body.data)));
+  });
+  api.post('/api/share/:slug/:network/copied', async (c) => {
+    const body = Copied.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text, hashtags? }' }, 400);
+    return c.json(shared(await uc.copiedSocialPost(c.req.param('slug'), c.req.param('network'), body.data)));
+  });
+  api.post('/api/share/:slug/:network/restore', async (c) => {
+    const body = Restore.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { index, current: { text, hashtags? } }' }, 400);
+    return c.json(shared(await uc.restoreSocialPost(c.req.param('slug'), c.req.param('network'), body.data.index, body.data.current)));
+  });
+  api.post('/api/share/:slug/:network/posted', async (c) => {
+    const body = Posted.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { url } with an http(s) link' }, 400);
+    return c.json(shared(await uc.markPosted(c.req.param('slug'), c.req.param('network'), body.data.url)));
+  });
+  api.delete('/api/share/:slug/:network/posted', async (c) => c.json(shared(await uc.unmarkPosted(c.req.param('slug'), c.req.param('network')))));
+  // Claude on the share page: its thread, its work as it happens, and the state when it writes a version.
+  api.get('/api/share/:slug/thread', async (c) => c.json(threads(await uc.shareConversation.list(c.req.param('slug')))));
+  api.post('/api/share/:slug/thread', async (c) => {
+    const body = NewShareMessage.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { text }' }, 400);
+    return c.json(threads((await uc.shareConversation.send(c.req.param('slug'), body.data.text)).threads));
+  });
+  api.post('/api/share/:slug/stop', (c) => {
+    uc.shareConversation.stop(c.req.param('slug'));
+    return c.body(null, 204);
+  });
+  api.get('/api/share/:slug/events', (c) => {
+    const slug = c.req.param('slug');
+    return events(c, ShareEvent, [
+      (push) => uc.shareConversation.subscribe(slug, push),
+      (push) => uc.shareConversation.subscribeState(slug, (state) => push({ type: 'state', state })),
+    ]);
+  });
+  api.post('/api/share/:slug/:network/link', async (c) => {
+    const body = ChooseLink.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: "expected { kind: 'tagged' | 'short' }" }, 400);
+    return c.json(shared(await uc.chooseLink(c.req.param('slug'), c.req.param('network'), body.data.kind)));
+  });
+  api.post('/api/share/:slug/:network/image', async (c) => c.json(shared(await uc.renderShareImage(c.req.param('slug'), c.req.param('network')))));
+  api.get('/api/share/:slug/:network/image', async (c) => {
+    const [slug, network] = [c.req.param('slug'), c.req.param('network')];
+    const png = await uc.shareImage(slug, network);
+    const headers: Record<string, string> = { 'content-type': 'image/png', 'cache-control': 'no-store' };
+    if (c.req.query('download')) headers['content-disposition'] = `attachment; filename="${slug}-${network}.png"`;
+    return c.body(new Uint8Array(png), 200, headers);
+  });
 
   api.get('/api/preview', async (c) => c.json(PreviewInfo.parse({ origin: await uc.previewOrigin() })));
 

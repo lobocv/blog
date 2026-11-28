@@ -55,7 +55,8 @@ Keep doing these. They are the voice at its best:
   best path I've found", unless it is clearly a joke ("the first rule of
   writing documentation")
 - Category titles. He is a generalist: no "Backend engineer", no "Staff". If a
-  title is needed, "software engineer" or "engineer and architect"
+  title is needed, "software developer". Not "engineer" (a licensed profession,
+  so it oversells) and not "architect" (reads as self-important)
 
 ### Towards preachy
 

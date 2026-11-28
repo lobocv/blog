@@ -10,6 +10,7 @@ import { shikiConfig } from './src/lib/shiki.mjs';
 import { legacyRedirects } from './src/lib/redirects.mjs';
 import { rehypeNotes } from './src/lib/notes.mjs';
 import { rehypeSourceLines } from './src/lib/source-lines.mjs';
+import { SITE } from './shared/site.ts';
 
 // `astro dev` shows drafting notes (@@ ...) on the page; a build drops or rejects them
 const dev = process.argv.includes('dev');
@@ -28,7 +29,7 @@ const editorBridge = {
   },
 };
 
-// /projects/ stays out of the sitemap until a project is published
+// /projects/ stays out of the sitemap until a project is published, and short links (/s/) always do
 const publishedProjects = fs.existsSync('src/content/projects')
   ? fs.readdirSync('src/content/projects').filter(d => {
       const f = `src/content/projects/${d}/index.mdx`;
@@ -37,9 +38,9 @@ const publishedProjects = fs.existsSync('src/content/projects')
   : [];
 
 export default defineConfig({
-  site: 'https://www.lobocv.com',
+  site: SITE,
   build: { format: 'directory' },
-  integrations: [...(editorPreview ? [editorBridge] : []), mdx(), sitemap({ filter: page => publishedProjects.length > 0 || !page.includes('/projects/') })],
+  integrations: [...(editorPreview ? [editorBridge] : []), mdx(), sitemap({ filter: page => (publishedProjects.length > 0 || !page.includes('/projects/')) && !page.includes('/s/') })],
   devToolbar: { enabled: !editorPreview },
   // /about/ was folded into the journey page
   redirects: { ...legacyRedirects('src/content/posts'), '/about': '/journey/' },

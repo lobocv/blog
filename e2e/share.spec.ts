@@ -1,0 +1,214 @@
+import type { ChildProcess } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { expect, test } from '@playwright/test';
+import { startEditor } from './start-editor.ts';
+
+const port = 4450;
+const url = `http://127.0.0.1:${port}/`;
+const link = 'https://www.lobocv.com/posts/live/?utm_source=linkedin&utm_medium=social';
+let editor: ChildProcess;
+let site: Server;
+let root: string;
+/** Whether the stand-in site serves short link pages yet, as it would once deployed. */
+let deployed = false;
+
+const shareFile = (name: string) => join(root, 'writing/share/live', name);
+const shareJson = async () => JSON.parse(await readFile(shareFile('share.json'), 'utf8'));
+
+test.beforeEach(async ({ context }) => {
+  deployed = false;
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  // A throwaway repo with one draft and one published post.
+  root = await mkdtemp(join(tmpdir(), 'editor-share-'));
+  const posts = {
+    draft: '---\ntitle: A draft\ndraft: true\n---\nText.\n',
+    live: '---\ntitle: "Live post"\nsummary: "What it says."\ndraft: false\ndate: 2026-11-24\ncategories: ["Golang"]\n---\nText.\n',
+  };
+  for (const [slug, text] of Object.entries(posts)) {
+    await mkdir(join(root, 'src/content/posts', slug), { recursive: true });
+    await writeFile(join(root, 'src/content/posts', slug, 'index.md'), text);
+  }
+  // The live site, as pre-flight sees it, so the test never reaches the real one.
+  site = createServer((req, res) => {
+    if (req.url === '/posts/live/') {
+      res.end(
+        '<meta property="og:title" content="Live post"><meta property="og:description" content="What it says.">' +
+          '<meta property="og:image" content="/og/live.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@x">',
+      );
+    } else if (req.url === '/og/live.png') res.writeHead(200, { 'content-type': 'image/png' }).end('png');
+    else if (deployed && req.url?.startsWith('/s/')) {
+      // A short link page as the blog builds it, from the repo's data file.
+      const links = JSON.parse(readFileSync(join(root, 'src/data/short-links.json'), 'utf8'));
+      const link = links[req.url.split('/')[2]];
+      if (link) res.end(`<meta http-equiv="refresh" content="0; url=https://www.lobocv.com${link.to.replace(/&/g, '&amp;')}">`);
+      else res.writeHead(404).end();
+    }
+    else res.writeHead(404).end();
+  });
+  await new Promise<void>((r) => site.listen(0, '127.0.0.1', r));
+  const origin = `http://127.0.0.1:${(site.address() as AddressInfo).port}`;
+  // Claude is a fake that makes the tool calls in tools.json, then replays a recorded reply.
+  process.env.FAKE_CLAUDE_STREAM = join(import.meta.dirname, '../editor/infra/testdata/reply.jsonl');
+  process.env.FAKE_CLAUDE_DELAY = '0';
+  process.env.FAKE_CLAUDE_TOOLS = join(root, 'tools.json');
+  process.env.FAKE_CLAUDE_ARGS = join(root, 'claude-args');
+  editor = await startEditor(root, port, '--no-preview', '--check-origin', origin, '--claude', join(import.meta.dirname, '../editor/infra/testdata/fake-claude.mjs'));
+});
+
+test.afterEach(() => {
+  editor?.kill();
+  site?.closeAllConnections();
+  site?.close();
+});
+
+test('shares a published post: type, check, copy and record the posted URL', async ({ page }) => {
+  await page.goto(url);
+  // Drafts can't be shared: S does nothing on one.
+  await expect(page.getByRole('option')).toHaveText([/A draft/, /Live post/]);
+  await page.keyboard.press('s');
+  await expect(page).toHaveURL(url);
+  await page.keyboard.press('j');
+  await page.keyboard.press('s');
+  await expect(page).toHaveURL(`${url}?share=live`);
+
+  await expect(page.getByRole('heading', { name: 'Live post' })).toBeVisible();
+  await expect(page.getByText('Live page and preview card look right')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^LinkedIn/ })).toHaveAttribute('aria-pressed', 'true');
+
+  // Typing saves the text and rewrites the ready-to-paste file.
+  const text = page.getByLabel('LinkedIn post text');
+  await text.click();
+  await page.keyboard.type('Errors in Go can carry more than a message.');
+  await expect
+    .poll(() => readFile(shareFile('linkedin.txt'), 'utf8').catch(() => ''))
+    .toBe(`Errors in Go can carry more than a message.\n\n${link}\n\n#Golang #Go\n`);
+  await expect(page.getByLabel('LinkedIn preview')).toContainText('Errors in Go can carry more than a message.');
+
+  // Two hashtags is under LinkedIn's three: the check says so until a third is added.
+  await expect(page.getByLabel('Failing checks')).toContainText('2 hashtags');
+  await page.getByLabel('Add a hashtag').fill('#Software Engineering');
+  await page.getByLabel('Add a hashtag').press('Enter');
+  await expect(page.getByLabel('Failing checks')).toHaveCount(0);
+  await expect.poll(async () => (await shareJson()).networks.linkedin.hashtags).toEqual(['Golang', 'Go', 'SoftwareEngineering']);
+
+  // A banned word and an em-dash are flagged as he types.
+  await text.click();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' We leverage them — a lot.');
+  await expect(page.getByLabel('Failing checks')).toContainText('Reads as AI-written: "leverage"');
+  await expect(page.getByLabel('Failing checks')).toContainText('1 em-dash');
+  for (let i = 0; i < ' We leverage them — a lot.'.length; i++) await page.keyboard.press('Backspace');
+
+  // A hook that runs well past the fold is flagged; the short one wasn't.
+  await page.keyboard.type(' It can carry the operation, the IDs involved, what the caller should do next, and whether retrying could ever help, which is a lot to say before anyone taps to read more.'.repeat(2));
+  await expect(page.getByLabel('Failing checks')).toContainText('The first paragraph runs past the fold');
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.type('Errors in Go can carry more than a message.\n\nHere is how.');
+  await expect(page.getByLabel('Failing checks')).toHaveCount(0);
+
+  // C copies (after leaving the text box), and the copied text becomes a version.
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('c');
+  await expect(page.getByText('Copied', { exact: true })).toBeVisible();
+  const pasted = `Errors in Go can carry more than a message.\n\nHere is how.\n\n${link}\n\n#Golang #Go #SoftwareEngineering`;
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(pasted);
+  await expect.poll(async () => (await shareJson()).networks.linkedin).toMatchObject({ status: 'ready', versions: [{ text: 'Errors in Go can carry more than a message.\n\nHere is how.' }] });
+  expect(await readFile(shareFile('linkedin.txt'), 'utf8')).toBe(`${pasted}\n`);
+
+  // Restore brings back the copied version and keeps the newer text as a version.
+  await text.click();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' Later.');
+  await page.keyboard.press('Alt+KeyV');
+  await page.getByRole('menuitem', { name: 'Restore' }).last().click();
+  await expect(text).toHaveText('Errors in Go can carry more than a message.Here is how.');
+  await expect.poll(async () => (await shareJson()).networks.linkedin.versions.map((v: { text: string }) => v.text)).toEqual([
+    'Errors in Go can carry more than a message.\n\nHere is how.',
+    'Errors in Go can carry more than a message.\n\nHere is how. Later.',
+  ]);
+
+  // Recording the posted URL.
+  await page.getByLabel('Posted URL').fill('https://www.linkedin.com/feed/update/urn:li:activity:1/');
+  await page.getByLabel('Posted URL').press('Enter');
+  await expect(page.getByText(/^Posted/)).toBeVisible();
+  await expect.poll(async () => (await shareJson()).networks.linkedin).toMatchObject({
+    status: 'posted',
+    posted: { url: 'https://www.linkedin.com/feed/update/urn:li:activity:1/', text: pasted },
+  });
+
+  // Esc goes back to the posts page.
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(url);
+});
+
+/** The tool calls the fake claude makes on its next turn. */
+const tools = (calls: { name: string; arguments: object }[]) => writeFile(join(root, 'tools.json'), JSON.stringify(calls));
+
+test('D asks Claude for a draft, which lands in the text box, then for a critique of an edited one', async ({ page }) => {
+  await page.goto(`${url}?share=live`);
+  const thread = page.getByLabel('Claude', { exact: true });
+  const text = page.getByLabel('LinkedIn post text');
+  await expect(thread).toContainText('D drafts the post');
+
+  await tools([
+    { name: 'write_social_post', arguments: { network: 'linkedin', text: 'Errors in Go can carry context.', hashtags: ['Golang', 'Go', 'SoftwareEngineering'], claims_to_check: ['for over a year'] } },
+  ]);
+  await page.keyboard.press('d');
+  await expect(thread).toContainText('Draft the LinkedIn post.');
+  await expect(thread).toContainText('Two short sentences. Nothing else.');
+  await expect(text).toHaveText('Errors in Go can carry context.');
+  await expect(page.getByLabel('Claims to check')).toContainText('Not in the post, check it: for over a year');
+  expect(await readFile(shareFile('linkedin.txt'), 'utf8')).toBe(`Errors in Go can carry context.\n\n${link}\n\n#Golang #Go #SoftwareEngineering\n`);
+  expect((await shareJson()).networks.linkedin.versions).toMatchObject([{ author: 'claude', text: 'Errors in Go can carry context.', flags: ['for over a year'] }]);
+
+  // Share turns get the share prompt, only write_social_post, and docs/voice.md as the one file to edit.
+  const args: string[] = JSON.parse((await readFile(join(root, 'claude-args'), 'utf8')).split('\n')[0]);
+  expect(args[args.indexOf('--append-system-prompt') + 1]).toContain('share page');
+  expect(args.slice(args.indexOf('--allowedTools') + 1, args.indexOf('--allowedTools') + 3)).toEqual(['mcp__editor__write_social_post', 'Edit(docs/voice.md)']);
+  expect(JSON.parse(args[args.indexOf('--mcp-config') + 1]).mcpServers.editor.url).toMatch(/\/mcp-share\/live$/);
+
+  // With his edit in the box, D asks for a critique, and the rewrite replaces the text.
+  await text.click();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' And more.');
+  await tools([{ name: 'write_social_post', arguments: { network: 'linkedin', text: 'A tighter rewrite.', hashtags: ['Golang', 'Go', 'SoftwareEngineering'] } }]);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('d');
+  await expect(thread).toContainText('Critique my LinkedIn draft, then rewrite it.');
+  await expect(text).toHaveText('A tighter rewrite.');
+  await expect(page.getByLabel('Claims to check')).toHaveCount(0);
+  const versions = (await shareJson()).networks.linkedin.versions.map((v: { author: string; text: string }) => [v.author, v.text]);
+  expect(versions).toEqual([
+    ['claude', 'Errors in Go can carry context.'],
+    ['claude', 'A tighter rewrite.'],
+  ]);
+});
+
+test('a short link replaces the tagged one, and pre-flight says when its page is live', async ({ page }) => {
+  await page.goto(`${url}?share=live`);
+  const linkGroup = page.getByRole('group', { name: 'Link' });
+  await expect(linkGroup.getByRole('button', { name: 'Tagged' })).toHaveAttribute('aria-pressed', 'true');
+
+  await linkGroup.getByRole('button', { name: 'Short' }).click();
+  await expect.poll(async () => Object.keys(JSON.parse(await readFile(join(root, 'src/data/short-links.json'), 'utf8').catch(() => '{}')))).toHaveLength(1);
+  const [[code, entry]] = Object.entries(JSON.parse(await readFile(join(root, 'src/data/short-links.json'), 'utf8')));
+  expect(entry).toEqual({ post: 'live', to: '/posts/live/?utm_source=linkedin&utm_medium=social' });
+  const short = `https://www.lobocv.com/s/${code}/`;
+  await expect(page.locator('.share-link code')).toHaveText(short);
+  await expect.poll(() => readFile(shareFile('linkedin.txt'), 'utf8')).toContain(short);
+  await expect(page.getByText(`/s/${code}/ isn't live yet (404). It works once the site is deployed`).first()).toBeVisible();
+
+  // Once deployed, switching back and forth reuses the code, and pre-flight finds it live.
+  deployed = true;
+  await linkGroup.getByRole('button', { name: 'Tagged' }).click();
+  await expect(page.locator('.share-link code')).toHaveText(link);
+  await linkGroup.getByRole('button', { name: 'Short' }).click();
+  await expect(page.locator('.share-link code')).toHaveText(short);
+  await expect(page.getByText(`isn't live yet`)).toHaveCount(0);
+  expect(Object.keys(JSON.parse(await readFile(join(root, 'src/data/short-links.json'), 'utf8')))).toEqual([code]);
+});

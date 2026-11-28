@@ -4,6 +4,7 @@ import Base from '../../layouts/Base.astro';
 import AuthorBlock from '../../components/AuthorBlock.astro';
 import Toc from '../../components/Toc.astro';
 import RssLine from '../../components/RssLine.astro';
+import ShareLinks from '../../components/ShareLinks.astro';
 import { render } from 'astro:content';
 import { getPosts, neighbours, pickTocHeadings, formatDate, readingMinutes, categorySlug, type Post } from '../../lib/posts';
 
@@ -32,6 +33,7 @@ const toc = pickTocHeadings(headings);
       <div>
         <div class="post-body" id="body"><Content /></div>
         <footer class="post-end">
+          <ShareLinks url={new URL(`/posts/${post.id}/`, Astro.site).toString()} title={title} />
           <AuthorBlock />
           <RssLine text="Or follow along via" link="RSS" />
           <nav class="pager">

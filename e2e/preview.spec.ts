@@ -1,5 +1,5 @@
 import type { ChildProcess } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
@@ -31,6 +31,12 @@ test.beforeAll(async () => {
     "---\ntitle: Figures\ndraft: true\n---\nimport ContextStack from '../../../components/post/ContextStack.astro';\n\nIntro.\n\n<ContextStack />\n\n![A dot](./dot.png)\n",
   );
   await cp(join(repo, 'public/posts/elasticsearch_slots/img.png'), join(root, 'src/content/posts/figs/dot.png'));
+  // And a published one, to share with a figure as its image.
+  await mkdir(join(root, 'src/content/posts/pub'), { recursive: true });
+  await writeFile(
+    join(root, 'src/content/posts/pub/index.mdx'),
+    "---\ntitle: Published\nsummary: A post to share.\ndraft: false\ndate: 2026-11-01\ncategories: [\"AI\"]\n---\nimport ContextStack from '../../../components/post/ContextStack.astro';\n\nIntro.\n\n<ContextStack />\n",
+  );
   // Comments go to Claude: a fake one, replaying a recorded reply.
   process.env.FAKE_CLAUDE_STREAM = join(repo, 'editor/infra/testdata/reply.jsonl');
   editor = await startEditor(root, port, '--claude', join(repo, 'editor/infra/testdata/fake-claude.mjs'));
@@ -161,4 +167,34 @@ test('Source shows figures under the lines that place them, without reloading th
   const file = join(root, 'src/components/post/ContextStack.astro');
   await writeFile(file, (await readFile(file, 'utf8')) + '\n');
   await expect.poll(loaded, { timeout: 10_000 }).not.toBe(before);
+});
+
+/** A PNG's size, from its header chunk. */
+const pngSize = (png: Buffer) => ({ width: png.readUInt32BE(16), height: png.readUInt32BE(20) });
+
+test('renders a figure as the share image, in the shape and theme chosen', async ({ page }) => {
+  const png = join(root, 'writing/share/pub/linkedin.png');
+  await page.goto(`http://127.0.0.1:${port}/?share=pub`);
+  // The preview card is the image until another is picked.
+  await expect(page.getByRole('button', { name: 'Preview card' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('1200 × 628')).toBeVisible({ timeout: 60_000 });
+  expect(pngSize(await readFile(png))).toEqual({ width: 1200, height: 628 });
+
+  await page.getByRole('button', { name: 'ContextStack' }).click();
+  // A component needs its own alt text.
+  await expect(page.getByLabel('Failing checks')).toContainText('The image has no alt text');
+  await page.getByLabel('Alt text').fill('A stack of context layers.');
+  await expect(page.getByText('The image has no alt text')).toHaveCount(0);
+
+  await page.getByRole('group', { name: 'Shape' }).getByRole('button', { name: 'Portrait' }).click();
+  await expect(page.getByText('1080 × 1350')).toBeVisible({ timeout: 30_000 });
+  expect(pngSize(await readFile(png))).toEqual({ width: 1080, height: 1350 });
+  const day = (await stat(png)).size;
+
+  await page.getByRole('group', { name: 'Theme' }).getByRole('button', { name: 'Night' }).click();
+  await expect.poll(async () => (await stat(png)).size, { timeout: 30_000 }).not.toBe(day);
+  await expect
+    .poll(async () => JSON.parse(await readFile(join(root, 'writing/share/pub/share.json'), 'utf8')).networks.linkedin.media)
+    .toEqual({ kind: 'image', figure: { kind: 'component', source: 'src/components/post/ContextStack.astro' }, alt: 'A stack of context layers.', shape: 'portrait', theme: 'night' });
+  await expect(page.getByLabel('LinkedIn preview').locator('img.fp-image')).toBeVisible();
 });

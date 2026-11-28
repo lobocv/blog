@@ -2,7 +2,7 @@
 // stream-json output. The post is blocked from Claude's Edit and Write tools.
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import type { Agent, AgentEvent } from '../app/ports.ts';
+import type { Agent, AgentEvent, AgentTurn } from '../app/ports.ts';
 import { EDITOR_SYSTEM_PROMPT } from '../domain/prompt.ts';
 import { TOOL_NAMES } from './mcp-tools.ts';
 
@@ -56,7 +56,7 @@ export class ClaudeAgent implements Agent {
     this.#command = command;
   }
 
-  async ask(turn: { prompt: string; session?: string; tools?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  async ask(turn: AgentTurn, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
     const first = await this.#run(turn, onEvent, signal);
     // A session can disappear (eg cleared from ~/.claude). Start a new one rather than fail.
     if (first.error && turn.session && !first.stopped && !first.text) {
@@ -66,7 +66,7 @@ export class ClaudeAgent implements Agent {
     return first;
   }
 
-  #run(turn: { prompt: string; session?: string; tools?: string }, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
+  #run(turn: AgentTurn, onEvent: (e: AgentEvent) => void, signal: AbortSignal) {
     const args = [
       '-p',
       turn.prompt,
@@ -75,7 +75,7 @@ export class ClaudeAgent implements Agent {
       '--verbose',
       '--include-partial-messages',
       '--append-system-prompt',
-      EDITOR_SYSTEM_PROMPT,
+      turn.system ?? EDITOR_SYSTEM_PROMPT,
       '--disallowedTools',
       'Edit(src/content/posts/**)',
       'Write(src/content/posts/**)',
@@ -85,10 +85,9 @@ export class ClaudeAgent implements Agent {
         ? ['--mcp-config', JSON.stringify({ mcpServers: { editor: { type: 'http', url: turn.tools } } }), '--strict-mcp-config']
         : []),
       // Figure components are code Claude may change without asking (see EDITOR_SYSTEM_PROMPT).
+      // Anything else that needs permission is refused, since nobody is there to answer.
       '--allowedTools',
-      ...(turn.tools ? TOOL_NAMES : []),
-      'Edit(src/components/**)',
-      'Write(src/components/**)',
+      ...(turn.allow ?? [...(turn.tools ? TOOL_NAMES : []), 'Edit(src/components/**)', 'Write(src/components/**)']),
       ...(turn.session ? ['--resume', turn.session] : []),
     ];
     // Started from inside a Claude Code session (eg while testing), the CLI would think it's nested.

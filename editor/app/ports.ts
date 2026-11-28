@@ -1,6 +1,9 @@
 // What the use cases need from the outside world. Adapters in infra/ implement
 // these, and testing/fakes.ts has an in-memory version of each.
 import type { PostFile } from '../domain/post.ts';
+import type { Size } from '../domain/social/network.ts';
+import type { ShareState, Theme } from '../domain/social/social-post.ts';
+import type { ShortLink } from '../domain/social/links.ts';
 import type { Thread } from '../domain/thread.ts';
 
 /**
@@ -61,6 +64,17 @@ export interface Clock {
 /** What Claude is doing while it works on a reply. */
 export type AgentEvent = { type: 'text'; text: string } | { type: 'tool'; name: string };
 
+export type AgentTurn = {
+  prompt: string;
+  session?: string;
+  /** The URL of the editor's MCP tools for this post. */
+  tools?: string;
+  /** Replaces the agent's default system prompt addition (the writing editor's). */
+  system?: string;
+  /** Replaces the tools Claude may use without asking (eg `mcp__editor__write_social_post`, `Edit(docs/voice.md)`). */
+  allow?: string[];
+};
+
 /** Claude, run once per turn. */
 export interface Agent {
   /**
@@ -69,8 +83,65 @@ export interface Agent {
    * `stopped: true` and whatever it had written.
    */
   ask(
-    turn: { prompt: string; session?: string; /** The editor's MCP tools for this post. */ tools?: string },
+    turn: AgentTurn,
     onEvent: (e: AgentEvent) => void,
     signal: AbortSignal,
   ): Promise<{ text: string; session?: string; stopped: boolean }>;
+}
+
+/** A change to a post's share state: the new state, and the ready-to-paste text per network id. */
+export type ShareUpdate = { state: ShareState; texts: Record<string, string> };
+
+/**
+ * Each published post's share state, in writing/share/<slug>/: share.json, and a <network>.txt per
+ * network that's always ready to paste. Callers check slugs with `isSlug` first.
+ */
+export interface ShareStore {
+  /**
+   * Undefined when the post hasn't been shared yet. Rejects with Refused when the saved state
+   * can't be read (eg broken JSON, or a newer format), so nothing overwrites it.
+   */
+  load(slug: string): Promise<ShareState | undefined>;
+  /**
+   * `change` gets the current state and returns the new one. Updates to the same post run one at
+   * a time, each seeing the last one's result, so none is lost.
+   */
+  update(slug: string, change: (current: ShareState | undefined) => ShareUpdate): Promise<ShareState>;
+  /** Writes a network's rendered image, <network>.png. */
+  writeImage(slug: string, network: string, png: Uint8Array): Promise<void>;
+  /** Undefined when the network has no rendered image yet. */
+  readImage(slug: string, network: string): Promise<Uint8Array | undefined>;
+}
+
+/**
+ * What to render: `page` is the preview server's page for one figure (/_editor/figure). With
+ * `image`, the page shows that image (on the same server) in place of a component.
+ */
+export type RenderTarget = { page: string; image?: string };
+
+/** Renders a figure to a PNG, the way it looks in the post. */
+export interface ImageRenderer {
+  /**
+   * `size` gets the figure's own size, as laid out in the post's column, and returns the PNG's
+   * size; the figure is centred and padded to fill it. Resolves with the PNG and the figure's size.
+   */
+  render(target: RenderTarget, options: { theme: Theme; size: (figure: Size) => Size }): Promise<{ png: Uint8Array; figure: Size }>;
+}
+
+/** One pre-flight result, eg { ok: true, message: 'og:title: ...' }. `code` marks a short link's check, so the page can show it by that link. */
+export type LiveCheck = { ok: boolean; message: string; code?: string };
+
+/** Pre-flight against the deployed site. For information only: it never blocks anything. */
+export interface LiveChecker {
+  /** Never rejects: a page that doesn't load is a failed check. */
+  check(url: string): Promise<LiveCheck[]>;
+  /** Whether a short link's page is live and sends the browser to `to` (a site path with its query). Never rejects. */
+  redirects(url: string, to: string): Promise<LiveCheck>;
+}
+
+/** The short link codes, in src/data/short-links.json, which the blog builds a page for each of. */
+export interface ShortLinks {
+  all(): Promise<Record<string, ShortLink>>;
+  /** Rejects with Refused when the code is taken. Adds made at once all land. */
+  add(code: string, link: ShortLink): Promise<void>;
 }

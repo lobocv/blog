@@ -30,45 +30,78 @@ editor/
     thread.ts          threads, replies, open and resolved
     suggestion.ts      proposed edits: apply, tweak, keep in place as the text changes
     review.ts          critique checklist progress
+    social/            the share page (sharing-design.md)
+      network.ts         the Network interface every network implements
+      networks/          one folder per network (eg linkedin/), and registry.ts, the
+                         enabled networks in tab order. Only the registry imports them
+      social-post.ts     a network's post: text, hashtags, media (and the image choice),
+                         status, versions, posted, and what its image was rendered from
+      figures.ts         what an image can show: the preview card and the post's figures
+      share-prompt.ts    what Claude is told on the share page, each turn
+      resolve.ts         a post with the network's defaults filled in, for the page and the files
+      checks.ts          length, the fold, hashtag count, banned words, em-dashes
+      links.ts, hashtags.ts   tagged URLs; categories to hashtags
   app/               use cases, one per file, and the ports they need
-    ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock
+    ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock, ShareStore,
+                       LiveChecker, ImageRenderer, ShortLinks
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
     list-posts.ts, create-draft.ts, ideas.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
     scope-idea.ts      a draft from an idea, with /scope asked for in its page thread
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
+    open-share.ts, save-social-post.ts, mark-posted.ts, render-share-image.ts,
+    choose-link.ts, share-post.ts   the share page
+    share-conversation.ts, write-social-post.ts   Claude on the share page: its own
+                       conversation, and the tool that saves its versions
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
     fs-post-library.ts     reads and writes posts, watches for outside edits, moves
                            deleted drafts to .trash/
-    json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session
+    json-thread-store.ts   writing/threads/<slug>.json, with the post's Claude session. The
+                           share page's thread and session go in writing/threads/share/
     fs-ideas-file.ts       writing/ideas.md, the same file /idea adds to
     claude-agent.ts        runs the claude CLI headless and parses its stream
     testdata/              recorded claude streams and a fake claude that replays them
     mcp-tools.ts           the suggest_edit tool Claude calls, as a small MCP server over
-                           HTTP. Each turn gets only these tools (--strict-mcp-config)
+                           HTTP. Each turn gets only these tools (--strict-mcp-config).
+                           The share page's write_social_post is on its own endpoint
     astro-preview.ts       starts and stops astro dev
+    fs-share-store.ts      writing/share/<slug>/: share.json, a ready-to-paste <network>.txt
+                           per network, and <network>.png. Updates to a post run one at a time
+    figure-renderer.ts     renders a figure to a PNG with Playwright's headless Chromium, from
+                           the preview server's one-figure page (/_editor/figure)
+    live-checker.ts        pre-flight against the deployed site: page, OG tags, preview image,
+                           and that each short link's page redirects where it should
+    fs-short-links.ts      src/data/short-links.json, the short link codes the blog builds pages for
     contracts/             one shared test suite per port
   server/
     http.ts            routes, and server-sent events for Claude's replies. Turns
                        requests into use-case calls
   ui/
     main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post
-                       (`&page` opens its page thread), `/?ideas` lists the ideas
+                       (`&page` opens its page thread), `/?share=<slug>` shares a published
+                       post, `/?ideas` lists the ideas
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
     thread-state.ts    the open post's threads and notes, selection and composer, as signals
     components/        Composer, ThreadCard, Margin, PageThread, StatusLine, KeySheet,
                        SectionPicker, FrontMatterForm
     views/             PostsView, IdeasView, EditorView, PreviewView (iframe plus anchors),
-                       SourceView (CodeMirror)
+                       SourceView (CodeMirror), ShareView
+    share/             the share page's text box (CodeMirror) and fold measuring, and
+                       previews/<network>.tsx, each network's phone feed
 shared/              code the blog build and the editor both use, moved here when
                      the editor first needs it
   reading.ts           word count and reading time, so the editor matches the site
   notes.ts             the `@@` note pattern
+  site.ts              the deployed site's address and a post's URL on it (astro.config.mjs reads it)
+  short-links.ts       short link codes and URLs, for the blog's /s/ pages and the share page
+  banned-words.json    phrases that read as AI-written, for scripts/lint_post.py and the share page
   preview.ts           the post's URL, and the bridge script Astro injects into the
                        preview page plus the messages it exchanges with the editor
 e2e/
   editor.spec.ts     posts page, typing and saving, deleting, threads
-  preview.spec.ts    Source and Preview swap, on a temporary copy of the site
+  preview.spec.ts    Source and Preview swap, and a figure rendered as a share image, on a
+                     temporary copy of the site
+  share.spec.ts      the share page: type, check, copy, restore, mark posted, files on disk
 ```
 
 ## Layers and what they may import
@@ -88,6 +121,10 @@ e2e/
 - `editor/architecture.test.ts` enforces this table by scanning each folder's
   imports. If a change needs to break a rule, change the design here first,
   then the table in the test
+- The same test enforces the share page's no-branching rule
+  (`sharing-design.md`, "Networks"): only `networks/registry.ts` imports a
+  network, and outside the network folders, the registry and
+  `ui/share/previews/`, no code names one
 - Only `infra`, `server`, `main.ts` and `shared` may import Node built-ins
   (`node:fs`, `child_process`, ...). Tests are exempt
 - The UI never imports `app` or `infra`. It talks to the server only through
@@ -144,6 +181,13 @@ e2e/
   the thread's quote follows the edit so the thread keeps its place. This keeps the
   three edit levels from `docs/writing.md` in the tool itself and means his
   typing and Claude's edits never collide
+- Social posts are the exception: they're Claude's to write (`sharing-design.md`).
+  On the share page Claude runs in its own conversation (its own thread and
+  session per post, a share system prompt) and has one tool, `write_social_post`,
+  which saves a version straight away. The version replaces the text on screen
+  only when Calvin hasn't typed since Claude's turn started; otherwise it waits in
+  Versions. The one file it may edit is `docs/voice.md`, and only after Calvin
+  agrees to a voice rule in the thread
 - Every comment and reply Calvin sends goes to Claude, one turn at a time per
   post (later messages wait their turn). Each turn resumes the post's session
   (`--resume`), names the thread and quotes its words. The reply streams into
@@ -173,7 +217,7 @@ split into projects: `blog`, `editor-node` and `editor-dom`.
 |---|---|
 | `domain` | Unit tests, table-driven. Most of the tests live here, because this is where the hard logic is |
 | `app` | Each use case against the fakes in `app/testing/fakes.ts`. No disk, no network, no Claude |
-| `infra` | The contract suite for each port runs against both the fake and the real adapter (the filesystem one in a temp dir), so the fakes can't drift from reality. The Claude adapter is tested with recorded stream files. One live test runs only with `EDITOR_LIVE=1` |
+| `infra` | The contract suite for each port runs against both the fake and the real adapter (the filesystem one in a temp dir), so the fakes can't drift from reality. The Claude adapter is tested with recorded stream files. One live test runs only with `EDITOR_LIVE=1`. The figure renderer's tests run only when Playwright's Chromium is installed (`make verify-editor` installs it; the deploy's CI doesn't) |
 | `ui` | Components with Testing Library in happy-dom: the margin, thread cards, the keymap |
 | End to end | One Playwright test with a scripted fake agent: type, receive a suggestion, accept it, check the file on disk. Deterministic and free |
 

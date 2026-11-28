@@ -6,7 +6,13 @@ import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
 import { scopeIdea } from '../app/scope-idea.ts';
-import { FakeClock, MemoryIdeasFile, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { chooseLink } from '../app/choose-link.ts';
+import { FakeAgent, FakeClock, FakeLiveChecker, FakeRenderer, MemoryIdeasFile, MemoryShortLinks, MemoryPostLibrary, MemoryShareStore, MemoryThreadStore } from '../app/testing/fakes.ts';
+import { markPosted, unmarkPosted } from '../app/mark-posted.ts';
+import { openShare, preflight } from '../app/open-share.ts';
+import { copiedSocialPost, restoreSocialPost, saveSocialPost } from '../app/save-social-post.ts';
+import { renderShareImage, shareImage } from '../app/render-share-image.ts';
+import { createShareConversation } from '../app/share-conversation.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
 import { watchPost } from '../app/watch-post.ts';
@@ -18,7 +24,8 @@ const draft = '---\ntitle: A draft\ndraft: true\n---\none two';
 function setup() {
   const lib = new MemoryPostLibrary({ a: draft, live: '---\ndraft: false\n---\n' });
   const ideasFile = new MemoryIdeasFile('## Ideas\n\n- 2026-11-21: Old\n');
-  const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock() };
+  const deps = { library: lib, threads: new MemoryThreadStore(), clock: new FakeClock(), share: new MemoryShareStore(), links: new MemoryShortLinks() };
+  const checker = new FakeLiveChecker({ 'https://www.lobocv.com/posts/live/': [{ ok: false, message: 'og:image: missing' }] });
   const asked: [string, string][] = [];
   const listeners = new Set<(e: ConversationEvent) => void>();
   const conversation = {
@@ -46,8 +53,19 @@ function setup() {
     watchPost: watchPost(lib),
     previewOrigin: async () => 'http://127.0.0.1:4402',
     watchFigures: () => () => {},
+    openShare: openShare(deps),
+    preflight: preflight({ ...deps, checker }),
+    chooseLink: chooseLink({ ...deps, randomBytes: (n) => new Uint8Array(n) }),
+    saveSocialPost: saveSocialPost(deps),
+    copiedSocialPost: copiedSocialPost(deps),
+    restoreSocialPost: restoreSocialPost(deps),
+    markPosted: markPosted(deps),
+    unmarkPosted: unmarkPosted(deps),
+    renderShareImage: renderShareImage({ ...deps, renderer: new FakeRenderer(), origin: async () => 'http://127.0.0.1:4402' }),
+    shareImage: shareImage(deps),
+    shareConversation: createShareConversation({ ...deps, threads: new MemoryThreadStore(), agent: new FakeAgent(['On it.']) }),
   };
-  return { lib, uc, asked, listeners, api: createApi(uc) };
+  return { lib, uc, asked, listeners, share: deps.share, api: createApi(uc) };
 }
 
 const put = (body: unknown) => ({ method: 'PUT', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
@@ -179,6 +197,95 @@ describe('editor API', () => {
     const res = await setup().api.request(path, { method });
     expect(res.status).toBe(status);
     expect((await res.json()).error).toBeTruthy();
+  });
+
+  describe('share page', () => {
+    const send = (method: string, body?: unknown) => ({ method, body: body === undefined ? undefined : JSON.stringify(body), headers: { 'content-type': 'application/json' } });
+
+    it('opens a published post, and refuses a draft', async () => {
+      const { api } = setup();
+      const res = await api.request('/api/share/live');
+      expect(await res.json()).toMatchObject({ post: { slug: 'live', postUrl: 'https://www.lobocv.com/posts/live/' }, state: { networks: { linkedin: { text: '' } } } });
+      expect((await api.request('/api/share/a')).status).toBe(409);
+      expect((await api.request('/api/share/missing')).status).toBe(404);
+    });
+
+    it('runs pre-flight on its own route', async () => {
+      expect(await (await setup().api.request('/api/share/live/preflight')).json()).toEqual({ checks: [{ ok: false, message: 'og:image: missing' }] });
+    });
+
+    it('saves, copies, restores and marks posted', async () => {
+      const { api, share } = setup();
+      const state = async (res: Response) => (await res.json()).state.networks.linkedin;
+      expect(await state(await api.request('/api/share/live/linkedin', send('PUT', { text: 'One.' })))).toMatchObject({ text: 'One.' });
+      expect(share.texts.get('live')?.linkedin).toMatch(/^One\./);
+      expect(await state(await api.request('/api/share/live/linkedin/copied', send('POST', { text: 'Two.' })))).toMatchObject({ status: 'ready', versions: [{ text: 'Two.' }] });
+      expect(await state(await api.request('/api/share/live/linkedin/restore', send('POST', { index: 0, current: { text: 'Three.' } })))).toMatchObject({ text: 'Two.' });
+      expect(await state(await api.request('/api/share/live/linkedin/posted', send('POST', { url: 'https://www.linkedin.com/feed/update/1/' })))).toMatchObject({ status: 'posted' });
+      expect(await state(await api.request('/api/share/live/linkedin/posted', send('DELETE')))).toMatchObject({ status: 'ready' });
+    });
+
+    it('renders the image, serves it, and offers it as a download', async () => {
+      const { api } = setup();
+      expect((await api.request('/api/share/live/linkedin/image')).status).toBe(404);
+      const rendered = await api.request('/api/share/live/linkedin/image', send('POST', {}));
+      expect((await rendered.json()).state.networks.linkedin.rendered).toMatchObject({ shape: 'landscape', width: 1200, height: 628 });
+      const png = await api.request('/api/share/live/linkedin/image');
+      expect(png.headers.get('content-type')).toBe('image/png');
+      expect((await png.arrayBuffer()).byteLength).toBe(24);
+      const saved = await api.request('/api/share/live/linkedin/image?download=1');
+      expect(saved.headers.get('content-disposition')).toBe('attachment; filename="live-linkedin.png"');
+    });
+
+    it('switches to a short link and back', async () => {
+      const { api } = setup();
+      const short = await api.request('/api/share/live/linkedin/link', send('POST', { kind: 'short' }));
+      expect((await short.json()).state.networks.linkedin.link).toEqual({ kind: 'short', code: 'aaaaaa' });
+      const tagged = await api.request('/api/share/live/linkedin/link', send('POST', { kind: 'tagged' }));
+      expect((await tagged.json()).state.networks.linkedin.link).toEqual({ kind: 'tagged', code: 'aaaaaa' });
+      expect((await api.request('/api/share/live/linkedin/link', send('POST', { kind: 'long' }))).status).toBe(400);
+    });
+
+    it('saves an image choice', async () => {
+      const { api } = setup();
+      const res = await api.request('/api/share/live/linkedin', send('PUT', { media: { kind: 'image', figure: { kind: 'component', source: 'src/components/post/T.astro' }, theme: 'night', alt: 'A tree.' } }));
+      expect((await res.json()).state.networks.linkedin.media).toEqual({ kind: 'image', figure: { kind: 'component', source: 'src/components/post/T.astro' }, theme: 'night', alt: 'A tree.' });
+    });
+
+    it('passes a message to Claude in the share thread, and streams its reply and new state', async () => {
+      const { api, uc } = setup();
+      const res = await api.request('/api/share/live/events');
+      const reader = res.body!.getReader();
+      await reader.read(); // ': open'
+      const sent = await api.request('/api/share/live/thread', send('POST', { text: 'Draft the LinkedIn post.' }));
+      expect((await sent.json()).threads[0].messages[0]).toMatchObject({ author: 'calvin', text: 'Draft the LinkedIn post.' });
+      const seen: string[] = [];
+      while (!seen.includes('idle')) {
+        for (const line of new TextDecoder().decode((await reader.read()).value).split('\n')) {
+          if (line.startsWith('data: ')) seen.push(JSON.parse(line.slice(6)).type);
+        }
+      }
+      expect(seen).toContain('threads');
+      const thread = await (await api.request('/api/share/live/thread')).json();
+      expect(thread.threads[0].messages.map((m: { text: string }) => m.text)).toEqual(['Draft the LinkedIn post.', 'On it.']);
+      expect((await api.request('/api/share/live/thread', send('POST', { text: '' }))).status).toBe(400);
+      expect((await api.request('/api/share/a/thread', send('POST', { text: 'hi' }))).status).toBe(409);
+      expect((await api.request('/api/share/live/stop', send('POST', {}))).status).toBe(204);
+      await reader.cancel();
+      void uc;
+    });
+
+    it.each([
+      ['PUT', '/api/share/live/linkedin', { text: 1 }, 400],
+      ['PUT', '/api/share/live/linkedin', { media: { kind: 'video' } }, 400],
+      ['PUT', '/api/share/live/linkedin', { media: { kind: 'image', theme: 'dusk' } }, 400],
+      ['PUT', '/api/share/live/nope', { text: 'x' }, 404],
+      ['PUT', '/api/share/a/linkedin', { text: 'x' }, 409],
+      ['POST', '/api/share/live/linkedin/posted', { url: 'javascript:alert(1)' }, 400],
+      ['POST', '/api/share/live/linkedin/restore', { index: -1, current: { text: '' } }, 400],
+    ])('%s %s %j is %i', async (method, path, body, status) => {
+      expect((await setup().api.request(path, send(method, body))).status).toBe(status);
+    });
   });
 
   it('reports a failed save', async () => {

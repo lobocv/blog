@@ -1,0 +1,45 @@
+---
+// A short link (https://www.lobocv.com/s/<code>/): GitHub Pages only serves files, so this page
+// sends the browser on as soon as it loads. It copies the post's preview card tags first, since
+// LinkedIn, X and Bluesky build the card from this page and may not follow the refresh. See
+// docs/decisions/2026-11-27-first-party-short-links.md.
+import links from '../../data/short-links.json';
+import { getPosts } from '../../lib/posts';
+import { shortLinkPages, type ShortLinkPage } from '../../lib/short-links';
+import { xHandle } from '../../data/social';
+
+export async function getStaticPaths() {
+  const posts = (await getPosts()).map((p) => ({ id: p.id, title: p.data.title, summary: p.data.summary }));
+  return shortLinkPages(links, posts).map((page) => ({ params: { code: page.code }, props: page }));
+}
+
+const { to, post } = Astro.props as ShortLinkPage;
+const target = new URL(to, Astro.site).toString();
+const postUrl = new URL(`/posts/${post.id}/`, Astro.site).toString();
+const image = new URL(`/og/${post.id}.png`, Astro.site).toString();
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{post.title}</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href={postUrl}>
+<meta http-equiv="refresh" content={`0; url=${target}`}>
+{post.summary && <meta name="description" content={post.summary}>}
+<meta property="og:site_name" content="lobocv">
+<meta property="og:type" content="article">
+<meta property="og:title" content={post.title}>
+{post.summary && <meta property="og:description" content={post.summary}>}
+<meta property="og:url" content={postUrl}>
+<meta property="og:image" content={image}>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content={xHandle}>
+<script is:inline define:vars={{ target }}>location.replace(target);</script>
+</head>
+<body>
+<p><a href={target}>{post.title}</a></p>
+</body>
+</html>
