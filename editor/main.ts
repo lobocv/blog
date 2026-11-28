@@ -14,6 +14,7 @@ import { addIdea, listIdeas, removeIdea } from './app/ideas.ts';
 import { listPosts } from './app/list-posts.ts';
 import { openPost } from './app/open-post.ts';
 import { savePost } from './app/save-post.ts';
+import { scopeIdea } from './app/scope-idea.ts';
 import { reportReview } from './app/review.ts';
 import { settleSuggestion, suggestEdit } from './app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from './app/threads.ts';
@@ -69,6 +70,7 @@ const api = createApi({
   listIdeas: listIdeas(ideasFile),
   addIdea: addIdea(ideasFile, deps.clock),
   removeIdea: removeIdea(ideasFile),
+  scopeIdea: scopeIdea({ ...deps, ideas: ideasFile }),
   openPost: openPost(library),
   savePost: savePost(library, threads),
   listThreads: listThreads(deps),

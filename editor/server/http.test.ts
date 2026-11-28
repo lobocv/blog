@@ -5,6 +5,7 @@ import { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import { listPosts } from '../app/list-posts.ts';
 import { openPost } from '../app/open-post.ts';
 import { savePost } from '../app/save-post.ts';
+import { scopeIdea } from '../app/scope-idea.ts';
 import { FakeClock, MemoryIdeasFile, MemoryPostLibrary, MemoryThreadStore } from '../app/testing/fakes.ts';
 import { settleSuggestion } from '../app/suggestions.ts';
 import { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
@@ -33,6 +34,7 @@ function setup() {
     listIdeas: listIdeas(ideasFile),
     addIdea: addIdea(ideasFile, deps.clock),
     removeIdea: removeIdea(ideasFile),
+    scopeIdea: scopeIdea({ ...deps, ideas: ideasFile }),
     openPost: openPost(lib),
     savePost: savePost(lib, deps.threads),
     deleteDraft: deleteDraft(lib),
@@ -59,6 +61,17 @@ describe('editor API', () => {
     expect(await res.json()).toEqual({ slug: 'new_idea' });
     expect((await lib.read('new_idea'))?.text).toContain('draft: true');
     expect((await post('New idea')).status).toBe(409);
+  });
+
+  it('starts a draft from an idea and asks Claude to run /scope in its page thread', async () => {
+    const { api, lib, asked } = setup();
+    const send = (body: unknown) => api.request('/api/ideas/scope', { method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
+    const res = await send({ idea: { date: '2026-11-21', text: 'Old' }, title: 'Old idea' });
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({ slug: 'old_idea' });
+    expect(await lib.read('old_idea')).toBeDefined();
+    expect(asked).toEqual([['old_idea', 'page']]);
+    expect((await send({ title: 'No idea' })).status).toBe(400);
   });
 
   it('lists, adds and removes ideas', async () => {

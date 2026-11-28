@@ -34,6 +34,7 @@ editor/
     ports.ts           PostLibrary, ThreadStore, IdeasFile, Agent, Preview, Clock
     errors.ts          NotFound and Refused, which the server turns into 404 and 409
     list-posts.ts, create-draft.ts, ideas.ts, open-post.ts, save-post.ts, delete-draft.ts, threads.ts, ...
+    scope-idea.ts      a draft from an idea, with /scope asked for in its page thread
     conversation.ts    Claude's turns: one at a time per post, streamed, stoppable
     testing/fakes.ts   in-memory implementation of every port
   infra/             the only code that touches the outside world
@@ -51,8 +52,8 @@ editor/
     http.ts            routes, and server-sent events for Claude's replies. Turns
                        requests into use-case calls
   ui/
-    main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post,
-                       `/?ideas` lists the ideas
+    main.tsx           `/` lists the posts (drafts first), `/?post=<slug>` edits a post
+                       (`&page` opens its page thread), `/?ideas` lists the ideas
     api.ts (fetch calls), autosave.ts, format.ts, keymap.ts, theme.css
     thread-state.ts    the open post's threads and notes, selection and composer, as signals
     components/        Composer, ThreadCard, Margin, PageThread, StatusLine, KeySheet,
@@ -157,6 +158,9 @@ e2e/
   With unsaved typing the two are merged when they change different lines
   (`domain/merge.ts`); when they change the same lines, Calvin chooses which to
   keep. Either way ⌘Z undoes the reload
+- ↵ on an idea asks for a working title, then makes the draft, takes the idea
+  off `writing/ideas.md` and opens the draft with `/scope <idea>` running in its
+  page thread. The interview happens there, and Claude writes the brief
 - History is the editor's undo for recent changes and git for the rest. No
   automatic commits
 

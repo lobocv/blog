@@ -416,3 +416,30 @@ test('lists the ideas from writing/ideas.md, adds one and removes one', async ({
   await page.keyboard.press('Escape');
   await expect(page.getByRole('listbox', { name: 'Drafts' })).toBeVisible();
 });
+
+test('starts a post from an idea and runs /scope in its page thread', async ({ page }) => {
+  const file = join(root, 'writing/ideas.md');
+  await mkdir(join(root, 'writing'), { recursive: true });
+  await writeFile(file, '## Ideas\n\n- 2026-11-21: [trellis] Topic graph\n- 2026-11-19: Review symptoms\n');
+  await page.goto(`${url}?ideas`);
+  await expect(page.getByRole('option')).toHaveCount(2);
+
+  // ↵ on the first idea asks for a working title; Esc takes it back.
+  await page.keyboard.press('Enter');
+  const title = page.getByLabel('Working title for the post');
+  await title.press('Escape');
+  await expect(title).toBeHidden();
+
+  // A click does the same.
+  await page.getByText('Topic graph').click();
+  await title.fill('How the topic graph works');
+  await title.press('Enter');
+
+  await expect(page.getByLabel('Title')).toHaveValue('How the topic graph works');
+  const thread = page.getByRole('complementary', { name: 'Page thread' });
+  await expect(thread).toContainText('/scope [trellis] Topic graph');
+  // The fake claude's recorded reply arrives in the same thread.
+  await expect(thread).toContainText('Two short sentences.');
+  expect(await readFile(file, 'utf8')).toBe('## Ideas\n\n- 2026-11-19: Review symptoms\n');
+  expect(await readFile(postPath('how_the_topic_graph_works'), 'utf8')).toContain('draft: true');
+});

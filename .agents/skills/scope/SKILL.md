@@ -27,6 +27,10 @@ Stop when all five are answered. Don't draft any prose for the post.
 
 ## Create the files
 
+Started from the editor's ideas page, the draft already exists with Calvin's
+working title, and the idea is already out of `writing/ideas.md`. Keep that slug
+and write only the brief.
+
 - Pick a snake_case slug that matches the working title (eg `communicating_effectively_with_agents`) and confirm it. It becomes the URL, so rename it before publishing if the title changes
 - `writing/briefs/<slug>.md`, using Calvin's own words from the interview:
 

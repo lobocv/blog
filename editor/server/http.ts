@@ -8,10 +8,11 @@ import type { addIdea, listIdeas, removeIdea } from '../app/ideas.ts';
 import type { listPosts } from '../app/list-posts.ts';
 import type { openPost } from '../app/open-post.ts';
 import type { savePost } from '../app/save-post.ts';
+import type { scopeIdea } from '../app/scope-idea.ts';
 import type { settleSuggestion } from '../app/suggestions.ts';
 import type { watchPost } from '../app/watch-post.ts';
 import type { addComment, listThreads, replyToThread, resolveThread } from '../app/threads.ts';
-import { CreatedDraft, Idea, Ideas, NewDraft, NewIdea, PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, Settle, Threads } from '../protocol.ts';
+import { CreatedDraft, Idea, Ideas, NewDraft, NewIdea, PostEvent, PostList, NewComment, NewReply, Post, PreviewInfo, SavePost, ScopeIdea, Settle, Threads } from '../protocol.ts';
 
 export type UseCases = {
   listPosts: ReturnType<typeof listPosts>;
@@ -19,6 +20,7 @@ export type UseCases = {
   listIdeas: ReturnType<typeof listIdeas>;
   addIdea: ReturnType<typeof addIdea>;
   removeIdea: ReturnType<typeof removeIdea>;
+  scopeIdea: ReturnType<typeof scopeIdea>;
   openPost: ReturnType<typeof openPost>;
   savePost: ReturnType<typeof savePost>;
   deleteDraft: ReturnType<typeof deleteDraft>;
@@ -55,6 +57,13 @@ export function createApi(uc: UseCases) {
     const body = Idea.safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: 'expected an idea' }, 400);
     return c.json(ideas(await uc.removeIdea(body.data)));
+  });
+  api.post('/api/ideas/scope', async (c) => {
+    const body = ScopeIdea.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'expected { idea, title: string }' }, 400);
+    const { slug, threadId } = await uc.scopeIdea(body.data.idea, body.data.title);
+    void uc.conversation.ask(slug, threadId);
+    return c.json(CreatedDraft.parse({ slug }), 201);
   });
 
   api.post('/api/posts', async (c) => {
